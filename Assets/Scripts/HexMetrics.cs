@@ -40,6 +40,6 @@ public static class HexMetrics
     public static Vector3 GetBridge(HexDirection direction)
     {
         //向量加法，背后原理不太清楚
-        return (corners[(int)direction] + corners[(int)direction + 1]) * 0.5f * blendFactor;
+        return (corners[(int)direction] + corners[(int)direction + 1]) * blendFactor;
     }
 }

@@ -56,13 +56,22 @@ public class HexMesh : MonoBehaviour
         AddTriangle(cetner, v1, v2);
         AddTriangleColor(cell.color);
 
+        if (direction <= HexDirection.SE)
+        {
+            TriangulateConnection(direction, cell, v1, v2);
+        }
+    }
+
+    private void TriangulateConnection(HexDirection direction, HexCell cell, Vector3 v1, Vector3 v2)
+    {
+        HexCell neighbor = cell.GetNeighbor(direction);
+        if (neighbor == null)
+        {
+            return;
+        }
         Vector3 bridge = HexMetrics.GetBridge(direction);
         Vector3 v3 = v1 + bridge;
         Vector3 v4 = v2 + bridge;
-
-        HexCell prev = cell.GetNeighbor(direction.Previous()) ?? cell;
-        HexCell neighbor = cell.GetNeighbor(direction) ?? cell;
-        HexCell next = cell.GetNeighbor(direction.Next()) ?? cell;
 
         Color bridgeColor = (cell.color + neighbor.color) * 0.5f;
         AddQuad(v1, v2, v3, v4);
@@ -71,19 +80,17 @@ public class HexMesh : MonoBehaviour
           bridgeColor
         );
 
-        AddTriangle(v1, cetner + HexMetrics.GetFirstCorner(direction), v3);
-        AddTriangleColor(
-            cell.color,
-            (cell.color + prev.color + neighbor.color) / 3f,
-            bridgeColor
-        );
+        HexCell next = cell.GetNeighbor(direction.Next());
+        if (direction <= HexDirection.E && next != null)
+        {
+            AddTriangle(v2, v4, v2 + HexMetrics.GetBridge(direction.Next()));
+            AddTriangleColor(
+                cell.color,
+                bridgeColor,
+                (cell.color + next.color + neighbor.color) / 3f
+            );
+        }
 
-        AddTriangle(v2, v4, cetner + HexMetrics.GetSecondCorner(direction));
-        AddTriangleColor(
-            cell.color,
-            bridgeColor,
-            (cell.color + next.color + neighbor.color) / 3f
-        );
     }
 
     void AddTriangle(Vector3 v1, Vector3 v2, Vector3 v3)
