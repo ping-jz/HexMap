@@ -64,13 +64,12 @@ public class HexGrid : MonoBehaviour
             }
             else
             {
-
-            }
-            cell.SetNeighbor(HexDirection.SW, cells[i - width]);
-            //基数行最后一个网格没有SE方向的邻居
-            if (x < width - 1)
-            {
-                cell.SetNeighbor(HexDirection.SE, cells[i - width + 1]);
+                cell.SetNeighbor(HexDirection.SW, cells[i - width]);
+                //基数行最后一个网格没有SE方向的邻居
+                if (x < width - 1)
+                {
+                    cell.SetNeighbor(HexDirection.SE, cells[i - width + 1]);
+                }
             }
         }
 
