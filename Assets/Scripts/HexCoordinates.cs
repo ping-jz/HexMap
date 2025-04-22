@@ -55,6 +55,8 @@ public struct HexCoordinates
 
     public static HexCoordinates FromPosition(Vector3 position)
     {
+        //地图的长宽是固定的所以x和z是固定范围内的数值
+        
         //六边形的宽
         float x = position.x / (HexMetrics.innerRadius * 2f);
         float y = -x;
