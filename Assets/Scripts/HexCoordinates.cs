@@ -3,8 +3,8 @@ using UnityEngine;
 [System.Serializable]
 public struct HexCoordinates
 {
-    [SerializeField]
-    private int x, z;
+    private readonly int x;
+    private readonly int z;
 
     public int X
     {
