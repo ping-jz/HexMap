@@ -67,7 +67,7 @@ public static class HexMetrics
         return a;
     }
 
-    public static Color TerraceLerp(Color a, Color b, int step)
+    public static Color TerraceLerpColor(Color a, Color b, int step)
     {
         float h = step * horizontalTerraceStepSize;
         return Color.Lerp(a, b, h);
