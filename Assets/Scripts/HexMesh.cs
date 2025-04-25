@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Video;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class HexMesh : MonoBehaviour
@@ -9,6 +10,12 @@ public class HexMesh : MonoBehaviour
     List<int> triangles;
     List<Color> colors;
     MeshCollider meshCollider;
+
+    [System.Flags]
+    public enum GizmoMode { Nothing = 0, Triangles = 0b0001 }
+
+    [SerializeField]
+    GizmoMode gizmos;
 
     void Awake()
     {
@@ -69,21 +76,18 @@ public class HexMesh : MonoBehaviour
         {
             return;
         }
+
         Vector3 bridge = HexMetrics.GetBridge(direction);
         Vector3 v3 = v1 + bridge;
         Vector3 v4 = v2 + bridge;
         v3.y = v4.y = neighbor.Elevation * HexMetrics.elevationStep;
 
-        Color bridgeColor = (cell.color + neighbor.color) * 0.5f;
-        AddQuad(v1, v2, v3, v4);
-        AddQuadColor(
-          cell.color,
-          bridgeColor
-        );
+        TriangulateEdgeTerraces(v1, v2, cell, v3, v4, neighbor);
 
         HexCell next = cell.GetNeighbor(direction.Next());
         if (direction <= HexDirection.E && next != null)
         {
+            Color bridgeColor = (cell.color + neighbor.color) * 0.5f;
             Vector3 v5 = v2 + HexMetrics.GetBridge(direction.Next());
             v5.y = next.Elevation * HexMetrics.elevationStep;
             AddTriangle(v2, v4, v5);
@@ -94,6 +98,34 @@ public class HexMesh : MonoBehaviour
             );
         }
 
+    }
+
+    private void TriangulateEdgeTerraces(
+        Vector3 beginLeft, Vector3 beginRight, HexCell beginCell,
+        Vector3 endLeft, Vector3 endRight, HexCell endCell)
+    {
+        Vector3 v3 = beginLeft;
+        Vector3 v4 = beginRight;
+        Color c2 = beginCell.color;
+        for (int i = 1; i < HexMetrics.terraceSteps; i++)
+        {
+            Vector3 v1 = v3;
+            Vector3 v2 = v4;
+            v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, i);
+            v4 = HexMetrics.TerraceLerp(beginRight, endRight, i);
+            c2 = HexMetrics.TerraceLerp(beginCell.color, endCell.color, i);
+            AddQuad(v1, v2, v3, v4);
+            AddQuadColor(
+              beginCell.color,
+              c2
+            );
+        }
+
+        AddQuad(v3, v4, endLeft, endRight);
+        AddQuadColor(
+          c2,
+          endCell.color
+        );
     }
 
     void AddTriangle(Vector3 v1, Vector3 v2, Vector3 v3)
@@ -146,5 +178,27 @@ public class HexMesh : MonoBehaviour
         colors.Add(c1);
         colors.Add(c2);
         colors.Add(c2);
+    }
+
+
+    void OnDrawGizmos()
+    {
+        if (gizmos == GizmoMode.Nothing || triangles == null)
+        {
+            return;
+        }
+
+        bool drawTiangles = (gizmos & GizmoMode.Triangles) != 0;
+
+        if (drawTiangles)
+        {
+            for (int i = 0; i < triangles.Count; i += 3)
+            {
+                Gizmos.DrawLine(vertices[triangles[i]], vertices[triangles[i + 1]]);
+                Gizmos.DrawLine(vertices[triangles[i + 1]], vertices[triangles[i + 2]]);
+                Gizmos.DrawLine(vertices[triangles[i + 2]], vertices[triangles[i]]);
+            }
+        }
+
     }
 }
