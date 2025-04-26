@@ -40,9 +40,9 @@ public class HexMesh : MonoBehaviour
             TriangulateCell(cells[i]);
         }
 
-        hexMesh.vertices = vertices.ToArray();
-        hexMesh.triangles = triangles.ToArray();
-        hexMesh.colors = colors.ToArray();
+        hexMesh.SetVertices(vertices);
+        hexMesh.SetTriangles(triangles, 0);
+        hexMesh.SetColors(colors);
         hexMesh.RecalculateNormals();
         meshCollider.sharedMesh = hexMesh;
     }
