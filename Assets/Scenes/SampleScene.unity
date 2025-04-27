@@ -1404,6 +1404,7 @@ MonoBehaviour:
   cellPrefab: {fileID: -3034230875598386575, guid: 996e5035b3d415348b5058f4bcf3d5fe, type: 3}
   cellLabelPrefab: {fileID: 3190673719425266696, guid: cedaf07c45c5c084e8475e9df3fc474e, type: 3}
   defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  noiseSource: {fileID: 2800000, guid: 995f391b45b92634091fd2af02b8fef9, type: 3}
 --- !u!1 &1097111577
 GameObject:
   m_ObjectHideFlags: 0
