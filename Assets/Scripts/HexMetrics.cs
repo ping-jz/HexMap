@@ -23,6 +23,9 @@ public static class HexMetrics
 
     public const float elevationPerturbStrength = 1.5f;
 
+    //每个Grid有个5*5的CELL
+    public const int chunkSizeX = 5, chunkSizeZ = 5;
+
     public static Texture2D noiseSource;
 
     public static Vector3[] corners = {

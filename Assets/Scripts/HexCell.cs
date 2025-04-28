@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UIElements.Experimental;
 
 public class HexCell : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class HexCell : MonoBehaviour
     [SerializeField]
     private HexCell[] neighbors;
     private int elevation;
+    private int chunkIndex;
     public RectTransform uiRect;
 
     public HexCell GetNeighbor(HexDirection direction)
@@ -60,6 +62,21 @@ public class HexCell : MonoBehaviour
         get
         {
             return transform.localPosition;
+        }
+    }
+
+    public int ChunkIdx {
+        get {  
+            return chunkIndex;
+        }
+        set {
+            chunkIndex = value;
+        }
+    }
+
+    public HexCell[] Neighbors {
+        get {  
+            return neighbors;
         }
     }
 }

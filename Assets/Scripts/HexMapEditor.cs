@@ -42,7 +42,20 @@ public class HexMapEditor : MonoBehaviour
     {
         cell.color = activeColor;
         cell.Elevation = activeElevation;
-        hexGrid.Refresh();
+        HexGridChunk chunk = hexGrid.GetChunk(cell);
+        if (chunk)
+        {
+            chunk.Refresh();
+            foreach (HexCell neighbor in cell.Neighbors)
+            {
+                if (
+                    neighbor != null && 
+                    (chunk = hexGrid.GetChunk(neighbor)) != null)
+                {
+                    chunk.Refresh();
+                }
+            }
+        }
     }
 
     public void SelectColor(int index)

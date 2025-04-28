@@ -88,12 +88,6 @@ public struct HexCoordinates
                 iZ = -iX - iY;
             }
         }
-
-        if (iX + iY + iZ != 0)
-        {
-            Debug.LogWarning("rounding error!");
-        }
-
         return new HexCoordinates(iX, iZ);
     }
 }

@@ -8,9 +8,9 @@ using UnityEditor.Experimental.GraphView;
 public class HexMesh : MonoBehaviour
 {
     Mesh hexMesh;
-    List<Vector3> vertices;
-    List<int> triangles;
-    List<Color> colors;
+    static List<Vector3> vertices = new List<Vector3>();
+    static List<int> triangles = new List<int>();
+    static List<Color> colors = new List<Color>();
     MeshCollider meshCollider;
 
     [Flags]
@@ -23,11 +23,7 @@ public class HexMesh : MonoBehaviour
     {
         GetComponent<MeshFilter>().mesh = hexMesh = new Mesh();
         meshCollider = gameObject.AddComponent<MeshCollider>();
-
         hexMesh.name = "Hex Mesh";
-        vertices = new List<Vector3>();
-        triangles = new List<int>();
-        colors = new List<Color>();
     }
 
     public void Triangulate(HexCell[] cells)
@@ -451,7 +447,10 @@ public class HexMesh : MonoBehaviour
 
         if (drawTiangles)
         {
-            for (int i = 0; i < triangles.Count; i += 3)
+            List<Vector3> vertices = new List<Vector3>();
+            int[] triangles = hexMesh.GetTriangles(0);
+            hexMesh.GetVertices(vertices);
+            for (int i = 0; i < triangles.Length; i += 3)
             {
                 Gizmos.DrawLine(vertices[triangles[i]], vertices[triangles[i + 1]]);
                 Gizmos.DrawLine(vertices[triangles[i + 1]], vertices[triangles[i + 2]]);
