@@ -50,7 +50,6 @@ public class HexGrid : MonoBehaviour
         cell.transform.localPosition = position;
         cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
         cell.color = defaultColor;
-        cell.Elevation = 0;
 
         if (x > 0)
         {
@@ -83,6 +82,7 @@ public class HexGrid : MonoBehaviour
         label.SetText(cell.coordinates.ToStringOnSeparateLines());
 
         cell.uiRect = label.rectTransform;
+        cell.Elevation = 0;
     }
 
     void Start()
