@@ -19,7 +19,16 @@ public class HexGrid : MonoBehaviour
     private int cellCountX = 6, cellCountZ = 6;
     HexCell[] cells;
     HexGridChunk[] chunks;
-    MeshCollider meshCollider;
+
+    public int ChunkCountX
+    {
+        get { return chunkCountX; }
+    }
+
+    public int ChunkCountZ
+    {
+        get { return chunkCountZ; }
+    }
 
     void Awake()
     {
