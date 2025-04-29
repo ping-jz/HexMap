@@ -49,7 +49,6 @@ public class HexMapCamera : MonoBehaviour
 
     void AdjustZoom(float delta)
     {
-        Debug.Log(delta);
         //好难，先知道可以这样做吧
         zoom = Mathf.Clamp01(zoom + delta);
 

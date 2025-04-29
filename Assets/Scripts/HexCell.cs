@@ -3,8 +3,8 @@ using UnityEngine.UIElements.Experimental;
 
 public class HexCell : MonoBehaviour
 {
-
-    public HexCoordinates coordinates;
+    [SerializeField]
+    private HexCoordinates coordinates;
     public Color color;
     [SerializeField]
     private HexCell[] neighbors;
@@ -71,6 +71,15 @@ public class HexCell : MonoBehaviour
         }
         set {
             chunkIndex = value;
+        }
+    }
+
+    public HexCoordinates Coordinates {
+        get {  
+            return coordinates;
+        }
+        set {
+            coordinates = value;
         }
     }
 

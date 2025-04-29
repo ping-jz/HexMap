@@ -3,10 +3,10 @@ using UnityEngine;
 [System.Serializable]
 public struct HexCoordinates
 {
-    private readonly int x;
-    private readonly int z;
+    [SerializeField]
+    private int x, z;
 
-    public int X
+    public readonly int X
     {
         get
         {
@@ -14,7 +14,7 @@ public struct HexCoordinates
         }
     }
 
-    public int Z
+    public readonly int Z
     {
         get
         {
@@ -56,7 +56,7 @@ public struct HexCoordinates
     public static HexCoordinates FromPosition(Vector3 position)
     {
         //地图的长宽是固定的所以x和z是固定范围内的数值
-        
+
         //六边形的宽
         float x = position.x / (HexMetrics.innerRadius * 2f);
         float y = -x;

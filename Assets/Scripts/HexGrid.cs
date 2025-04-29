@@ -39,6 +39,7 @@ public class HexGrid : MonoBehaviour
 
         CreateChunks();
         CreateCell();
+        ShowUI(false);
     }
 
     void CreateChunks()
@@ -75,12 +76,12 @@ public class HexGrid : MonoBehaviour
 
         HexCell cell = cells[i] = Instantiate(cellPrefab);
         cell.transform.localPosition = position;
-        cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
+        cell.Coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
         cell.color = defaultColor;
 
         TextMeshPro label = Instantiate(cellLabelPrefab);
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
-        label.SetText(cell.coordinates.ToStringOnSeparateLines());
+        label.SetText(cell.Coordinates.ToStringOnSeparateLines());
         cell.uiRect = label.rectTransform;
         cell.Elevation = 0;
 
@@ -131,6 +132,8 @@ public class HexGrid : MonoBehaviour
         HexMetrics.noiseSource = noiseSource;
     }
 
+    //从屏幕坐标转换世界坐标，然后转换为本地坐标
+    //遇到问题之后多回来看看
     public HexCell GetCell(Vector3 position)
     {
         position = transform.InverseTransformPoint(position);
@@ -139,8 +142,26 @@ public class HexGrid : MonoBehaviour
         return cells[index];
     }
 
+    public HexCell GetCell(HexCoordinates coordinates) {
+        int z = coordinates.Z;
+        int x = coordinates.X + z / 2;
+        if(z < 0 || z >= cellCountZ) {
+            return null;
+        }
+        if(x < 0 || x >= cellCountX) {
+            return null;
+        }
+        return cells[x + z * cellCountX];
+    }
+
     public HexGridChunk GetChunk(HexCell cell)
     {
         return chunks[cell.ChunkIdx];
+    }
+
+    public void ShowUI(bool visible) {
+        foreach(HexGridChunk chunk in chunks) {
+            chunk.ShowUI(visible);
+        }
     }
 }
