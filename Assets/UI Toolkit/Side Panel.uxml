@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:engine="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+>
+    <Style src="Side Panel Styles.uss"/>
+    <engine:VisualElement name="LeftPanel" class="sidePanel">
+    	<engine:RadioButtonGroup
+            label="Colors"
+			choices="---,Yellow,Green,Blue,White"
+			value="1"
+			name="Colors"
+        />
+        <engine:Toggle label="Elevation" value="true" name="ApplyElevation" />
+    	<engine:SliderInt value="0" high-value="6" name="Elevation" />
+        <engine:RadioButtonGroup
+            label="River"
+			choices="---,Yes,No"
+			value="0"
+			name="River" />
+        <engine:Label text="Brush Size" />
+        <engine:SliderInt value="0" high-value="4" name="BrushSize" />
+        <engine:Toggle label="Labels" value="false" name="ShowUI" />
+	</engine:VisualElement>
+</engine:UXML>

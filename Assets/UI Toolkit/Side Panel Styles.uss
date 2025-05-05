@@ -1,0 +1,41 @@
+.sidePanel {
+    background-color: rgba(255, 255, 255, 0.39);
+    position: absolute;
+    width: 130px;
+}
+
+.unity-radio-button-group__container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.unity-radio-button__input {
+    flex-direction: column;
+    width: 30px;
+}
+
+.unity-radio-button__text {
+    margin: 0;
+    padding: 0;
+}
+
+.unity-radio-button-group {
+    background-color: rgba(255, 255, 255, 0.39);
+    flex-direction: column;
+}
+
+.unity-radio-button-group > Label {
+    align-self: center;
+    margin: 0;
+    padding: 0;
+}
+
+Label {
+    min-width: auto;
+}
+
+Toggle {
+    align-self: flex-start;
+    flex-direction: row-reverse;
+}

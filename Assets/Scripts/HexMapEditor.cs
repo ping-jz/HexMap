@@ -1,6 +1,11 @@
-using System.IO.Compression;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UIElements;
+
+enum OptionalToggle
+{
+    Ignore, Yes, No
+}
 
 public class HexMapEditor : MonoBehaviour
 {
@@ -8,15 +13,27 @@ public class HexMapEditor : MonoBehaviour
     private Color[] colors;
     [SerializeField]
     private HexGrid hexGrid;
+    [SerializeField]
+    private UIDocument sidePanels;
     private Color activeColor;
     int activeElevation;
     bool applyElevation = true;
     bool applyColor = true;
     int brushSize;
+    OptionalToggle riverMode;
 
     void Awake()
     {
-        SelectColor(0);
+        SelectColor(1);
+
+        VisualElement root = sidePanels.rootVisualElement;
+
+        root.Q<RadioButtonGroup>("Colors").RegisterValueChangedCallback(change => SelectColor(change.newValue));
+        root.Q<Toggle>("ApplyElevation").RegisterValueChangedCallback(change => applyElevation = change.newValue);
+        root.Q<SliderInt>("Elevation").RegisterValueChangedCallback(change => SetElevation(change.newValue));
+        root.Q<SliderInt>("BrushSize").RegisterValueChangedCallback(change => SetBrushSize(change.newValue));
+        root.Q<Toggle>("ShowUI").RegisterValueChangedCallback(change => hexGrid.ShowUI(change.newValue));
+        root.Q<RadioButtonGroup>("River").RegisterValueChangedCallback(change => SetRiverMode(change.newValue));
     }
 
     void Update()
@@ -46,7 +63,6 @@ public class HexMapEditor : MonoBehaviour
     {
         int centerX = center.Coordinates.X;
         int centerZ = center.Coordinates.Z;
-        Debug.Log(center.Coordinates);
 
         //从中间往下走
         for (int r = 0, z = centerZ - brushSize; z <= centerZ; z++, r++)
@@ -99,10 +115,11 @@ public class HexMapEditor : MonoBehaviour
 
     public void SelectColor(int index)
     {
-        applyColor = index >= 0;
+        applyColor = index > 0;
+        Debug.Log(index);
         if (applyColor)
         {
-            activeColor = colors[index];
+            activeColor = colors[index - 1];
         }
     }
 
@@ -119,6 +136,10 @@ public class HexMapEditor : MonoBehaviour
     public void SetBrushSize(float size)
     {
         brushSize = (int)size;
-        Debug.Log(brushSize);
+    }
+
+    public void SetRiverMode(int mode)
+    {
+        riverMode = (OptionalToggle)mode;
     }
 }
