@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
@@ -6,6 +8,34 @@ enum OptionalToggle
 {
     Ignore, Yes, No
 }
+
+
+
+[Flags]
+enum EditorFlags
+{
+    Nothing = 0,
+    ApplyElevation = 0b0001,
+    ApplyColor = 0b0010,
+    Drag = 0b0100
+}
+
+static class EditorFlagsExtensions
+{
+    public static bool Has(this EditorFlags flags, EditorFlags mask) =>
+        (flags & mask) == mask;
+
+    public static bool HasAny(this EditorFlags flags, EditorFlags mask) =>
+        (flags & mask) != 0;
+    public static bool HasNot(this EditorFlags flags, EditorFlags mask) =>
+        (flags & mask) != mask;
+
+    public static EditorFlags With(this EditorFlags flags, EditorFlags mask) =>
+        flags | mask;
+    public static EditorFlags Without(this EditorFlags flags, EditorFlags mask) =>
+        flags & ~mask;
+}
+
 
 public class HexMapEditor : MonoBehaviour
 {
@@ -17,10 +47,11 @@ public class HexMapEditor : MonoBehaviour
     private UIDocument sidePanels;
     private Color activeColor;
     int activeElevation;
-    bool applyElevation = true;
-    bool applyColor = true;
+    EditorFlags flags = EditorFlags.ApplyColor.With(EditorFlags.ApplyElevation);
     int brushSize;
     OptionalToggle riverMode;
+    HexDirection dragDirection;
+    HexCell previousCell;
 
     void Awake()
     {
@@ -29,7 +60,17 @@ public class HexMapEditor : MonoBehaviour
         VisualElement root = sidePanels.rootVisualElement;
 
         root.Q<RadioButtonGroup>("Colors").RegisterValueChangedCallback(change => SelectColor(change.newValue));
-        root.Q<Toggle>("ApplyElevation").RegisterValueChangedCallback(change => applyElevation = change.newValue);
+        root.Q<Toggle>("ApplyElevation").RegisterValueChangedCallback(change =>
+        {
+            if (change.newValue)
+            {
+                flags = flags.With(EditorFlags.ApplyElevation);
+            }
+            else
+            {
+                flags = flags.Without(EditorFlags.ApplyElevation);
+            }
+        });
         root.Q<SliderInt>("Elevation").RegisterValueChangedCallback(change => SetElevation(change.newValue));
         root.Q<SliderInt>("BrushSize").RegisterValueChangedCallback(change => SetBrushSize(change.newValue));
         root.Q<Toggle>("ShowUI").RegisterValueChangedCallback(change => hexGrid.ShowUI(change.newValue));
@@ -45,6 +86,10 @@ public class HexMapEditor : MonoBehaviour
         {
             HandleInput();
         }
+        else
+        {
+            previousCell = null;
+        }
     }
 
 
@@ -55,8 +100,39 @@ public class HexMapEditor : MonoBehaviour
         if (Physics.Raycast(inputRay, out hit))
         {
             HexCell cell = hexGrid.GetCell(hit.point);
+            if (previousCell && previousCell != cell)
+            {
+                ValidateDrag(cell);
+            }
+            else
+            {
+                flags = flags.Without(EditorFlags.Drag);
+            }
             EditCells(cell);
+            previousCell = cell;
         }
+        else
+        {
+            previousCell = null;
+        }
+    }
+
+    void ValidateDrag(HexCell cell)
+    {
+        for (
+            dragDirection = HexDirection.NE;
+            dragDirection <= HexDirection.NW;
+            dragDirection++
+        )
+        {
+            if (previousCell.GetNeighbor(dragDirection) == cell)
+            {
+                flags = flags.With(EditorFlags.Drag);
+                return;
+            }
+        }
+
+        flags = flags.Without(EditorFlags.Drag);
     }
 
     private void EditCells(HexCell center)
@@ -89,14 +165,31 @@ public class HexMapEditor : MonoBehaviour
         {
             return;
         }
-        if (applyColor)
+
+        if (flags.Has(EditorFlags.ApplyColor))
         {
             cell.color = activeColor;
         }
-        if (applyElevation)
+
+        if (flags.Has(EditorFlags.ApplyElevation))
         {
             cell.Elevation = activeElevation;
         }
+
+        if (riverMode == OptionalToggle.No)
+        {
+            refrechCells(cell.RemoveRivers());
+        }
+        else if (flags.Has(EditorFlags.Drag) && riverMode == OptionalToggle.Yes)
+        {
+            HexCell otherCell = cell.GetNeighbor(dragDirection.Opposite());
+            if (otherCell)
+            {
+                refrechCells(otherCell.SetOutgoingRiver(dragDirection));
+            }
+
+        }
+
         HexGridChunk chunk = hexGrid.GetChunk(cell);
         if (chunk)
         {
@@ -113,11 +206,19 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
+    void refrechCells(IEnumerable<HexCell> cells)
+    {
+        foreach (HexCell cell in cells)
+        {
+            hexGrid.GetChunk(cell).Refresh();
+        }
+    }
+
     public void SelectColor(int index)
     {
-        applyColor = index > 0;
-        Debug.Log(index);
-        if (applyColor)
+        flags = index > 0 ? flags.With(EditorFlags.ApplyColor) : flags.Without(EditorFlags.ApplyColor);
+
+        if (flags.Has(EditorFlags.ApplyColor))
         {
             activeColor = colors[index - 1];
         }
@@ -125,7 +226,7 @@ public class HexMapEditor : MonoBehaviour
 
     public void SetApplyElevation(bool toggle)
     {
-        applyElevation = toggle;
+        flags = toggle ? flags.With(EditorFlags.ApplyElevation) : flags.Without(EditorFlags.ApplyElevation);
     }
 
     public void SetElevation(float elevation)

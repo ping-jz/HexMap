@@ -13,7 +13,7 @@ public class HexCell : MonoBehaviour
     private int elevation;
     private int chunkIndex;
     private HexCellFlags flags;
-    private HexDirection incomingRiver, outgoingRiver;
+    public HexDirection incomingRiver, outgoingRiver;
     public RectTransform uiRect;
 
     public HexCell GetNeighbor(HexDirection direction)
@@ -176,7 +176,7 @@ public class HexCell : MonoBehaviour
     {
         if (flags.HasNot(HexCellFlags.OutgoingRiver))
         {
-            return default;
+            return defaultEnumer;
         }
 
         flags = flags.Without(HexCellFlags.OutgoingRiver);
@@ -193,7 +193,7 @@ public class HexCell : MonoBehaviour
     {
         if (flags.HasNot(HexCellFlags.OutgoingRiver))
         {
-            return default;
+            return defaultEnumer;
         }
 
         flags = flags.Without(HexCellFlags.IncomingRvier);
@@ -214,16 +214,16 @@ public class HexCell : MonoBehaviour
     {
         if (flags.Has(HexCellFlags.OutgoingRiver) && outgoingRiver == direction)
         {
-            return default;
+            return defaultEnumer;
         }
 
         HexCell neighbor = GetNeighbor(direction);
         if (!neighbor || elevation < neighbor.elevation)
         {
-            return default;
+            return defaultEnumer;
         }
 
-        IEnumerable<HexCell> affecetd = default;
+        IEnumerable<HexCell> affecetd = defaultEnumer;
         affecetd = affecetd.Concat(RemoveOutgoingRiver());
         if (flags.Has(HexCellFlags.IncomingRvier) && incomingRiver == direction)
         {
@@ -240,6 +240,12 @@ public class HexCell : MonoBehaviour
         affecetd = affecetd.Concat(new HexCell[] { this, neighbor });
 
         return affecetd;
+    }
+
+    IEnumerable<HexCell> defaultEnumer {
+        get {
+            return new HexCell[0];
+        }
     }
 
 
