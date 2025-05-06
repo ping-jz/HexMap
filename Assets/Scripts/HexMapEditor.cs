@@ -57,7 +57,16 @@ public class HexMapEditor : MonoBehaviour
     {
         SelectColor(1);
 
+        RegisterEvents();
+    }
+
+    private void RegisterEvents()
+    {
         VisualElement root = sidePanels.rootVisualElement;
+        if (root == null)
+        {
+            return;
+        }
 
         root.Q<RadioButtonGroup>("Colors").RegisterValueChangedCallback(change => SelectColor(change.newValue));
         root.Q<Toggle>("ApplyElevation").RegisterValueChangedCallback(change =>
@@ -187,7 +196,6 @@ public class HexMapEditor : MonoBehaviour
             {
                 refrechCells(otherCell.SetOutgoingRiver(dragDirection));
             }
-
         }
 
         HexGridChunk chunk = hexGrid.GetChunk(cell);
@@ -242,5 +250,10 @@ public class HexMapEditor : MonoBehaviour
     public void SetRiverMode(int mode)
     {
         riverMode = (OptionalToggle)mode;
+    }
+
+    void OnValidate()
+    {
+        RegisterEvents();
     }
 }

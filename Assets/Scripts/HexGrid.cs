@@ -1,5 +1,9 @@
 using TMPro;
 using UnityEngine;
+using System;
+
+[Flags]
+public enum GizmoMode { Nothing = 0, Triangles = 0b0001 }
 
 public class HexGrid : MonoBehaviour
 {
@@ -16,6 +20,8 @@ public class HexGrid : MonoBehaviour
     private Texture2D noiseSource;
     [SerializeField]
     private int chunkCountX = 4, chunkCountZ = 3;
+    [SerializeField]
+    GizmoMode gizmos;
     private int cellCountX = 6, cellCountZ = 6;
     HexCell[] cells;
     HexGridChunk[] chunks;
@@ -142,13 +148,16 @@ public class HexGrid : MonoBehaviour
         return cells[index];
     }
 
-    public HexCell GetCell(HexCoordinates coordinates) {
+    public HexCell GetCell(HexCoordinates coordinates)
+    {
         int z = coordinates.Z;
         int x = coordinates.X + z / 2;
-        if(z < 0 || z >= cellCountZ) {
+        if (z < 0 || z >= cellCountZ)
+        {
             return null;
         }
-        if(x < 0 || x >= cellCountX) {
+        if (x < 0 || x >= cellCountX)
+        {
             return null;
         }
         return cells[x + z * cellCountX];
@@ -159,9 +168,30 @@ public class HexGrid : MonoBehaviour
         return chunks[cell.ChunkIdx];
     }
 
-    public void ShowUI(bool visible) {
-        foreach(HexGridChunk chunk in chunks) {
+    public void ShowUI(bool visible)
+    {
+        foreach (HexGridChunk chunk in chunks)
+        {
             chunk.ShowUI(visible);
         }
+    }
+
+    void OnDrawGizmos()
+    {
+        if (gizmos == GizmoMode.Nothing)
+        {
+            return;
+        }
+
+        bool drawTiangles = (gizmos & GizmoMode.Triangles) != 0;
+
+        if (drawTiangles)
+        {
+            foreach (HexGridChunk chunk in chunks)
+            {
+                chunk.DrawGizmos();
+            }
+        }
+
     }
 }

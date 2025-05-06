@@ -33,7 +33,13 @@ public class HexGridChunk : MonoBehaviour
         enabled = false;
     }
 
-    public void ShowUI(bool visible) {
+    public void ShowUI(bool visible)
+    {
         gridCanvas.gameObject.SetActive(visible);
+    }
+
+    public void DrawGizmos()
+    {
+        hexMesh.DrawGizmos();
     }
 }

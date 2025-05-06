@@ -26,6 +26,8 @@ public static class HexMetrics
     //每个Grid有个5*5的CELL
     public const int chunkSizeX = 5, chunkSizeZ = 5;
 
+    public const float streamBedElevationOffset = -1f;
+
     public static Texture2D noiseSource;
 
     public static Vector3[] corners = {

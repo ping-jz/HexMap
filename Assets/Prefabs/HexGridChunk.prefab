@@ -194,7 +194,7 @@ GameObject:
   - component: {fileID: 1067358368711953619}
   - component: {fileID: 7471503865768428700}
   m_Layer: 0
-  m_Name: HexGriidChunk
+  m_Name: HexGridChunk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -13,7 +13,7 @@ public class HexCell : MonoBehaviour
     private int elevation;
     private int chunkIndex;
     private HexCellFlags flags;
-    public HexDirection incomingRiver, outgoingRiver;
+    private HexDirection incomingRiver, outgoingRiver;
     public RectTransform uiRect;
 
     public HexCell GetNeighbor(HexDirection direction)
@@ -168,6 +168,16 @@ public class HexCell : MonoBehaviour
             flags.Has(HexCellFlags.OutgoingRiver) && outgoingRiver == direction;
     }
 
+    public float StreamBedY
+    {
+        get
+        {
+            return
+                (elevation + HexMetrics.streamBedElevationOffset) *
+                HexMetrics.elevationStep;
+        }
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -191,7 +201,7 @@ public class HexCell : MonoBehaviour
     /// <returns>发生了改变的网格</returns>
     public IEnumerable<HexCell> RemoveIncomingRiver()
     {
-        if (flags.HasNot(HexCellFlags.OutgoingRiver))
+        if (flags.HasNot(HexCellFlags.IncomingRvier))
         {
             return defaultEnumer;
         }
@@ -242,8 +252,10 @@ public class HexCell : MonoBehaviour
         return affecetd;
     }
 
-    IEnumerable<HexCell> defaultEnumer {
-        get {
+    IEnumerable<HexCell> defaultEnumer
+    {
+        get
+        {
             return new HexCell[0];
         }
     }
