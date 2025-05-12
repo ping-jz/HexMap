@@ -99,7 +99,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d93d0a22ee5d384bb44547f93c1eb30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gizmos: 0
 --- !u!1 &3453427781781102655
 GameObject:
   m_ObjectHideFlags: 0
@@ -229,3 +228,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f244d4dd976ac24f83d911441e2246b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  terrain: {fileID: 3492786280912900597}
