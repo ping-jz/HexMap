@@ -161,6 +161,15 @@ public class HexCell : MonoBehaviour
         }
     }
 
+    public bool HasRiver
+    {
+        get
+        {
+            return flags.Has(HexCellFlags.IncomingRvier) ||
+                flags.Has(HexCellFlags.OutgoingRiver);
+        }
+    }
+
     public bool HasRiverThroughEdge(HexDirection direction)
     {
         return
