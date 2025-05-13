@@ -18,7 +18,7 @@ public static class HexMetrics
 
     public const int terraceSteps = terracesPerSlope * 2 + 1;
 
-    public const float cellPerturbStrength = 0f; //4f;
+    public const float cellPerturbStrength = 4f; //4f;
 
     public const float noiseScale = 0.003f;
 
@@ -27,7 +27,7 @@ public static class HexMetrics
     //每个Grid有个5*5的CELL
     public const int chunkSizeX = 5, chunkSizeZ = 5;
 
-    public const float streamBedElevationOffset = -1f;
+    public const float streamBedElevationOffset = -1.75f;
 
     public const float riverSurfaceElevationOffset = -0.5f;
 
