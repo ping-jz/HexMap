@@ -31,9 +31,9 @@ public static class MeshFlagsExtensions
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class HexMesh : MonoBehaviour
 {
-    [NonSerialized] List<Vector3> vertices = new List<Vector3>();
-    [NonSerialized] List<int> triangles = new List<int>();
-    [NonSerialized] List<Color> colors = new List<Color>();
+    [NonSerialized] List<Vector3> vertices;
+    [NonSerialized] List<int> triangles;
+    [NonSerialized] List<Color> colors;
     [NonSerialized] List<Vector2> uvs;
 
     [SerializeField]
@@ -43,7 +43,6 @@ public class HexMesh : MonoBehaviour
 
     void Awake()
     {
-        flags = MeshFlags.Color.With(MeshFlags.Collider);
         GetComponent<MeshFilter>().mesh = hexMesh = new Mesh();
         if (flags.Has(MeshFlags.Collider))
         {
@@ -131,18 +130,27 @@ public class HexMesh : MonoBehaviour
         colors.Add(c4);
     }
 
-    public void DrawGizmos()
+    public void AddTriangleUV(Vector2 uv1, Vector2 uv2, Vector2 uv3)
     {
-        List<Vector3> vertices = ListPool<Vector3>.Get();
-        int[] triangles = hexMesh.GetTriangles(0);
-        hexMesh.GetVertices(vertices);
-        for (int i = 0; i < triangles.Length; i += 3)
-        {
-            Gizmos.DrawLine(vertices[triangles[i]], vertices[triangles[i + 1]]);
-            Gizmos.DrawLine(vertices[triangles[i + 1]], vertices[triangles[i + 2]]);
-            Gizmos.DrawLine(vertices[triangles[i + 2]], vertices[triangles[i]]);
-        }
-        ListPool<Vector3>.Add(vertices);
+        uvs.Add(uv1);
+        uvs.Add(uv2);
+        uvs.Add(uv3);
+    }
+
+    public void AddQuadUV(Vector2 uv1, Vector2 uv2, Vector2 uv3, Vector2 uv4)
+    {
+        uvs.Add(uv1);
+        uvs.Add(uv2);
+        uvs.Add(uv3);
+        uvs.Add(uv4);
+    }
+
+    public void AddQuadUV(float uMin, float uMax, float vMin, float vMax)
+    {
+        uvs.Add(new Vector2(uMin, vMin));
+        uvs.Add(new Vector2(uMax, vMin));
+        uvs.Add(new Vector2(uMin, vMax));
+        uvs.Add(new Vector2(uMax, vMax));
     }
 
     public void Clear()
@@ -183,4 +191,19 @@ public class HexMesh : MonoBehaviour
             ListPool<Vector2>.Add(uvs);
         }
     }
+
+    public void DrawGizmos()
+    {
+        List<Vector3> vertices = ListPool<Vector3>.Get();
+        int[] triangles = hexMesh.GetTriangles(0);
+        hexMesh.GetVertices(vertices);
+        for (int i = 0; i < triangles.Length; i += 3)
+        {
+            Gizmos.DrawLine(vertices[triangles[i]], vertices[triangles[i + 1]]);
+            Gizmos.DrawLine(vertices[triangles[i + 1]], vertices[triangles[i + 2]]);
+            Gizmos.DrawLine(vertices[triangles[i + 2]], vertices[triangles[i]]);
+        }
+        ListPool<Vector3>.Add(vertices);
+    }
+
 }

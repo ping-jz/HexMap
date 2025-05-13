@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class HexGridChunk : MonoBehaviour
 {
     [SerializeField]
-    private HexMesh terrain;
+    private HexMesh terrain, rivers;
     HexCell[] cells;
     Canvas gridCanvas;
 
@@ -36,11 +36,13 @@ public class HexGridChunk : MonoBehaviour
     public void Triangulate(HexCell[] cells)
     {
         terrain.Clear();
+        rivers.Clear();
         foreach (HexCell cell in cells)
         {
             TriangulateCell(cell);
         }
         terrain.Apply();
+        rivers.Apply();
     }
 
     void TriangulateCell(HexCell cell)
@@ -139,6 +141,24 @@ public class HexGridChunk : MonoBehaviour
 
         TriangulateEdgeStrip(m, cell.color, e, cell.color);
         TriangulateEdgeFan(center, m, cell.color);
+
+        bool reversed = cell.Flags.Has(HexCellFlags.IncomingRvier);
+        TriangulateRiverQuad(m.v2, m.v4, e.v2, e.v4, cell.RiverSurfaceY, 0.6f, reversed);
+        center.y = m.v2.y = m.v4.y = cell.RiverSurfaceY;
+        rivers.AddTriangle(center, m.v2, m.v4);
+        //这段代码没看懂，为什么是1/2,UV这部分差太多基础只是了。有点难理解
+        if (reversed)
+        {
+            rivers.AddTriangleUV(
+                new Vector2(0.5f, 0.4f), new Vector2(1f, 0.2f), new Vector2(0f, 0.2f)
+            );
+        }
+        else
+        {
+            rivers.AddTriangleUV(
+                new Vector2(0.5f, 0.4f), new Vector2(0f, 0.6f), new Vector2(1f, 0.6f)
+            );
+        }
     }
 
     void TriangulateCellWithRiver(
@@ -195,6 +215,10 @@ public class HexGridChunk : MonoBehaviour
 
         terrain.AddTriangle(centerR, m.v4, m.v5);
         terrain.AddTriangleColor(cell.color);
+
+        bool reversed = cell.IncomingRiver == direction;
+        TriangulateRiverQuad(centerL, centerR, m.v2, m.v4, cell.RiverSurfaceY, 0.4f, reversed);
+        TriangulateRiverQuad(m.v2, m.v4, e.v2, e.v4, cell.RiverSurfaceY, 0.6f, reversed);
     }
 
     private void TriangulateConnection(
@@ -214,6 +238,9 @@ public class HexGridChunk : MonoBehaviour
         if (cell.HasRiverThroughEdge(direction))
         {
             e2.v3.y = neighbor.StreamBedY;
+            TriangulateRiverQuad(e1.v2, e1.v4, e2.v2, e2.v4,
+            cell.RiverSurfaceY, neighbor.RiverSurfaceY, 0.8f,
+            cell.Flags.Has(HexCellFlags.IncomingRvier) && cell.IncomingRiver == direction);
         }
 
         if (cell.GetEdgeType(direction) == HexEdgeType.Slope)
@@ -469,6 +496,35 @@ public class HexGridChunk : MonoBehaviour
         terrain.AddTriangleColor(c2, leftCell.color, boundaryColor);
     }
 
+    void TriangulateRiverQuad(
+        Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4,
+        float y, float v, bool reversed
+        )
+    {
+        TriangulateRiverQuad(v1, v2, v3, v4, y, y, v, reversed);
+    }
+
+    void TriangulateRiverQuad(
+        Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4,
+        float y1, float y2, float v, bool reversed
+        )
+    {
+        v1.y = v2.y = y1;
+        v3.y = v4.y = y2;
+        rivers.AddQuad(v1, v2, v3, v4);
+        if (reversed)
+        {
+            //rivers.AddQuadUV(1f, 0f, 0.8f - v, 0.6f - v);
+            rivers.AddQuadUV(1f, 0f, 1f, 0f);
+
+        }
+        else
+        {
+            //rivers.AddQuadUV(0f, 1f, 0f, 1f);
+            rivers.AddQuadUV(0f, 1f, v, v + 0.2f);
+        }
+    }
+
     void TriangulateEdgeFan(Vector3 center, EdgeVertices edge, Color color)
     {
         terrain.AddTriangle(center, edge.v1, edge.v2);
@@ -502,5 +558,6 @@ public class HexGridChunk : MonoBehaviour
     public void DrawGizmos()
     {
         terrain.DrawGizmos();
+        rivers.DrawGizmos();
     }
 }
