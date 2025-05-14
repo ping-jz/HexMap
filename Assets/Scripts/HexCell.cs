@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEditor.UI;
 
 public class HexCell : MonoBehaviour
 {
@@ -187,6 +188,90 @@ public class HexCell : MonoBehaviour
         }
     }
 
+    HexCellFlags directionToRoadFlag(HexDirection direction)
+    {
+        switch (direction)
+        {
+            case HexDirection.NE: return HexCellFlags.RoadNE;
+            case HexDirection.E: return HexCellFlags.RoadE;
+            case HexDirection.SE: return HexCellFlags.RoadSE;
+            case HexDirection.SW: return HexCellFlags.RoadSW;
+            case HexDirection.W: return HexCellFlags.RoadW;
+            case HexDirection.NW: return HexCellFlags.RoadNW;
+            default: return HexCellFlags.Nothing;
+        }
+    }
+
+    public bool HasRoads
+    {
+        get
+        {
+            return flags.HasAny(HexCellFlags.Road);
+        }
+    }
+
+    public bool HasRoadThroughEdge(HexDirection direction)
+    {
+        return flags.Has(directionToRoadFlag(direction));
+    }
+
+    public IEnumerable<HexCell> RemoveRoad(HexDirection d)
+    {
+        flags = flags.Without(directionToRoadFlag(d));
+        HexCell neighbor = neighbors[(int)d];
+        if (neighbor)
+        {
+            neighbor.flags = flags.Without(directionToRoadFlag(d.Opposite()));
+            return new HexCell[] { this, neighbor };
+        }
+        else
+        {
+            return new HexCell[] { this };
+        }
+    }
+
+    public int GetElevationDifference(HexDirection direction)
+    {
+        int difference = elevation - GetNeighbor(direction).elevation;
+        return difference >= 0 ? difference : -difference;
+    }
+
+
+    public IEnumerable<HexCell> AddRoad(HexDirection d)
+    {
+        if (HasRiverThroughEdge(d) || GetElevationDifference(d) > 1)
+        {
+            return defaultEnumer;
+        }
+
+        flags = flags.With(directionToRoadFlag(d));
+        HexCell neighbor = neighbors[(int)d];
+        if (neighbor)
+        {
+            neighbor.flags = flags.With(directionToRoadFlag(d.Opposite()));
+            return new HexCell[] { this, neighbor };
+        }
+        else
+        {
+            return new HexCell[] { this };
+        }
+    }
+
+
+    public IEnumerable<HexCell> RemoveRoads()
+    {
+        IEnumerable<HexCell> affected = new List<HexCell>();
+        for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+        {
+            if (HasRoadThroughEdge(d))
+            {
+                affected = affected.Concat(RemoveRoad(d));
+            }
+        }
+
+        return affected;
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -256,8 +341,7 @@ public class HexCell : MonoBehaviour
         neighbor.flags = neighbor.flags.With(HexCellFlags.IncomingRvier);
         neighbor.IncomingRiver = direction.Opposite();
 
-        affecetd = affecetd.Concat(new HexCell[] { this, neighbor });
-
+        affecetd = affecetd.Concat(RemoveRoad(direction));
         return affecetd;
     }
 

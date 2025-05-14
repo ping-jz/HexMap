@@ -183,6 +183,13 @@ public class HexMapEditor : MonoBehaviour
         if (flags.Has(EditorFlags.ApplyElevation))
         {
             cell.Elevation = activeElevation;
+            for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+            {
+                if (cell.HasRoadThroughEdge(d) && cell.GetElevationDifference(d) > 1)
+                {
+                    refrechCells(cell.RemoveRoad(d));
+                }
+            }
         }
 
         if (riverMode == OptionalToggle.No)

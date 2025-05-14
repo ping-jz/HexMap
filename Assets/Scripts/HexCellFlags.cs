@@ -4,9 +4,16 @@ using System;
 public enum HexCellFlags
 {
     Nothing = 0,
-    IncomingRvier = 0b0001,
-    OutgoingRiver = 0b0010,
-    River = 0b0011
+    IncomingRvier = 0b00_01,
+    OutgoingRiver = 0b00_10,
+    River = 0b00_11,
+    RoadNE = 0b000001_00,
+    RoadE = 0b000010_00,
+    RoadSE = 0b000100_00,
+    RoadSW = 0b001000_00,
+    RoadW = 0b010000_00,
+    RoadNW = 0b100000_00,
+    Road = 0b111111_00,
 }
 
 public static class HexCellFlagsExtensions
