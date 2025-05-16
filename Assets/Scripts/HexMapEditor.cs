@@ -4,20 +4,22 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
 
-enum OptionalToggle
-{
-    Ignore, Yes, No
-}
-
-
-
 [Flags]
 enum EditorFlags
 {
     Nothing = 0,
     ApplyElevation = 0b0001,
     ApplyColor = 0b0010,
-    Drag = 0b0100
+    Drag = 0b0100,
+    RiverIgnore = 0b001_000,
+    RiverYes = 0b010_000,
+    RiverNo = 0b100_000,
+    RiverOpts = 0b111_000,
+
+    RoadIgnore = 0b001_000_000,
+    RoadYes = 0b010_000_000,
+    RoadNo = 0b100_000_000,
+    RoadOpts = 0b111_000_000,
 }
 
 static class EditorFlagsExtensions
@@ -49,7 +51,6 @@ public class HexMapEditor : MonoBehaviour
     int activeElevation;
     EditorFlags flags = EditorFlags.ApplyColor.With(EditorFlags.ApplyElevation);
     int brushSize;
-    OptionalToggle riverMode;
     HexDirection dragDirection;
     HexCell previousCell;
 
@@ -84,6 +85,7 @@ public class HexMapEditor : MonoBehaviour
         root.Q<SliderInt>("BrushSize").RegisterValueChangedCallback(change => SetBrushSize(change.newValue));
         root.Q<Toggle>("ShowUI").RegisterValueChangedCallback(change => hexGrid.ShowUI(change.newValue));
         root.Q<RadioButtonGroup>("River").RegisterValueChangedCallback(change => SetRiverMode(change.newValue));
+        root.Q<RadioButtonGroup>("Road").RegisterValueChangedCallback(change => SetRoadMode(change.newValue));
     }
 
     void Update()
@@ -129,8 +131,8 @@ public class HexMapEditor : MonoBehaviour
     void ValidateDrag(HexCell cell)
     {
         for (
-            dragDirection = HexDirection.NE;
-            dragDirection <= HexDirection.NW;
+            dragDirection = HexDirection.TopRight;
+            dragDirection <= HexDirection.TopLeft;
             dragDirection++
         )
         {
@@ -183,7 +185,7 @@ public class HexMapEditor : MonoBehaviour
         if (flags.Has(EditorFlags.ApplyElevation))
         {
             cell.Elevation = activeElevation;
-            for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+            for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
                 if (cell.HasRoadThroughEdge(d) && cell.GetElevationDifference(d) > 1)
                 {
@@ -192,16 +194,31 @@ public class HexMapEditor : MonoBehaviour
             }
         }
 
-        if (riverMode == OptionalToggle.No)
+        if (flags.Has(EditorFlags.RiverNo))
         {
             refrechCells(cell.RemoveRivers());
         }
-        else if (flags.Has(EditorFlags.Drag) && riverMode == OptionalToggle.Yes)
+
+        if (flags.Has(EditorFlags.RoadNo))
+        {
+            refrechCells(cell.RemoveRoads());
+        }
+
+        if (flags.Has(EditorFlags.Drag))
         {
             HexCell otherCell = cell.GetNeighbor(dragDirection.Opposite());
             if (otherCell)
             {
-                refrechCells(otherCell.SetOutgoingRiver(dragDirection));
+
+                if (flags.Has(EditorFlags.RiverYes))
+                {
+                    refrechCells(otherCell.SetOutgoingRiver(dragDirection));
+                }
+
+                if (flags.Has(EditorFlags.RoadYes))
+                {
+                    refrechCells(otherCell.AddRoad(dragDirection));
+                }
             }
         }
 
@@ -256,7 +273,36 @@ public class HexMapEditor : MonoBehaviour
 
     public void SetRiverMode(int mode)
     {
-        riverMode = (OptionalToggle)mode;
+        flags = flags.Without(EditorFlags.RiverOpts);
+        switch (mode)
+        {
+            case 0:
+                flags = flags.With(EditorFlags.RiverIgnore);
+                break;
+            case 1:
+                flags = flags.With(EditorFlags.RiverYes);
+                break;
+            case 2:
+                flags = flags.With(EditorFlags.RiverNo);
+                break;
+        }
+    }
+
+    public void SetRoadMode(int mode)
+    {
+        flags = flags.Without(EditorFlags.RoadOpts);
+        switch (mode)
+        {
+            case 0:
+                flags = flags.With(EditorFlags.RoadIgnore);
+                break;
+            case 1:
+                flags = flags.With(EditorFlags.RoadYes);
+                break;
+            case 2:
+                flags = flags.With(EditorFlags.RoadNo);
+                break;
+        }
     }
 
     void OnValidate()

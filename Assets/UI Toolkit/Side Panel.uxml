@@ -9,7 +9,7 @@
     <engine:VisualElement name="LeftPanel" class="sidePanel">
     	<engine:RadioButtonGroup
             label="Colors"
-			choices="---,Yellow,Green,Blue,White"
+			choices="---,Yellow,Green,Blue,Orange,White"
 			value="1"
 			name="Colors"
         />
@@ -20,6 +20,11 @@
 			choices="---,Yes,No"
 			value="0"
 			name="River" />
+        <engine:RadioButtonGroup
+            label="Road"
+			choices="---,Yes,No"
+			value="0"
+			name="Road" />
         <engine:Label text="Brush Size" />
         <engine:SliderInt value="0" high-value="4" name="BrushSize" />
         <engine:Toggle label="Labels" value="false" name="ShowUI" />

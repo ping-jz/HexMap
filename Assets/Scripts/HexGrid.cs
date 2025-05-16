@@ -95,25 +95,25 @@ public class HexGrid : MonoBehaviour
 
         if (x > 0)
         {
-            cell.SetNeighbor(HexDirection.W, cells[i - 1]);
+            cell.SetNeighbor(HexDirection.Left, cells[i - 1]);
         }
         if (z > 0)
         {
             if ((z & 1) == 0)
             {
-                cell.SetNeighbor(HexDirection.SE, cells[i - cellCountX]);
+                cell.SetNeighbor(HexDirection.BottomRight, cells[i - cellCountX]);
                 if (x > 0)
                 {
-                    cell.SetNeighbor(HexDirection.SW, cells[i - cellCountX - 1]);
+                    cell.SetNeighbor(HexDirection.BottomLeft, cells[i - cellCountX - 1]);
                 }
             }
             else
             {
-                cell.SetNeighbor(HexDirection.SW, cells[i - cellCountX]);
+                cell.SetNeighbor(HexDirection.BottomLeft, cells[i - cellCountX]);
                 //基数行最后一个网格没有SE方向的邻居
                 if (x < cellCountX - 1)
                 {
-                    cell.SetNeighbor(HexDirection.SE, cells[i - cellCountX + 1]);
+                    cell.SetNeighbor(HexDirection.BottomRight, cells[i - cellCountX + 1]);
                 }
             }
         }
