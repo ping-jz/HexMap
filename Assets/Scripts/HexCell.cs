@@ -14,7 +14,6 @@ public class HexCell : MonoBehaviour
     private int elevation;
     private int chunkIndex;
     private HexCellFlags flags;
-    private HexDirection incomingRiver, outgoingRiver;
     public RectTransform uiRect;
 
     public HexCell GetNeighbor(HexDirection direction)
@@ -62,25 +61,221 @@ public class HexCell : MonoBehaviour
         }
     }
 
-    public IEnumerable<HexCell> removeInvalidRiver()
+    public IEnumerable<HexCell> RemoveInvalidRiver()
     {
-        IEnumerable<HexCell> affeceted = default;
+        IEnumerable<HexCell> affeceted = defaultEnumer;
         if (
-            flags.Has(HexCellFlags.OutgoingRiver) &&
-            elevation < GetNeighbor(outgoingRiver).elevation)
+            flags.HasAny(HexCellFlags.RiverOut) &&
+             elevation < GetNeighbor(flags.RiverOutToDirection()).elevation)
         {
             affeceted = affeceted.Concat(RemoveOutgoingRiver());
         }
 
         if (
-            flags.Has(HexCellFlags.IncomingRvier) &&
-            elevation < GetNeighbor(incomingRiver).elevation)
+            flags.HasAny(HexCellFlags.RiverIn) &&
+             GetNeighbor(flags.RiverInToDirection()).elevation < elevation)
         {
             affeceted = affeceted.Concat(RemoveIncomingRiver());
         }
 
         return affeceted;
     }
+
+    public IEnumerable<HexCell> RemoveRoad(HexDirection d)
+    {
+        flags = flags.WithoutRoad(d);
+        HexCell neighbor = neighbors[(int)d];
+        if (neighbor)
+        {
+            neighbor.flags = neighbor.flags.WithoutRoad(d.Opposite());
+            return new HexCell[] { this, neighbor };
+        }
+        else
+        {
+            return new HexCell[] { this };
+        }
+    }
+
+    public int GetElevationDifference(HexDirection direction)
+    {
+        HexCell neighbor = GetNeighbor(direction);
+        int difference = elevation - (neighbor ? neighbor.elevation : 0);
+        return difference >= 0 ? difference : -difference;
+    }
+
+    public IEnumerable<HexCell> AddRoad(HexDirection d)
+    {
+        if (HasRiverThroughEdge(d) || GetElevationDifference(d) > 1)
+        {
+            return defaultEnumer;
+        }
+
+        flags = flags.WithRoad(d);
+        HexCell neighbor = neighbors[(int)d];
+        if (neighbor)
+        {
+            neighbor.flags = neighbor.flags.WithRoad(d.Opposite());
+            return new HexCell[] { this, neighbor };
+        }
+        else
+        {
+            return new HexCell[] { this };
+        }
+    }
+
+
+    public IEnumerable<HexCell> RemoveRoads()
+    {
+        IEnumerable<HexCell> affected = defaultEnumer;
+        for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
+        {
+            if (HasRoadThroughEdge(d))
+            {
+                affected = affected.Concat(RemoveRoad(d));
+            }
+        }
+
+        return affected;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>发生了改变的网格</returns>
+    public IEnumerable<HexCell> RemoveOutgoingRiver()
+    {
+        if (!flags.HasAny(HexCellFlags.RiverOut))
+        {
+            return defaultEnumer;
+        }
+
+        HexCell neighbor = GetNeighbor(flags.RiverOutToDirection());
+        flags = flags.Without(HexCellFlags.RiverOut);
+        neighbor.flags = neighbor.flags.Without(HexCellFlags.RiverIn);
+        return new HexCell[] { this, neighbor };
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>发生了改变的网格</returns>
+    public IEnumerable<HexCell> RemoveIncomingRiver()
+    {
+        if (!flags.HasAny(HexCellFlags.RiverIn))
+        {
+            return defaultEnumer;
+        }
+
+        HexCell neighbor = GetNeighbor(flags.RiverInToDirection());
+        flags = flags.Without(HexCellFlags.RiverIn);
+        neighbor.flags = neighbor.flags.Without(HexCellFlags.RiverOut);
+        return new HexCell[] { this, neighbor };
+    }
+
+    public IEnumerable<HexCell> RemoveRivers()
+    {
+        IEnumerable<HexCell> affected1 = RemoveOutgoingRiver();
+        IEnumerable<HexCell> affecetd2 = RemoveIncomingRiver();
+
+        return affected1.Concat(affecetd2);
+    }
+
+    public IEnumerable<HexCell> SetOutgoingRiver(HexDirection direction)
+    {
+        if (flags.HasRiverOut(direction))
+        {
+            return defaultEnumer;
+        }
+
+        HexCell neighbor = GetNeighbor(direction);
+        if (!neighbor || elevation < neighbor.elevation)
+        {
+            return defaultEnumer;
+        }
+
+        IEnumerable<HexCell> affecetd = defaultEnumer;
+        affecetd = affecetd.Concat(RemoveOutgoingRiver());
+        if (flags.HasRiverIn(direction))
+        {
+            affecetd = affecetd.Concat(RemoveIncomingRiver());
+        }
+
+        flags = flags.WithRiverOut(direction);
+
+        affecetd = affecetd.Concat(neighbor.RemoveIncomingRiver());
+        neighbor.flags = neighbor.flags.WithRiverIn(direction.Opposite());
+
+        affecetd = affecetd.Concat(RemoveRoad(direction));
+        return affecetd;
+    }
+
+    IEnumerable<HexCell> defaultEnumer
+    {
+        get
+        {
+            return new HexCell[0];
+        }
+    }
+
+    public float RiverSurfaceY
+    {
+        get
+        {
+            return
+                (elevation + HexMetrics.riverSurfaceElevationOffset) *
+                HexMetrics.elevationStep;
+        }
+    }
+
+    public bool HasIncomingRiver
+    {
+        get
+        {
+            return flags.Has(HexCellFlags.RiverIn);
+        }
+    }
+
+    public bool HasOutgoingRiver
+    {
+        get
+        {
+            return flags.Has(HexCellFlags.RiverOut);
+        }
+    }
+
+    public bool HasRiverBeginOrEnd
+    {
+        get
+        {
+            return flags.HasAny(HexCellFlags.RiverIn) !=
+                flags.HasAny(HexCellFlags.RiverOut);
+        }
+    }
+
+    public bool HasRiver
+    {
+        get
+        {
+            return flags.HasAny(HexCellFlags.River);
+        }
+    }
+
+    public bool HasRiverThroughEdge(HexDirection direction)
+    {
+        return flags.HasRiverIn(direction) || flags.HasRiverOut(direction);
+    }
+
+    public float StreamBedY
+    {
+        get
+        {
+            return
+                (elevation + HexMetrics.streamBedElevationOffset) *
+                HexMetrics.elevationStep;
+        }
+    }
+
+    
     public Vector3 Position
     {
         get
@@ -133,75 +328,6 @@ public class HexCell : MonoBehaviour
         }
     }
 
-    public HexDirection IncomingRiver
-    {
-        get
-        {
-            return incomingRiver;
-        }
-        set
-        {
-            incomingRiver = value;
-        }
-    }
-
-    public HexDirection OutgoingRiver
-    {
-        get
-        {
-            return outgoingRiver;
-        }
-    }
-
-    public bool HasRiverBeginOrEnd
-    {
-        get
-        {
-            return flags.Has(HexCellFlags.IncomingRvier) !=
-                flags.Has(HexCellFlags.OutgoingRiver);
-        }
-    }
-
-    public bool HasRiver
-    {
-        get
-        {
-            return flags.Has(HexCellFlags.IncomingRvier) ||
-                flags.Has(HexCellFlags.OutgoingRiver);
-        }
-    }
-
-    public bool HasRiverThroughEdge(HexDirection direction)
-    {
-        return
-            flags.Has(HexCellFlags.IncomingRvier) && incomingRiver == direction ||
-            flags.Has(HexCellFlags.OutgoingRiver) && outgoingRiver == direction;
-    }
-
-    public float StreamBedY
-    {
-        get
-        {
-            return
-                (elevation + HexMetrics.streamBedElevationOffset) *
-                HexMetrics.elevationStep;
-        }
-    }
-
-    HexCellFlags directionToRoadFlag(HexDirection direction)
-    {
-        switch (direction)
-        {
-            case HexDirection.TopRight: return HexCellFlags.RoadTR;
-            case HexDirection.Right: return HexCellFlags.RoadR;
-            case HexDirection.BottomRight: return HexCellFlags.RoadBR;
-            case HexDirection.BottomLeft: return HexCellFlags.RoadBL;
-            case HexDirection.Left: return HexCellFlags.RoadL;
-            case HexDirection.TopLeft: return HexCellFlags.RoadTL;
-            default: throw new ArgumentOutOfRangeException("direction");
-        }
-    }
-
     public bool HasRoads
     {
         get
@@ -212,156 +338,7 @@ public class HexCell : MonoBehaviour
 
     public bool HasRoadThroughEdge(HexDirection direction)
     {
-        return flags != HexCellFlags.Nothing && flags.Has(directionToRoadFlag(direction));
-    }
-
-    public IEnumerable<HexCell> RemoveRoad(HexDirection d)
-    {
-        flags = flags.Without(directionToRoadFlag(d));
-        HexCell neighbor = neighbors[(int)d];
-        if (neighbor)
-        {
-            neighbor.flags = neighbor.flags.Without(directionToRoadFlag(d.Opposite()));
-            return new HexCell[] { this, neighbor };
-        }
-        else
-        {
-            return new HexCell[] { this };
-        }
-    }
-
-    public int GetElevationDifference(HexDirection direction)
-    {
-        HexCell neighbor = GetNeighbor(direction);
-        int difference = elevation - (neighbor ? neighbor.elevation : 0);
-        return difference >= 0 ? difference : -difference;
-    }
-
-
-    public IEnumerable<HexCell> AddRoad(HexDirection d)
-    {
-        if (HasRiverThroughEdge(d) || GetElevationDifference(d) > 1)
-        {
-            return defaultEnumer;
-        }
-
-        flags = flags.With(directionToRoadFlag(d));
-        HexCell neighbor = neighbors[(int)d];
-        if (neighbor)
-        {
-            neighbor.flags = neighbor.flags.With(directionToRoadFlag(d.Opposite()));
-            return new HexCell[] { this, neighbor };
-        }
-        else
-        {
-            return new HexCell[] { this };
-        }
-    }
-
-
-    public IEnumerable<HexCell> RemoveRoads()
-    {
-        IEnumerable<HexCell> affected = new List<HexCell>();
-        for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
-        {
-            if (HasRoadThroughEdge(d))
-            {
-                affected = affected.Concat(RemoveRoad(d));
-            }
-        }
-
-        return affected;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns>发生了改变的网格</returns>
-    public IEnumerable<HexCell> RemoveOutgoingRiver()
-    {
-        if (flags.HasNot(HexCellFlags.OutgoingRiver))
-        {
-            return defaultEnumer;
-        }
-
-        flags = flags.Without(HexCellFlags.OutgoingRiver);
-        HexCell neighbor = GetNeighbor(outgoingRiver);
-        neighbor.flags = neighbor.flags.Without(HexCellFlags.OutgoingRiver);
-        return new HexCell[] { this, neighbor };
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns>发生了改变的网格</returns>
-    public IEnumerable<HexCell> RemoveIncomingRiver()
-    {
-        if (flags.HasNot(HexCellFlags.IncomingRvier))
-        {
-            return defaultEnumer;
-        }
-
-        flags = flags.Without(HexCellFlags.IncomingRvier);
-        HexCell neighbor = GetNeighbor(incomingRiver);
-        neighbor.flags = neighbor.flags.Without(HexCellFlags.IncomingRvier);
-        return new HexCell[] { this, neighbor };
-    }
-
-    public IEnumerable<HexCell> RemoveRivers()
-    {
-        IEnumerable<HexCell> affected1 = RemoveOutgoingRiver();
-        IEnumerable<HexCell> affecetd2 = RemoveIncomingRiver();
-
-        return affected1.Concat(affecetd2);
-    }
-
-    public IEnumerable<HexCell> SetOutgoingRiver(HexDirection direction)
-    {
-        if (flags.Has(HexCellFlags.OutgoingRiver) && outgoingRiver == direction)
-        {
-            return defaultEnumer;
-        }
-
-        HexCell neighbor = GetNeighbor(direction);
-        if (!neighbor || elevation < neighbor.elevation)
-        {
-            return defaultEnumer;
-        }
-
-        IEnumerable<HexCell> affecetd = defaultEnumer;
-        affecetd = affecetd.Concat(RemoveOutgoingRiver());
-        if (flags.Has(HexCellFlags.IncomingRvier) && incomingRiver == direction)
-        {
-            affecetd = affecetd.Concat(RemoveIncomingRiver());
-        }
-
-        flags = flags.With(HexCellFlags.OutgoingRiver);
-        outgoingRiver = direction;
-
-        affecetd = affecetd.Concat(neighbor.RemoveIncomingRiver());
-        neighbor.flags = neighbor.flags.With(HexCellFlags.IncomingRvier);
-        neighbor.IncomingRiver = direction.Opposite();
-
-        affecetd = affecetd.Concat(RemoveRoad(direction));
-        return affecetd;
-    }
-
-    IEnumerable<HexCell> defaultEnumer
-    {
-        get
-        {
-            return new HexCell[0];
-        }
-    }
-
-    public float RiverSurfaceY
-    {
-        get
-        {
-            return
-                (elevation + HexMetrics.riverSurfaceElevationOffset) *
-                HexMetrics.elevationStep;
-        }
+        return flags.HasRoad(direction);
     }
 
 

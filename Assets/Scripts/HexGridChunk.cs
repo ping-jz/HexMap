@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class HexGridChunk : MonoBehaviour
 {
@@ -143,7 +142,7 @@ public class HexGridChunk : MonoBehaviour
         TriangulateEdgeStrip(m, cell.color, e, cell.color);
         TriangulateEdgeFan(center, m, cell.color);
 
-        bool reversed = cell.Flags.Has(HexCellFlags.IncomingRvier);
+        bool reversed = cell.Flags.Has(HexCellFlags.RiverIn);
         TriangulateRiverQuad(m.v2, m.v4, e.v2, e.v4, cell.RiverSurfaceY, 0.6f, reversed);
         center.y = m.v2.y = m.v4.y = cell.RiverSurfaceY;
         rivers.AddTriangle(center, m.v2, m.v4);
@@ -217,7 +216,7 @@ public class HexGridChunk : MonoBehaviour
         terrain.AddTriangle(centerR, m.v4, m.v5);
         terrain.AddTriangleColor(cell.color);
 
-        bool reversed = cell.IncomingRiver == direction;
+        bool reversed = cell.Flags.HasRiverIn(direction);
         TriangulateRiverQuad(centerL, centerR, m.v2, m.v4, cell.RiverSurfaceY, 0.4f, reversed);
         TriangulateRiverQuad(m.v2, m.v4, e.v2, e.v4, cell.RiverSurfaceY, 0.6f, reversed);
     }
@@ -241,7 +240,7 @@ public class HexGridChunk : MonoBehaviour
             e2.v3.y = neighbor.StreamBedY;
             TriangulateRiverQuad(e1.v2, e1.v4, e2.v2, e2.v4,
             cell.RiverSurfaceY, neighbor.RiverSurfaceY, 0.8f,
-            cell.Flags.Has(HexCellFlags.IncomingRvier) && cell.IncomingRiver == direction);
+            cell.Flags.HasRiverIn(direction));
         }
 
         bool hasRoad = cell.HasRoadThroughEdge(direction);

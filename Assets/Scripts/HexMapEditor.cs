@@ -185,6 +185,7 @@ public class HexMapEditor : MonoBehaviour
         if (flags.Has(EditorFlags.ApplyElevation))
         {
             cell.Elevation = activeElevation;
+            refrechCells(cell.RemoveInvalidRiver());
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
                 if (cell.HasRoadThroughEdge(d) && cell.GetElevationDifference(d) > 1)
