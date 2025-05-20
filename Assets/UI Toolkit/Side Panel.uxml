@@ -15,6 +15,8 @@
         />
         <engine:Toggle label="Elevation" value="true" name="ApplyElevation" />
     	<engine:SliderInt value="0" high-value="6" name="Elevation" />
+        <engine:Toggle label="Water" value="true" name="ApplyWaterLevel" />
+    	<engine:SliderInt value="0" high-value="6" name="WaterLevel" />
         <engine:RadioButtonGroup
             label="River"
 			choices="---,Yes,No"

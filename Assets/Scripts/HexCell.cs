@@ -11,6 +11,7 @@ public class HexCell : MonoBehaviour
     public Color color;
     private int elevation;
     private int chunkIndex;
+    private int waterLevel;
     private HexCellFlags flags;
     public RectTransform uiRect;
 
@@ -220,7 +221,7 @@ public class HexCell : MonoBehaviour
         get
         {
             return
-                (elevation + HexMetrics.riverSurfaceElevationOffset) *
+                (elevation + HexMetrics.waterElevationOffset) *
                 HexMetrics.elevationStep;
         }
     }
@@ -303,6 +304,30 @@ public class HexCell : MonoBehaviour
         set
         {
             coordinates = value;
+        }
+    }
+
+    public int WaterLevel
+    {
+        get
+        {
+            return waterLevel;
+        }
+        set
+        {
+            if (waterLevel == value)
+            {
+                return;
+            }
+            waterLevel = value;
+        }
+    }
+
+    public bool IsUnderwater
+    {
+        get
+        {
+            return waterLevel > elevation;
         }
     }
 

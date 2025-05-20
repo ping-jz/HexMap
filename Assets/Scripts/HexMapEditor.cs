@@ -12,15 +12,15 @@ enum EditorFlags
     ApplyElevation = 0b0001,
     ApplyColor = 0b0010,
     Drag = 0b0100,
-    RiverIgnore = 0b001_000,
-    RiverYes = 0b010_000,
-    RiverNo = 0b100_000,
-    RiverOpts = 0b111_000,
-
-    RoadIgnore = 0b001_000_000,
-    RoadYes = 0b010_000_000,
-    RoadNo = 0b100_000_000,
-    RoadOpts = 0b111_000_000,
+    ApplyWaterLevel = 0b1000,
+    RiverIgnore = 0b001_0000,
+    RiverYes = 0b010_0000,
+    RiverNo = 0b100_0000,
+    RiverOpts = 0b111_0000,
+    RoadIgnore = 0b001_000_0000,
+    RoadYes = 0b010_000_0000,
+    RoadNo = 0b100_000_0000,
+    RoadOpts = 0b111_000_0000,
 }
 
 static class EditorFlagsExtensions
@@ -50,6 +50,7 @@ public class HexMapEditor : MonoBehaviour
     private UIDocument sidePanels;
     private Color activeColor;
     int activeElevation;
+    int activeWaterLevel;
     EditorFlags flags = EditorFlags.ApplyColor.With(EditorFlags.ApplyElevation);
     int brushSize;
     HexDirection dragDirection;
@@ -89,6 +90,22 @@ public class HexMapEditor : MonoBehaviour
         root.Q<SliderInt>("Elevation").RegisterValueChangedCallback(change => SetElevation(change.newValue));
         root.Q<SliderInt>("Elevation").value = activeElevation;
 
+        root.Q<Toggle>("ApplyWaterLevel").RegisterValueChangedCallback(change =>
+        {
+            if (change.newValue)
+            {
+                flags = flags.With(EditorFlags.ApplyWaterLevel);
+            }
+            else
+            {
+                flags = flags.Without(EditorFlags.ApplyWaterLevel);
+            }
+        });
+        root.Q<Toggle>("ApplyWaterLevel").value = flags.Has(EditorFlags.ApplyWaterLevel);
+
+        root.Q<SliderInt>("WaterLevel").RegisterValueChangedCallback(change => SetWaterLevel(change.newValue));
+        root.Q<SliderInt>("WaterLevel").value = activeWaterLevel;
+
         root.Q<SliderInt>("BrushSize").RegisterValueChangedCallback(change => SetBrushSize(change.newValue));
         root.Q<SliderInt>("BrushSize").value = brushSize;
 
@@ -96,7 +113,7 @@ public class HexMapEditor : MonoBehaviour
 
         root.Q<RadioButtonGroup>("River").RegisterValueChangedCallback(change => SetRiverMode(change.newValue));
         SetRiverMode(0);
-        
+
         root.Q<RadioButtonGroup>("Road").RegisterValueChangedCallback(change => SetRoadMode(change.newValue));
         SetRoadMode(0);
     }
@@ -208,6 +225,12 @@ public class HexMapEditor : MonoBehaviour
             }
         }
 
+        if (flags.Has(EditorFlags.ApplyWaterLevel))
+        {
+            cell.WaterLevel = activeWaterLevel;
+            hexGrid.GetChunk(cell).Refresh();
+        }
+
         if (flags.Has(EditorFlags.RiverNo))
         {
             refrechCells(cell.RemoveRivers());
@@ -283,6 +306,11 @@ public class HexMapEditor : MonoBehaviour
     public void SetBrushSize(float size)
     {
         brushSize = (int)size;
+    }
+
+    public void SetWaterLevel(float waterLevel)
+    {
+        activeWaterLevel = (int)waterLevel;
     }
 
     public void SetRiverMode(int mode)
