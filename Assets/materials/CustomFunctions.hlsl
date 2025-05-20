@@ -1,4 +1,5 @@
 #include "Water.hlsl"
+#include "HexMetrics.hlsl"
 
 void FgetFragmentDataRiver_float(
     UnityTexture2D NoiseTexture,
@@ -14,12 +15,17 @@ void FgetFragmentDataRiver_float(
 }
 
 void FgetFragmentDataRoad_float(
+    UnityTexture2D NoiseTexture,
+    float3 WorldPosition,
     float2 BlendUV, 
     float4 Color, 
     out float3 BaseColor,
     out float Alpha) {
-    BaseColor = Color;
+    float4 noise = NoiseTexture.Sample(
+            NoiseTexture.samplerstate, WorldPosition.xz * (3 * TILING_SCALE));
+    BaseColor = Color.rgb * (noise.y * 0.75 + 0.25);
     Alpha = BlendUV.x;
+    Alpha *= noise.x + 0.5;
     Alpha = smoothstep(0.4, 0.7, Alpha);
 } 
 
