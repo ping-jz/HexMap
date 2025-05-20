@@ -96,6 +96,11 @@ public class HexGridChunk : MonoBehaviour
 
     void TriangulateAdjacentToRiver(HexDirection direction, HexCell cell, Vector3 center, EdgeVertices e)
     {
+        if (cell.HasRoads)
+        {
+            TriangulateRoadAdjacentToRiver(direction, cell, center, e);
+        }
+
         if (cell.HasRiverThroughEdge(direction.Next()))
         {
             if (cell.HasRiverThroughEdge(direction.Previous()))
@@ -127,6 +132,147 @@ public class HexGridChunk : MonoBehaviour
         TriangulateEdgeFan(center, m, cell.color);
     }
 
+    void TriangulateRoadAdjacentToRiver(HexDirection direction, HexCell cell, Vector3 center, EdgeVertices e)
+    {
+        bool hasRoadThroughEdge = cell.HasRoadThroughEdge(direction);
+        bool previousHasRiver = cell.HasRiverThroughEdge(direction.Previous());
+        bool nextHasRiver = cell.HasRiverThroughEdge(direction.Next());
+        Vector2 interpolators = GetRoadInterpolators(direction, cell);
+        Vector3 roadCenter = center;
+        if (cell.HasRiverBeginOrEnd)
+        {
+            roadCenter += HexMetrics
+                .GetSolidEdgeMiddle(cell.RiverBeginOrEndDirection.Opposite())
+                * (1f / 3f);
+        }
+        else if (HasStraightRiver(cell))
+        {
+            Vector3 corner;
+            if (previousHasRiver)
+            {
+                corner = HexMetrics.GetSecondSolidCorner(direction);
+            }
+            else
+            {
+                corner = HexMetrics.GetFirstSolidCorner(direction);
+            }
+            roadCenter += corner * 0.5f;
+            center += corner * 0.25f;
+        }
+        else if (HasZigzagRiverPrev(cell))
+        {
+            roadCenter -= HexMetrics.GetSecondCorner(cell.Flags.RiverInToDirection()) * 0.25f;
+        }
+        else if (HasZigzagRiverNext(cell))
+        {
+            roadCenter -= HexMetrics.GetFirstCorner(cell.Flags.RiverInToDirection()) * 0.25f;
+        }
+        //这时候就很体现对问题的描述能力了
+        else if (previousHasRiver && nextHasRiver)
+        {
+            if (!hasRoadThroughEdge)
+            {
+                return;
+            }
+            Vector3 offset = HexMetrics.GetSolidEdgeMiddle(direction) *
+                        HexMetrics.innerToOuter;
+            roadCenter += offset * 0.7f;
+            center += offset * 0.5f;
+        }
+        else
+        {
+            //太多小细节了，先知道吧。不纠结了
+            HexDirection middle;
+            if (previousHasRiver)
+            {
+                middle = direction.Next();
+            }
+            else if (nextHasRiver)
+            {
+                middle = direction.Previous();
+            }
+            else
+            {
+                middle = direction;
+            }
+            roadCenter += HexMetrics.GetSolidEdgeMiddle(middle) * 0.25f;
+        }
+
+        Vector3 mL = Vector3.Lerp(roadCenter, e.v1, interpolators.x);
+        Vector3 mR = Vector3.Lerp(roadCenter, e.v5, interpolators.y);
+        if (previousHasRiver)
+        {
+            if (
+                    !hasRoadThroughEdge &&
+                    !cell.HasRoadThroughEdge(direction.Next())
+                )
+            {
+                return;
+            }
+            TriangulateRoadEdge(roadCenter, center, mL);
+        }
+        if (nextHasRiver)
+        {
+            if (
+                !hasRoadThroughEdge &&
+                !cell.HasRoadThroughEdge(direction.Previous())
+            )
+            {
+                return;
+            }
+            TriangulateRoadEdge(roadCenter, mR, center);
+        }
+
+        if (hasRoadThroughEdge)
+        {
+            TriangulateRoad(roadCenter, mL, mR, e);
+        }
+        else
+        {
+            TriangulateRoadEdge(roadCenter, mL, mR);
+        }
+    }
+
+    private bool HasStraightRiver(HexCell cell)
+    {
+        HexCellFlags flags = cell.Flags;
+
+        if (!flags.HasAny(HexCellFlags.RiverIn) ||
+        !flags.HasAny(HexCellFlags.RiverOut))
+        {
+            return false;
+        }
+
+        return flags.RiverInToDirection() == flags.RiverOutToDirection().Opposite();
+    }
+
+
+    private bool HasZigzagRiverPrev(HexCell cell)
+    {
+        HexCellFlags flags = cell.Flags;
+
+        if (!flags.HasAny(HexCellFlags.RiverIn) ||
+        !flags.HasAny(HexCellFlags.RiverOut))
+        {
+            return false;
+        }
+
+        return flags.RiverInToDirection() == flags.RiverOutToDirection().Previous();
+    }
+
+    private bool HasZigzagRiverNext(HexCell cell)
+    {
+        HexCellFlags flags = cell.Flags;
+
+        if (!flags.HasAny(HexCellFlags.RiverIn) ||
+        !flags.HasAny(HexCellFlags.RiverOut))
+        {
+            return false;
+        }
+
+        return flags.RiverInToDirection() == flags.RiverOutToDirection().Next();
+    }
+
     void TriangulateCellWithRiverBeginOrEnd(
         HexDirection direction,
         HexCell cell,
@@ -142,7 +288,7 @@ public class HexGridChunk : MonoBehaviour
         TriangulateEdgeStrip(m, cell.color, e, cell.color);
         TriangulateEdgeFan(center, m, cell.color);
 
-        bool reversed = cell.Flags.Has(HexCellFlags.RiverIn);
+        bool reversed = cell.Flags.HasAny(HexCellFlags.RiverIn);
         TriangulateRiverQuad(m.v2, m.v4, e.v2, e.v4, cell.RiverSurfaceY, 0.6f, reversed);
         center.y = m.v2.y = m.v4.y = cell.RiverSurfaceY;
         rivers.AddTriangle(center, m.v2, m.v4);
@@ -551,12 +697,9 @@ public class HexGridChunk : MonoBehaviour
         if (reversed)
         {
             rivers.AddQuadUV(1f, 0f, 0.8f - v, 0.6f - v);
-            //rivers.AddQuadUV(1f, 0f, 1f, 0f);
-
         }
         else
         {
-            //rivers.AddQuadUV(0f, 1f, 0f, 1f);
             rivers.AddQuadUV(0f, 1f, v, v + 0.2f);
         }
     }
@@ -568,14 +711,6 @@ public class HexGridChunk : MonoBehaviour
         TriangulateEdgeFan(center, e, cell.color);
         if (cell.HasRoads)
         {
-            //不知道在哪里提高/降低路径的深度，不然会被cell的颜色覆盖。
-            //所以直接在这里提高
-            center.y += 0.001f;
-            e.v1.y += 0.001f;
-            e.v2.y += 0.001f;
-            e.v3.y += 0.001f;
-            e.v4.y += 0.001f;
-            e.v5.y += 0.001f;
             Vector2 interpolators = GetRoadInterpolators(direction, cell);
             Vector3 mL = Vector3.Lerp(center, e.v1, interpolators.x);
             Vector3 mR = Vector3.Lerp(center, e.v5, interpolators.y);
@@ -679,9 +814,23 @@ public class HexGridChunk : MonoBehaviour
         gridCanvas.gameObject.SetActive(visible);
     }
 
-    public void DrawGizmos()
+    public void DrawGizmos(GizmoMode gizmoMode)
     {
-        terrain.DrawGizmos();
-        rivers.DrawGizmos();
+        if (gizmoMode.HasFlag(GizmoMode.Terrian))
+        {
+            Gizmos.color = Color.red;
+            terrain.DrawGizmos();
+        }
+        if (gizmoMode.HasFlag(GizmoMode.River))
+        {
+            Gizmos.color = Color.blue;
+            rivers.DrawGizmos();
+        }
+        if (gizmoMode.HasFlag(GizmoMode.Road))
+        {
+            Gizmos.color = Color.green;
+            roads.DrawGizmos();
+        }
     }
+
 }

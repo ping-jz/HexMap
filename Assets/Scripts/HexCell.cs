@@ -1,8 +1,6 @@
 using UnityEngine;
-using System;
 using System.Linq;
 using System.Collections.Generic;
-using UnityEditor.UI;
 
 public class HexCell : MonoBehaviour
 {
@@ -275,7 +273,7 @@ public class HexCell : MonoBehaviour
         }
     }
 
-    
+
     public Vector3 Position
     {
         get
@@ -339,6 +337,19 @@ public class HexCell : MonoBehaviour
     public bool HasRoadThroughEdge(HexDirection direction)
     {
         return flags.HasRoad(direction);
+    }
+
+    /// <summary>
+    /// call {@link HexCell.HasRiverBeginOrEnd} before this method
+    /// </summary>
+    /// <returns></returns>
+    public HexDirection RiverBeginOrEndDirection
+    {
+        get
+        {
+            return flags.HasAny(HexCellFlags.RiverIn) ?
+            flags.RiverInToDirection() : flags.RiverOutToDirection();
+        }
     }
 
 

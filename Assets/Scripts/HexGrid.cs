@@ -3,7 +3,14 @@ using UnityEngine;
 using System;
 
 [Flags]
-public enum GizmoMode { Nothing = 0, Triangles = 0b0001 }
+public enum GizmoMode
+{
+    Nothing = 0,
+    Terrian = 0b0001,
+    River = 0b0010,
+    Road = 0b0100,
+    All = 0b111
+}
 
 public class HexGrid : MonoBehaviour
 {
@@ -183,15 +190,9 @@ public class HexGrid : MonoBehaviour
             return;
         }
 
-        bool drawTiangles = (gizmos & GizmoMode.Triangles) != 0;
-
-        if (drawTiangles)
+        foreach (HexGridChunk chunk in chunks)
         {
-            foreach (HexGridChunk chunk in chunks)
-            {
-                chunk.DrawGizmos();
-            }
+            chunk.DrawGizmos(gizmos);
         }
-
     }
 }

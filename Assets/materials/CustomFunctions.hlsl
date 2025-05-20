@@ -18,7 +18,15 @@ void FgetFragmentDataRoad_float(
     float4 Color, 
     out float3 BaseColor,
     out float Alpha) {
-    float4 c = float4(BlendUV.x, BlendUV.y, 1.0, 1.0);
-    BaseColor = c.rgb;
+    BaseColor = Color;
     Alpha = BlendUV.x;
+    Alpha = smoothstep(0.4, 0.7, Alpha);
+} 
+
+void FgetRoadViewOffset_float(
+    float3 OriginPosition, 
+    float YViewOffset, 
+    out float3 Position) {
+    Position = OriginPosition;
+    Position.y += YViewOffset;
 } 

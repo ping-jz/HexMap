@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
@@ -70,6 +71,8 @@ public class HexMapEditor : MonoBehaviour
         }
 
         root.Q<RadioButtonGroup>("Colors").RegisterValueChangedCallback(change => SelectColor(change.newValue));
+        root.Q<RadioButtonGroup>("Colors").value = Array.IndexOf(colors, activeColor) + 1;
+
         root.Q<Toggle>("ApplyElevation").RegisterValueChangedCallback(change =>
         {
             if (change.newValue)
@@ -81,11 +84,21 @@ public class HexMapEditor : MonoBehaviour
                 flags = flags.Without(EditorFlags.ApplyElevation);
             }
         });
+        root.Q<Toggle>("ApplyElevation").value = flags.Has(EditorFlags.ApplyElevation);
+
         root.Q<SliderInt>("Elevation").RegisterValueChangedCallback(change => SetElevation(change.newValue));
+        root.Q<SliderInt>("Elevation").value = activeElevation;
+
         root.Q<SliderInt>("BrushSize").RegisterValueChangedCallback(change => SetBrushSize(change.newValue));
+        root.Q<SliderInt>("BrushSize").value = brushSize;
+
         root.Q<Toggle>("ShowUI").RegisterValueChangedCallback(change => hexGrid.ShowUI(change.newValue));
+
         root.Q<RadioButtonGroup>("River").RegisterValueChangedCallback(change => SetRiverMode(change.newValue));
+        SetRiverMode(0);
+        
         root.Q<RadioButtonGroup>("Road").RegisterValueChangedCallback(change => SetRoadMode(change.newValue));
+        SetRoadMode(0);
     }
 
     void Update()

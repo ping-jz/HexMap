@@ -588,7 +588,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   swivel: {fileID: 423233572}
   stick: {fileID: 1165300848}
-  stickMinZoom: -250
+  stickMinZoom: -550
   stickMaxZoom: -90
   swivelMinZoom: 90
   swivelMaxZoom: 45
