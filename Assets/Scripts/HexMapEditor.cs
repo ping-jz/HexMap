@@ -75,32 +75,20 @@ public class HexMapEditor : MonoBehaviour
         root.Q<RadioButtonGroup>("Colors").value = Array.IndexOf(colors, activeColor) + 1;
 
         root.Q<Toggle>("ApplyElevation").RegisterValueChangedCallback(change =>
-        {
-            if (change.newValue)
-            {
-                flags = flags.With(EditorFlags.ApplyElevation);
-            }
-            else
-            {
-                flags = flags.Without(EditorFlags.ApplyElevation);
-            }
-        });
+            flags = change.newValue ?
+            flags.With(EditorFlags.ApplyElevation) :
+            flags.Without(EditorFlags.ApplyElevation)
+        );
         root.Q<Toggle>("ApplyElevation").value = flags.Has(EditorFlags.ApplyElevation);
 
         root.Q<SliderInt>("Elevation").RegisterValueChangedCallback(change => SetElevation(change.newValue));
         root.Q<SliderInt>("Elevation").value = activeElevation;
 
         root.Q<Toggle>("ApplyWaterLevel").RegisterValueChangedCallback(change =>
-        {
-            if (change.newValue)
-            {
-                flags = flags.With(EditorFlags.ApplyWaterLevel);
-            }
-            else
-            {
-                flags = flags.Without(EditorFlags.ApplyWaterLevel);
-            }
-        });
+            flags = change.newValue ?
+            flags.With(EditorFlags.ApplyWaterLevel) :
+            flags.Without(EditorFlags.ApplyWaterLevel)
+        );
         root.Q<Toggle>("ApplyWaterLevel").value = flags.Has(EditorFlags.ApplyWaterLevel);
 
         root.Q<SliderInt>("WaterLevel").RegisterValueChangedCallback(change => SetWaterLevel(change.newValue));

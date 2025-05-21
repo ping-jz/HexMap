@@ -35,4 +35,16 @@ void FgetRoadViewOffset_float(
     out float3 Position) {
     Position = OriginPosition;
     Position.y += YViewOffset;
-} 
+}
+
+void FgetFragmentDataWater_float(
+    UnityTexture2D NoiseTexture,
+    float2 RiverUV, 
+    float4 Color, 
+    float Time,  
+    out float3 BaseColor,
+    out float Alpha) {
+    float4 c = Color;
+    BaseColor = c.rgb;
+    Alpha = c.a;
+}

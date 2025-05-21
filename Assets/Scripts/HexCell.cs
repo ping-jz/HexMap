@@ -226,6 +226,16 @@ public class HexCell : MonoBehaviour
         }
     }
 
+    public float WaterSurfaceY
+    {
+        get
+        {
+            return
+                (waterLevel + HexMetrics.waterElevationOffset) *
+                HexMetrics.elevationStep;
+        }
+    }
+
     public bool HasIncomingRiver
     {
         get
