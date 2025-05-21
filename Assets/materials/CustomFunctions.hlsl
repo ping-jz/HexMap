@@ -44,24 +44,28 @@ void FgetFragmentDataWater_float(
     float Time,  
     out float3 BaseColor,
     out float Alpha) {
-    float2 uv1 = WorldPosition.xz;
-    uv1.y += Time;
-    float4 noise1 = NoiseTexture.Sample(NoiseTexture.samplerstate, uv1 * 0.025);
-
-    float2 uv2 = WorldPosition.xz;
-    uv2.x += Time;
-    float4 noise2 = NoiseTexture.Sample(NoiseTexture.samplerstate, uv2 * 0.025);
-
-    float blendWave = sin((WorldPosition.x + WorldPosition.z) * 0.1 + (noise1.y + noise2.z) +Time);
-    blendWave *= blendWave;
-
-
-    float waves = 
-         lerp(noise1.z, noise1.w, blendWave) + 
-         lerp(noise2.x, noise2.y, blendWave);
-    waves = smoothstep(0.75, 2, waves);
+    float waves = Waves(WorldPosition.xz, Time, NoiseTexture);
 
     float4 c = saturate(Color + waves);
+    BaseColor = c.rgb;
+    Alpha = c.a;
+}
+
+void FgetFragmentDataWaterShore_float(
+    UnityTexture2D NoiseTexture,
+    float3 WorldPosition,
+    float4 Color, 
+    float2 ShoreUV,
+    float Time,  
+    out float3 BaseColor,
+    out float Alpha) {
+
+    float shore = ShoreUV.y;
+    float foam = Foam(shore, WorldPosition.xz, Time, NoiseTexture);
+    float waves = Waves(WorldPosition.xz, Time, NoiseTexture);
+    waves *= 1 - shore;
+
+    float4 c = saturate(Color + max(foam, waves));
     BaseColor = c.rgb;
     Alpha = c.a;
 }
