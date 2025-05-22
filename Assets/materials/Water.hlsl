@@ -13,7 +13,7 @@ float River(float2 riverUV, float time, UnityTexture2D noiseTex) {
 }
 
 float Foam(float shore, float2 worldXZ, float Time, UnityTexture2D NoiseTexture) {
-	shore = sqrt(shore);
+	shore = sqrt(shore) * 0.9;
 
 	float2 noiseUV = worldXZ + Time * 0.25;
     float4 noise = NoiseTexture.Sample(NoiseTexture.samplerstate, noiseUV * 0.015);
