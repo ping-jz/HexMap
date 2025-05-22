@@ -8,7 +8,8 @@ public enum MeshFlags
     Nothing = 0,
     Collider = 0b0001,
     Color = 0b0010,
-    UVCoordinates = 0b0100
+    UVCoordinates = 0b0100,
+    UVCoordinates1 = 0b1000,
 }
 
 public static class MeshFlagsExtensions
@@ -35,6 +36,7 @@ public class HexMesh : MonoBehaviour
     [NonSerialized] List<int> triangles;
     [NonSerialized] List<Color> colors;
     [NonSerialized] List<Vector2> uvs;
+    [NonSerialized] List<Vector2> uv1s;
 
     [SerializeField]
     private MeshFlags flags;
@@ -173,6 +175,30 @@ public class HexMesh : MonoBehaviour
         uvs.Add(new Vector2(uMax, vMax));
     }
 
+    public void AddTriangleUV1(Vector2 uv1, Vector2 uv2, Vector2 uv3)
+    {
+        uv1s.Add(uv1);
+        uv1s.Add(uv2);
+        uv1s.Add(uv3);
+    }
+
+    public void AddQuadUV1(Vector2 uv1, Vector2 uv2, Vector2 uv3, Vector2 uv4)
+    {
+        uv1s.Add(uv1);
+        uv1s.Add(uv2);
+        uv1s.Add(uv3);
+        uv1s.Add(uv4);
+    }
+
+    public void AddQuadUV1(float uMin, float uMax, float vMin, float vMax)
+    {
+        uv1s.Add(new Vector2(uMin, vMin));
+        uv1s.Add(new Vector2(uMax, vMin));
+        uv1s.Add(new Vector2(uMin, vMax));
+        uv1s.Add(new Vector2(uMax, vMax));
+    }
+
+
     public void Clear()
     {
         hexMesh.Clear();
@@ -185,6 +211,10 @@ public class HexMesh : MonoBehaviour
         if (flags.Has(MeshFlags.UVCoordinates))
         {
             uvs = ListPool<Vector2>.Get();
+        }
+        if (flags.Has(MeshFlags.UVCoordinates1))
+        {
+            uv1s = ListPool<Vector2>.Get();
         }
     }
 
@@ -200,15 +230,23 @@ public class HexMesh : MonoBehaviour
             hexMesh.SetColors(colors);
             ListPool<Color>.Add(colors);
         }
+
         hexMesh.RecalculateNormals();
         if (flags.Has(MeshFlags.Collider))
         {
             meshCollider.sharedMesh = hexMesh;
         }
+
         if (flags.Has(MeshFlags.UVCoordinates))
         {
             hexMesh.SetUVs(0, uvs);
             ListPool<Vector2>.Add(uvs);
+        }
+
+        if (flags.Has(MeshFlags.UVCoordinates1))
+        {
+            hexMesh.SetUVs(1, uv1s);
+            ListPool<Vector2>.Add(uv1s);
         }
     }
 

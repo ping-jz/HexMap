@@ -64,8 +64,32 @@ void FgetFragmentDataWaterShore_float(
     float foam = Foam(shore, WorldPosition.xz, Time, NoiseTexture);
     float waves = Waves(WorldPosition.xz, Time, NoiseTexture);
     waves *= 1 - shore;
-
+    
     float4 c = saturate(Color + max(foam, waves));
+    BaseColor = c.rgb;
+    Alpha = c.a;
+}
+
+void FgetFragmentDataEstuary_float(
+    UnityTexture2D NoiseTexture,
+    float3 WorldPosition,
+    float4 Color, 
+    float2 ShoreUV,
+    float2 RiverUV,
+    float Time,  
+    out float3 BaseColor,
+    out float Alpha) {
+
+    float shore = ShoreUV.y;
+    float foam = Foam(shore, WorldPosition.xz, Time, NoiseTexture);
+    float waves = Waves(WorldPosition.xz, Time, NoiseTexture);
+    waves *= 1 - shore;
+
+    float river = River(RiverUV, Time, NoiseTexture);
+
+    float shoreWater = max(foam, waves);
+    float water = lerp(shoreWater, river, ShoreUV.x);
+    float4 c = saturate(Color + water);
     BaseColor = c.rgb;
     Alpha = c.a;
 }
