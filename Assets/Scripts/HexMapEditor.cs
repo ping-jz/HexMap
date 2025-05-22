@@ -217,6 +217,7 @@ public class HexMapEditor : MonoBehaviour
         {
             cell.WaterLevel = activeWaterLevel;
             hexGrid.GetChunk(cell).Refresh();
+            refrechCells(cell.RemoveInvalidRiver());
         }
 
         if (flags.Has(EditorFlags.RiverNo))

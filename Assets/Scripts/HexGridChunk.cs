@@ -140,7 +140,7 @@ public class HexGridChunk : MonoBehaviour
         );
         if (cell.HasRiverThroughEdge(direction))
         {
-            TriangulateEstuary(e1, e2);
+            TriangulateEstuary(e1, e2, cell.HasIncomingRiverOf(direction));
         }
         else
         {
@@ -172,7 +172,7 @@ public class HexGridChunk : MonoBehaviour
         }
     }
 
-    void TriangulateEstuary(EdgeVertices e1, EdgeVertices e2)
+    void TriangulateEstuary(EdgeVertices e1, EdgeVertices e2, bool incomingRiver)
     {
         waterShore.AddTriangle(e2.v1, e1.v2, e1.v1);
         waterShore.AddTriangle(e2.v5, e1.v5, e1.v4);
@@ -200,20 +200,40 @@ public class HexGridChunk : MonoBehaviour
         );
 
         //这段uv描述河口(溪流到大海)区域的扩散过程
-        //具体我也不太懂，后面要实在的了解下才行了
-        estuaries.AddQuadUV1(
-            new Vector2(1.5f, 1f), new Vector2(0.7f, 1.15f),
-            new Vector2(1f, 0.8f), new Vector2(0.5f, 1.1f)
-        );
-        estuaries.AddTriangleUV1(
-            new Vector2(0.5f, 1.1f),
-            new Vector2(1f, 0.8f),
-            new Vector2(0f, 0.8f)
-        );
-        estuaries.AddQuadUV1(
-            new Vector2(0.5f, 1.1f), new Vector2(0.3f, 1.15f),
-            new Vector2(0f, 0.8f), new Vector2(-0.5f, 1f)
-        );
+        //具体我也不太懂，用到时回来要了解下
+        if (incomingRiver)
+        {
+            estuaries.AddQuadUV1(
+                new Vector2(1.5f, 1f), new Vector2(0.7f, 1.15f),
+                new Vector2(1f, 0.8f), new Vector2(0.5f, 1.1f)
+            );
+            estuaries.AddTriangleUV1(
+                new Vector2(0.5f, 1.1f),
+                new Vector2(1f, 0.8f),
+                new Vector2(0f, 0.8f)
+            );
+            estuaries.AddQuadUV1(
+                new Vector2(0.5f, 1.1f), new Vector2(0.3f, 1.15f),
+                new Vector2(0f, 0.8f), new Vector2(-0.5f, 1f)
+            );
+        }
+        else
+        {
+            estuaries.AddQuadUV1(
+                new Vector2(-0.5f, -0.2f), new Vector2(0.3f, -0.35f),
+                new Vector2(0f, 0f), new Vector2(0.5f, -0.3f)
+            );
+            estuaries.AddTriangleUV1(
+                new Vector2(0.5f, -0.3f),
+                new Vector2(0f, 0f),
+                new Vector2(1f, 0f)
+            );
+            estuaries.AddQuadUV1(
+                new Vector2(0.5f, -0.3f), new Vector2(0.7f, -0.35f),
+                new Vector2(1f, 0f), new Vector2(1.5f, -0.2f)
+            );
+        }
+
     }
 
     private void TriangulateOpenWater(HexDirection direction, HexCell cell, HexCell neighbor, Vector3 center)

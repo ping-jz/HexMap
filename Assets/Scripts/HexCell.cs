@@ -65,14 +65,16 @@ public class HexCell : MonoBehaviour
         IEnumerable<HexCell> affeceted = defaultEnumer;
         if (
             flags.HasAny(HexCellFlags.RiverOut) &&
-             elevation < GetNeighbor(flags.RiverOutToDirection()).elevation)
+             !IsValidRiverDestination(GetNeighbor(flags.RiverOutToDirection()))
+        )
         {
             affeceted = affeceted.Concat(RemoveOutgoingRiver());
         }
 
         if (
             flags.HasAny(HexCellFlags.RiverIn) &&
-             GetNeighbor(flags.RiverInToDirection()).elevation < elevation)
+            !IsValidRiverDestination(GetNeighbor(flags.RiverInToDirection()))
+            )
         {
             affeceted = affeceted.Concat(RemoveIncomingRiver());
         }
@@ -187,7 +189,7 @@ public class HexCell : MonoBehaviour
         }
 
         HexCell neighbor = GetNeighbor(direction);
-        if (!neighbor || elevation < neighbor.elevation)
+        if (!IsValidRiverDestination(neighbor))
         {
             return defaultEnumer;
         }
@@ -240,15 +242,21 @@ public class HexCell : MonoBehaviour
     {
         get
         {
-            return flags.Has(HexCellFlags.RiverIn);
+            return flags.HasAny(HexCellFlags.RiverIn);
         }
     }
+
+    public bool HasIncomingRiverOf(HexDirection direction)
+    {
+        return HasIncomingRiver && direction == flags.RiverInToDirection();
+    }
+
 
     public bool HasOutgoingRiver
     {
         get
         {
-            return flags.Has(HexCellFlags.RiverOut);
+            return flags.HasAny(HexCellFlags.RiverOut);
         }
     }
 
@@ -385,6 +393,11 @@ public class HexCell : MonoBehaviour
             return flags.HasAny(HexCellFlags.RiverIn) ?
             flags.RiverInToDirection() : flags.RiverOutToDirection();
         }
+    }
+
+    public bool IsValidRiverDestination(HexCell neighbor)
+    {
+        return neighbor && (elevation >= neighbor.elevation || waterLevel == neighbor.elevation);
     }
 
 
