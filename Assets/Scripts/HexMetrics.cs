@@ -37,6 +37,8 @@ public static class HexMetrics
     public const float waterFactor = 0.6f;
     public const float waterBlendFactor = 1f - waterFactor;
 
+    public static Color[] colors;
+
     public static Vector3[] corners = {
         new Vector3(0f, 0f, outerRadius),
         new Vector3(innerRadius, 0f, 0.5f * outerRadius),

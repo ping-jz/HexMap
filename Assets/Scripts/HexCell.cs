@@ -8,7 +8,7 @@ public class HexCell : MonoBehaviour
     private HexCoordinates coordinates;
     [SerializeField]
     private HexCell[] neighbors;
-    public Color color;
+    private int terrainTypeIndex;
     private int elevation;
     private int chunkIndex;
     private int waterLevel;
@@ -394,6 +394,28 @@ public class HexCell : MonoBehaviour
             flags.RiverInToDirection() : flags.RiverOutToDirection();
         }
     }
+
+    public Color Color
+    {
+        get
+        {
+            return HexMetrics.colors[terrainTypeIndex];
+        }
+    }
+
+    public int TerrainTypeIndex
+    {
+        get
+        {
+            return terrainTypeIndex;
+        }
+        set
+        {
+
+            terrainTypeIndex = value;
+        }
+    }
+
 
     public bool IsValidRiverDestination(HexCell neighbor)
     {

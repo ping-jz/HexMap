@@ -48,7 +48,7 @@ public class HexMapEditor : MonoBehaviour
     private HexGrid hexGrid;
     [SerializeField]
     private UIDocument sidePanels;
-    private Color activeColor;
+    private int activeTerrianType;
     int activeElevation;
     int activeWaterLevel;
     EditorFlags flags = EditorFlags.ApplyColor.With(EditorFlags.ApplyElevation);
@@ -58,9 +58,15 @@ public class HexMapEditor : MonoBehaviour
 
     void Awake()
     {
-        SelectColor(1);
-
+        HexMetrics.colors = colors;
+        
+        SelectTerrianType(1);
         RegisterEvents();
+    }
+
+    void Onable()
+    {
+        HexMetrics.colors = colors;
     }
 
     private void RegisterEvents()
@@ -71,8 +77,8 @@ public class HexMapEditor : MonoBehaviour
             return;
         }
 
-        root.Q<RadioButtonGroup>("Colors").RegisterValueChangedCallback(change => SelectColor(change.newValue));
-        root.Q<RadioButtonGroup>("Colors").value = Array.IndexOf(colors, activeColor) + 1;
+        root.Q<RadioButtonGroup>("Colors").RegisterValueChangedCallback(change => SelectTerrianType(change.newValue));
+        root.Q<RadioButtonGroup>("Colors").value = Array.IndexOf(colors, activeTerrianType) + 1;
 
         root.Q<Toggle>("ApplyElevation").RegisterValueChangedCallback(change =>
             flags = change.newValue ?
@@ -197,7 +203,7 @@ public class HexMapEditor : MonoBehaviour
 
         if (flags.Has(EditorFlags.ApplyColor))
         {
-            cell.color = activeColor;
+            cell.TerrainTypeIndex = activeTerrianType;
         }
 
         if (flags.Has(EditorFlags.ApplyElevation))
@@ -272,13 +278,12 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
-    public void SelectColor(int index)
+    public void SelectTerrianType(int index)
     {
         flags = index > 0 ? flags.With(EditorFlags.ApplyColor) : flags.Without(EditorFlags.ApplyColor);
-
         if (flags.Has(EditorFlags.ApplyColor))
         {
-            activeColor = colors[index - 1];
+            activeTerrianType = index - 1;
         }
     }
 

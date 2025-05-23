@@ -21,8 +21,7 @@ public class HexGrid : MonoBehaviour
     private HexGridChunk chunkPrefab;
     [SerializeField]
     private TextMeshPro cellLabelPrefab;
-    [SerializeField]
-    private Color defaultColor = Color.white;
+    private int terrainTypeIndex;
     [SerializeField]
     private Texture2D noiseSource;
     [SerializeField]
@@ -90,7 +89,6 @@ public class HexGrid : MonoBehaviour
         HexCell cell = cells[i] = Instantiate(cellPrefab);
         cell.transform.localPosition = position;
         cell.Coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
-        cell.color = defaultColor;
 
         TextMeshPro label = Instantiate(cellLabelPrefab);
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
