@@ -30,5 +30,9 @@
         <engine:Label text="Brush Size" />
         <engine:SliderInt value="0" high-value="4" name="BrushSize" />
         <engine:Toggle label="Labels" value="false" name="ShowUI" />
+      	<engine:VisualElement style="flex-direction: row;">
+			<engine:Button text="Save" name="SaveButton" />
+			<engine:Button text="Load" name="LoadButton" />
+		</engine:VisualElement>
 	</engine:VisualElement>
 </engine:UXML>

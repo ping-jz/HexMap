@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -59,14 +60,15 @@ public class HexMapEditor : MonoBehaviour
     void Awake()
     {
         HexMetrics.colors = colors;
-        
+
         SelectTerrianType(1);
         RegisterEvents();
     }
 
-    void Onable()
+    void OnValidate() 
     {
         HexMetrics.colors = colors;
+        RegisterEvents();
     }
 
     private void RegisterEvents()
@@ -110,6 +112,9 @@ public class HexMapEditor : MonoBehaviour
 
         root.Q<RadioButtonGroup>("Road").RegisterValueChangedCallback(change => SetRoadMode(change.newValue));
         SetRoadMode(0);
+
+        root.Q<Button>("SaveButton").RegisterCallback<MouseUpEvent>(ent => Save());
+        root.Q<Button>("LoadButton").RegisterCallback<MouseUpEvent>(ent => Load());
     }
 
     void Update()
@@ -341,8 +346,22 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
-    void OnValidate()
+    public void Save()
     {
-        RegisterEvents();
+        string path = Path.Combine(Application.dataPath, "test.map");
+        using (BinaryWriter write = new BinaryWriter(File.Open(path, FileMode.Create)))
+        {
+            hexGrid.Save(write);
+        }
+    }
+
+    public void Load()
+    {
+        string path = Path.Combine(Application.dataPath, "test.map");
+        using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
+        {
+             hexGrid.Load(reader);
+        }
+        
     }
 }

@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using System;
+using System.IO;
 
 [Flags]
 public enum GizmoMode
@@ -178,6 +179,27 @@ public class HexGrid : MonoBehaviour
         foreach (HexGridChunk chunk in chunks)
         {
             chunk.ShowUI(visible);
+        }
+    }
+
+    public void Save(BinaryWriter writer)
+    {
+        foreach (HexCell cell in cells)
+        {
+            cell.Save(writer);
+        }
+    }
+
+    public void Load(BinaryReader reader)
+    {
+        foreach (HexCell cell in cells)
+        {
+            cell.Load(reader);
+        }
+
+        foreach (HexGridChunk chunk in chunks)
+        {
+            chunk.Refresh();
         }
     }
 

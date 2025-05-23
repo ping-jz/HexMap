@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 
 public class HexCell : MonoBehaviour
 {
@@ -422,5 +423,19 @@ public class HexCell : MonoBehaviour
         return neighbor && (elevation >= neighbor.elevation || waterLevel == neighbor.elevation);
     }
 
+    public void Save(BinaryWriter writer)
+    {
+        writer.Write(terrainTypeIndex);
+        writer.Write(Elevation);
+        writer.Write(waterLevel);
+        writer.Write((int)flags);
+    }
 
+    public void Load(BinaryReader reader)
+    {
+        terrainTypeIndex = reader.ReadInt32();
+        Elevation = reader.ReadInt32();
+        waterLevel = reader.ReadInt32();
+        flags = (HexCellFlags)reader.ReadInt32();
+    }
 }
