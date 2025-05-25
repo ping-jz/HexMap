@@ -383,6 +383,51 @@ MonoBehaviour:
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 10
   m_PresetInfoIsWorld: 1
+--- !u!1 &3686811170665940401
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4057596159761216500}
+  - component: {fileID: 4319163848221063527}
+  m_Layer: 0
+  m_Name: Features
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4057596159761216500
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3686811170665940401}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1067358368711953619}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4319163848221063527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3686811170665940401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db0a39fa5e34cc548b2ef621f9653593, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  featurePrefab: {fileID: 5857356209197871682, guid: 08e64c32f95420e4499d1de9ad0bc1b8, type: 3}
 --- !u!1 &4886450317385575496
 GameObject:
   m_ObjectHideFlags: 0
@@ -620,6 +665,7 @@ Transform:
   - {fileID: 5560661263653428173}
   - {fileID: 5653314071846027910}
   - {fileID: 6868377103027501591}
+  - {fileID: 4057596159761216500}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7471503865768428700
@@ -640,6 +686,7 @@ MonoBehaviour:
   water: {fileID: 5022595879153636116}
   waterShore: {fileID: 6619838515772683865}
   estuaries: {fileID: 9186705331734291007}
+  features: {fileID: 4319163848221063527}
 --- !u!1 &6643492189022050143
 GameObject:
   m_ObjectHideFlags: 0

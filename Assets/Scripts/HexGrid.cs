@@ -29,6 +29,8 @@ public class HexGrid : MonoBehaviour
     private int chunkCountX = 4, chunkCountZ = 3;
     [SerializeField]
     GizmoMode gizmos;
+    [SerializeField]
+    private int seed;
     private int cellCountX = 6, cellCountZ = 6;
     HexCell[] cells;
     HexGridChunk[] chunks;
@@ -46,6 +48,7 @@ public class HexGrid : MonoBehaviour
     void Awake()
     {
         HexMetrics.noiseSource = noiseSource;
+        HexMetrics.InitializeHashGrid(seed);
 
         cellCountX = chunkCountX * HexMetrics.chunkSizeX;
         cellCountZ = chunkCountZ * HexMetrics.chunkSizeZ;
@@ -53,6 +56,15 @@ public class HexGrid : MonoBehaviour
         CreateChunks();
         CreateCell();
         ShowUI(false);
+    }
+
+    void OnEnable()
+    {
+        if (!HexMetrics.noiseSource)
+        {
+            HexMetrics.noiseSource = noiseSource;
+            HexMetrics.InitializeHashGrid(seed);
+        }
     }
 
     void CreateChunks()
@@ -137,11 +149,6 @@ public class HexGrid : MonoBehaviour
         int localZ = z - chunkZ * HexMetrics.chunkSizeZ;
         cell.ChunkIdx = chunkIdx;
         chunk.AddCell(localX + localZ * HexMetrics.chunkSizeX, cell);
-    }
-
-    void OnEnable()
-    {
-        HexMetrics.noiseSource = noiseSource;
     }
 
     //从屏幕坐标转换世界坐标，然后转换为本地坐标

@@ -14,6 +14,7 @@ public class HexCell : MonoBehaviour
     private int chunkIndex;
     private int waterLevel;
     private HexCellFlags flags;
+    private int urbanLevel;
     public RectTransform uiRect;
 
     public HexCell GetNeighbor(HexDirection direction)
@@ -417,6 +418,21 @@ public class HexCell : MonoBehaviour
         }
     }
 
+    public int UrbanLevel
+    {
+        get
+        {
+            return urbanLevel;
+        }
+        set
+        {
+            if (urbanLevel != value)
+            {
+                urbanLevel = value;
+            }
+        }
+    }
+
 
     public bool IsValidRiverDestination(HexCell neighbor)
     {
@@ -429,6 +445,7 @@ public class HexCell : MonoBehaviour
         writer.Write(Elevation);
         writer.Write(waterLevel);
         writer.Write((int)flags);
+        writer.Write(urbanLevel);
     }
 
     public void Load(BinaryReader reader)
@@ -437,5 +454,6 @@ public class HexCell : MonoBehaviour
         Elevation = reader.ReadInt32();
         waterLevel = reader.ReadInt32();
         flags = (HexCellFlags)reader.ReadInt32();
+        urbanLevel = reader.ReadInt32();
     }
 }

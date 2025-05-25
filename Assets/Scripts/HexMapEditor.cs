@@ -10,18 +10,21 @@ using UnityEngine.UIElements;
 enum EditorFlags
 {
     Nothing = 0,
-    ApplyElevation = 0b0001,
-    ApplyColor = 0b0010,
-    Drag = 0b0100,
-    ApplyWaterLevel = 0b1000,
-    RiverIgnore = 0b001_0000,
-    RiverYes = 0b010_0000,
-    RiverNo = 0b100_0000,
-    RiverOpts = 0b111_0000,
-    RoadIgnore = 0b001_000_0000,
-    RoadYes = 0b010_000_0000,
-    RoadNo = 0b100_000_0000,
-    RoadOpts = 0b111_000_0000,
+    ApplyElevation = 0b00001,
+    ApplyColor = 0b00010,
+    Drag = 0b00100,
+    ApplyWaterLevel = 0b01000,
+    ApplyUrbanLevel = 0b01000,
+
+    RiverIgnore = 0b001_00000,
+    RiverYes = 0b010_00000,
+    RiverNo = 0b100_00000,
+    RiverOpts = 0b111_00000,
+    
+    RoadIgnore = 0b001_000_00000,
+    RoadYes = 0b010_000_00000,
+    RoadNo = 0b100_000_00000,
+    RoadOpts = 0b111_000_00000,
 }
 
 static class EditorFlagsExtensions
@@ -52,6 +55,7 @@ public class HexMapEditor : MonoBehaviour
     private int activeTerrianType;
     int activeElevation;
     int activeWaterLevel;
+    int activeUrbanLevel;
     EditorFlags flags = EditorFlags.ApplyColor.With(EditorFlags.ApplyElevation);
     int brushSize;
     HexDirection dragDirection;
@@ -65,7 +69,7 @@ public class HexMapEditor : MonoBehaviour
         RegisterEvents();
     }
 
-    void OnValidate() 
+    void OnValidate()
     {
         HexMetrics.colors = colors;
         RegisterEvents();
@@ -115,6 +119,17 @@ public class HexMapEditor : MonoBehaviour
 
         root.Q<Button>("SaveButton").RegisterCallback<MouseUpEvent>(ent => Save());
         root.Q<Button>("LoadButton").RegisterCallback<MouseUpEvent>(ent => Load());
+
+
+        root.Q<Toggle>("ApplyUrbanLevel").RegisterValueChangedCallback(change =>
+            flags = change.newValue ?
+            flags.With(EditorFlags.ApplyUrbanLevel) :
+            flags.Without(EditorFlags.ApplyUrbanLevel)
+        );
+        root.Q<Toggle>("ApplyUrbanLevel").value = flags.Has(EditorFlags.ApplyUrbanLevel);
+
+        root.Q<SliderInt>("UrbanLevel").RegisterValueChangedCallback(change => activeUrbanLevel = change.newValue);
+        root.Q<SliderInt>("UrbanLevel").value = activeUrbanLevel;
     }
 
     void Update()
@@ -135,6 +150,7 @@ public class HexMapEditor : MonoBehaviour
 
     void HandleInput()
     {
+
         Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
         if (Physics.Raycast(inputRay, out hit))
@@ -209,6 +225,11 @@ public class HexMapEditor : MonoBehaviour
         if (flags.Has(EditorFlags.ApplyColor))
         {
             cell.TerrainTypeIndex = activeTerrianType;
+        }
+
+        if (flags.Has(EditorFlags.ApplyUrbanLevel))
+        {
+            cell.UrbanLevel = activeUrbanLevel;
         }
 
         if (flags.Has(EditorFlags.ApplyElevation))
@@ -360,8 +381,8 @@ public class HexMapEditor : MonoBehaviour
         string path = Path.Combine(Application.dataPath, "test.map");
         using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
         {
-             hexGrid.Load(reader);
+            hexGrid.Load(reader);
         }
-        
+
     }
 }

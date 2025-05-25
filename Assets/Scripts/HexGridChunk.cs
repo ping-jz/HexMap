@@ -5,6 +5,8 @@ public class HexGridChunk : MonoBehaviour
 {
     [SerializeField]
     private HexMesh terrain, rivers, roads, water, waterShore, estuaries;
+    [SerializeField]
+    private HexFeatureManager features;
     HexCell[] cells;
     Canvas gridCanvas;
 
@@ -40,9 +42,10 @@ public class HexGridChunk : MonoBehaviour
         water.Clear();
         waterShore.Clear();
         estuaries.Clear();
+        features.Clear();
         foreach (HexCell cell in cells)
         {
-            TriangulateCell(cell);
+            Triangulate(cell);
         }
         terrain.Apply();
         rivers.Apply();
@@ -50,18 +53,20 @@ public class HexGridChunk : MonoBehaviour
         water.Apply();
         waterShore.Apply();
         estuaries.Apply();
+        features.Apply();
     }
 
-    void TriangulateCell(HexCell cell)
+    void Triangulate(HexCell cell)
     {
         for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
         {
-            TriangulateCell(d, cell);
+            Triangulate(d, cell);
         }
-
+        if (!cell.IsUnderwater && !cell.HasRiver && !cell.HasRoads)
+            features.AddFeature(cell, cell.Position);
     }
 
-    void TriangulateCell(HexDirection direction, HexCell cell)
+    void Triangulate(HexDirection direction, HexCell cell)
     {
         Vector3 center = cell.Position;
         EdgeVertices e = new EdgeVertices(
@@ -91,6 +96,11 @@ public class HexGridChunk : MonoBehaviour
         else
         {
             TriangulateWithoutRiver(direction, cell, center, e);
+
+            if (!cell.IsUnderwater && !cell.HasRoadThroughEdge(direction))
+            {
+                features.AddFeature(cell, (center + e.v1 + e.v5) * (1f / 3f));
+            }
         }
 
 
@@ -300,6 +310,11 @@ public class HexGridChunk : MonoBehaviour
 
         TriangulateEdgeStrip(m, cell.Color, e, cell.Color);
         TriangulateEdgeFan(center, m, cell.Color);
+
+        if (!cell.IsUnderwater && !cell.HasRoadThroughEdge(direction))
+        {
+            features.AddFeature(cell, (center + e.v1 + e.v5) * (1f / 3f));
+        }
     }
 
     void TriangulateRoadAdjacentToRiver(HexDirection direction, HexCell cell, Vector3 center, EdgeVertices e)
