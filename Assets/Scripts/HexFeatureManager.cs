@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class HexFeatureManager : MonoBehaviour
 {
     [SerializeField]
-    private HexFeatureCollection[] urbanPrefabs;
+    private HexFeatureCollection[] urbanPrefabs, farmPrefabs, plantPrefabs;
 
     private Transform container;
 
@@ -31,7 +32,25 @@ public class HexFeatureManager : MonoBehaviour
         {
             return;
         }
-        Transform prefab = PickPrefab(cell.UrbanLevel, hash.a, hash.b);
+
+        Transform urban = PickPrefab(urbanPrefabs, cell.UrbanLevel, hash.a, hash.d);
+        Transform farm = PickPrefab(farmPrefabs, cell.FarmLevel, hash.b, hash.d);
+        Transform plant = PickPrefab(plantPrefabs, cell.PlantLevel, hash.c, hash.d);
+
+        List<Transform> transforms = ListPool<Transform>.Get();
+        if (urban)
+        {
+            transforms.Add(urban);
+        }
+            if (farm)
+        {
+            transforms.Add(farm);
+        }
+            if (plant)
+        {
+            transforms.Add(plant);
+        }
+        Transform prefab = transforms[(int)(hash.e * transforms.Count)];
         if (!prefab)
         {
             return;
@@ -40,11 +59,11 @@ public class HexFeatureManager : MonoBehaviour
         Transform instance = Instantiate(prefab);
         position.y += instance.localScale.y * 0.5f;
         instance.localPosition = HexMetrics.Perturb(position);
-        instance.localRotation = Quaternion.Euler(0f, 360f * hash.c, 0f);
+        instance.localRotation = Quaternion.Euler(0f, 360f * hash.f, 0f);
         instance.SetParent(container, false);
     }
 
-    Transform PickPrefab(int level, float hash, float choice)
+    Transform PickPrefab(HexFeatureCollection[] features, int level, float hash, float choice)
     {
         if (level <= 0)
         {
@@ -56,7 +75,7 @@ public class HexFeatureManager : MonoBehaviour
         {
             if (hash < thresholds[i])
             {
-                HexFeatureCollection prefabs = urbanPrefabs[i];
+                HexFeatureCollection prefabs = features[i];
                 return prefabs.Pick(choice);
             }
         }

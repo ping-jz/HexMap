@@ -10,21 +10,23 @@ using UnityEngine.UIElements;
 enum EditorFlags
 {
     Nothing = 0,
-    ApplyElevation = 0b00001,
-    ApplyColor = 0b00010,
-    Drag = 0b00100,
-    ApplyWaterLevel = 0b01000,
-    ApplyUrbanLevel = 0b01000,
+    ApplyElevation = 0b00000001,
+    ApplyColor = 0b00000010,
+    Drag = 0b00000100,
+    ApplyWaterLevel = 0b00001000,
+    ApplyUrbanLevel = 0b00010000,
+    ApplyFarmLevel  = 0b00100000,
+    ApplyPlantLevel = 0b01000000,
 
-    RiverIgnore = 0b001_00000,
-    RiverYes = 0b010_00000,
-    RiverNo = 0b100_00000,
-    RiverOpts = 0b111_00000,
-    
-    RoadIgnore = 0b001_000_00000,
-    RoadYes = 0b010_000_00000,
-    RoadNo = 0b100_000_00000,
-    RoadOpts = 0b111_000_00000,
+    RiverIgnore = 0b001_00000000,
+    RiverYes = 0b010_00000000,
+    RiverNo = 0b100_00000000,
+    RiverOpts = 0b111_00000000,
+
+    RoadIgnore = 0b001_000_00000000,
+    RoadYes = 0b010_000_00000000,
+    RoadNo = 0b100_000_00000000,
+    RoadOpts = 0b111_000_00000000,
 }
 
 static class EditorFlagsExtensions
@@ -53,9 +55,11 @@ public class HexMapEditor : MonoBehaviour
     [SerializeField]
     private UIDocument sidePanels;
     private int activeTerrianType;
-    int activeElevation;
-    int activeWaterLevel;
-    int activeUrbanLevel;
+    int elevation;
+    int waterLevel;
+    int urbanLevel;
+    int framLevel;
+    int plantLevel;
     EditorFlags flags = EditorFlags.ApplyColor.With(EditorFlags.ApplyElevation);
     int brushSize;
     HexDirection dragDirection;
@@ -94,7 +98,7 @@ public class HexMapEditor : MonoBehaviour
         root.Q<Toggle>("ApplyElevation").value = flags.Has(EditorFlags.ApplyElevation);
 
         root.Q<SliderInt>("Elevation").RegisterValueChangedCallback(change => SetElevation(change.newValue));
-        root.Q<SliderInt>("Elevation").value = activeElevation;
+        root.Q<SliderInt>("Elevation").value = elevation;
 
         root.Q<Toggle>("ApplyWaterLevel").RegisterValueChangedCallback(change =>
             flags = change.newValue ?
@@ -104,7 +108,7 @@ public class HexMapEditor : MonoBehaviour
         root.Q<Toggle>("ApplyWaterLevel").value = flags.Has(EditorFlags.ApplyWaterLevel);
 
         root.Q<SliderInt>("WaterLevel").RegisterValueChangedCallback(change => SetWaterLevel(change.newValue));
-        root.Q<SliderInt>("WaterLevel").value = activeWaterLevel;
+        root.Q<SliderInt>("WaterLevel").value = waterLevel;
 
         root.Q<SliderInt>("BrushSize").RegisterValueChangedCallback(change => SetBrushSize(change.newValue));
         root.Q<SliderInt>("BrushSize").value = brushSize;
@@ -128,8 +132,28 @@ public class HexMapEditor : MonoBehaviour
         );
         root.Q<Toggle>("ApplyUrbanLevel").value = flags.Has(EditorFlags.ApplyUrbanLevel);
 
-        root.Q<SliderInt>("UrbanLevel").RegisterValueChangedCallback(change => activeUrbanLevel = change.newValue);
-        root.Q<SliderInt>("UrbanLevel").value = activeUrbanLevel;
+        root.Q<SliderInt>("UrbanLevel").RegisterValueChangedCallback(change => urbanLevel = change.newValue);
+        root.Q<SliderInt>("UrbanLevel").value = urbanLevel;
+
+        root.Q<Toggle>("ApplyFarmLevel").RegisterValueChangedCallback(change =>
+           flags = change.newValue ?
+           flags.With(EditorFlags.ApplyFarmLevel) :
+           flags.Without(EditorFlags.ApplyFarmLevel)
+       );
+        root.Q<Toggle>("ApplyFarmLevel").value = flags.Has(EditorFlags.ApplyFarmLevel);
+
+        root.Q<SliderInt>("FarmLevel").RegisterValueChangedCallback(change => framLevel = change.newValue);
+        root.Q<SliderInt>("FarmLevel").value = framLevel;
+        
+         root.Q<Toggle>("ApplyPlantLevel").RegisterValueChangedCallback(change =>
+            flags = change.newValue ?
+            flags.With(EditorFlags.ApplyPlantLevel) :
+            flags.Without(EditorFlags.ApplyPlantLevel)
+        );
+        root.Q<Toggle>("ApplyPlantLevel").value = flags.Has(EditorFlags.ApplyPlantLevel);
+
+        root.Q<SliderInt>("PlantLevel").RegisterValueChangedCallback(change => plantLevel = change.newValue);
+        root.Q<SliderInt>("PlantLevel").value = plantLevel;
     }
 
     void Update()
@@ -229,12 +253,22 @@ public class HexMapEditor : MonoBehaviour
 
         if (flags.Has(EditorFlags.ApplyUrbanLevel))
         {
-            cell.UrbanLevel = activeUrbanLevel;
+            cell.UrbanLevel = urbanLevel;
+        }
+
+        if (flags.Has(EditorFlags.ApplyFarmLevel))
+        {
+            cell.FarmLevel = framLevel;
+        }
+
+        if (flags.Has(EditorFlags.ApplyPlantLevel))
+        {
+            cell.PlantLevel = plantLevel;
         }
 
         if (flags.Has(EditorFlags.ApplyElevation))
         {
-            cell.Elevation = activeElevation;
+            cell.Elevation = elevation;
             refrechCells(cell.RemoveInvalidRiver());
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
@@ -247,7 +281,7 @@ public class HexMapEditor : MonoBehaviour
 
         if (flags.Has(EditorFlags.ApplyWaterLevel))
         {
-            cell.WaterLevel = activeWaterLevel;
+            cell.WaterLevel = waterLevel;
             hexGrid.GetChunk(cell).Refresh();
             refrechCells(cell.RemoveInvalidRiver());
         }
@@ -320,7 +354,7 @@ public class HexMapEditor : MonoBehaviour
 
     public void SetElevation(float elevation)
     {
-        activeElevation = (int)elevation;
+        this.elevation = (int)elevation;
     }
 
     public void SetBrushSize(float size)
@@ -330,7 +364,7 @@ public class HexMapEditor : MonoBehaviour
 
     public void SetWaterLevel(float waterLevel)
     {
-        activeWaterLevel = (int)waterLevel;
+        this.waterLevel = (int)waterLevel;
     }
 
     public void SetRiverMode(int mode)

@@ -19,6 +19,10 @@
     	<engine:SliderInt value="0" high-value="6" name="WaterLevel" />
         <engine:Toggle label="Urban" value="true" name="ApplyUrbanLevel" />
     	<engine:SliderInt value="0" high-value="3" name="UrbanLevel" />
+        <engine:Toggle label="Farm" value="true" name="ApplyFarmLevel" />
+    	<engine:SliderInt value="0" high-value="3" name="FarmLevel" />
+        <engine:Toggle label="Plant" value="true" name="ApplyPlantLevel" />
+    	<engine:SliderInt value="0" high-value="3" name="PlantLevel" />
         <engine:RadioButtonGroup
             label="River"
 			choices="---,Yes,No"
