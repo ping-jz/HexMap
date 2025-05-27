@@ -626,7 +626,7 @@ public class HexGridChunk : MonoBehaviour
 
         }
 
-        features.AddWall(e1, cell, e2, neighbor);
+        features.AddWall(e1, cell, e2, neighbor, direction);
 
         HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
         if (direction <= HexDirection.Right && nextNeighbor != null)
@@ -857,7 +857,7 @@ public class HexGridChunk : MonoBehaviour
         }
         else
         {
-            terrain.AddTriangleUnPerturb(HexMetrics.Perturb(left), HexMetrics.Perturb(right), boundary);
+            terrain.AddTriangleUnperturbed(HexMetrics.Perturb(left), HexMetrics.Perturb(right), boundary);
             terrain.AddTriangleColor(leftCell.Color, rightCell.Color, boundaryColor);
         }
     }
@@ -881,7 +881,7 @@ public class HexGridChunk : MonoBehaviour
         }
         else
         {
-            terrain.AddTriangleUnPerturb(HexMetrics.Perturb(left), HexMetrics.Perturb(right), boundary);
+            terrain.AddTriangleUnperturbed(HexMetrics.Perturb(left), HexMetrics.Perturb(right), boundary);
             terrain.AddTriangleColor(leftCell.Color, rightCell.Color, boundaryColor);
         }
     }
@@ -894,7 +894,7 @@ public class HexGridChunk : MonoBehaviour
     {
         Vector3 v2 = HexMetrics.Perturb(HexMetrics.TerraceLerp(begin, left, 1));
         Color c2 = HexMetrics.TerraceLerpColor(beginCell.Color, leftCell.Color, 1);
-        terrain.AddTriangleUnPerturb(HexMetrics.Perturb(begin), v2, boundary);
+        terrain.AddTriangleUnperturbed(HexMetrics.Perturb(begin), v2, boundary);
         terrain.AddTriangleColor(beginCell.Color, c2, boundaryColor);
         for (int i = 2; i < HexMetrics.terraceSteps; i++)
         {
@@ -902,11 +902,11 @@ public class HexGridChunk : MonoBehaviour
             Color c1 = c2;
             v2 = HexMetrics.Perturb(HexMetrics.TerraceLerp(begin, left, i));
             c2 = HexMetrics.TerraceLerpColor(beginCell.Color, leftCell.Color, i);
-            terrain.AddTriangleUnPerturb(v1, v2, boundary);
+            terrain.AddTriangleUnperturbed(v1, v2, boundary);
             terrain.AddTriangleColor(c1, c2, boundaryColor);
         }
 
-        terrain.AddTriangleUnPerturb(v2, HexMetrics.Perturb(left), boundary);
+        terrain.AddTriangleUnperturbed(v2, HexMetrics.Perturb(left), boundary);
         terrain.AddTriangleColor(c2, leftCell.Color, boundaryColor);
     }
 

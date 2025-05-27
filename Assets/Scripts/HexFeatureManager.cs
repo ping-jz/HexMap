@@ -86,18 +86,53 @@ public class HexFeatureManager : MonoBehaviour
         return null;
     }
 
-    public void AddWall(EdgeVertices near, HexCell nearCell,
-    EdgeVertices far, HexCell farCell)
+    public void AddWall(
+        EdgeVertices near, HexCell nearCell,
+        EdgeVertices far, HexCell farCell,
+        HexDirection direction
+    )
     {
-        if (nearCell.Walled == farCell.Walled)
+        if (
+            nearCell.Walled == farCell.Walled ||
+            nearCell.IsUnderwater ||
+            farCell.IsUnderwater ||
+            nearCell.GetEdgeType(farCell) == HexEdgeType.Cliff
+        )
         {
             return;
         }
 
         AddWallSegment(near.v1, far.v1, near.v2, far.v2);
-        AddWallSegment(near.v2, far.v2, near.v3, far.v3);
-        AddWallSegment(near.v3, far.v3, near.v4, far.v4);
+        switch (nearCell.HasRiverThroughEdge(direction),
+                nearCell.HasRoadThroughEdge(direction))
+        {
+            case (false, false):
+                AddWallSegment(near.v2, far.v2, near.v3, far.v3);
+                AddWallSegment(near.v3, far.v3, near.v4, far.v4);
+                break;
+            default:
+                AddWallCap(near.v2, far.v2);
+                //为什么要换位置为什么上面不用，基于什么原理
+                //难道跟wallSegment一面，只能从一个方面看。所以才反过来吗？
+                AddWallCap(far.v4, near.v4);
+                break;
+        }
+
         AddWallSegment(near.v4, far.v4, near.v5, far.v5);
+    }
+
+    void AddWallCap(Vector3 near, Vector3 far)
+    {
+        near = HexMetrics.Perturb(near);
+        far = HexMetrics.Perturb(far);
+        Vector3 center = HexMetrics.WallLerp(near, far);
+        Vector3 thickness = HexMetrics.WallThicknessOffset(near, far);
+
+        Vector3 v1, v2, v3, v4;
+        v1 = v3 = center - thickness;
+        v2 = v4 = center + thickness;
+        v3.y = v4.y = center.y + HexMetrics.wallHeight;
+        walls.AddQuadUnperturbed(v1, v2, v3, v4);
     }
 
     void AddWallSegment(
@@ -108,7 +143,7 @@ public class HexFeatureManager : MonoBehaviour
         nearRight = HexMetrics.Perturb(nearRight);
         farLeft = HexMetrics.Perturb(farLeft);
         farRight = HexMetrics.Perturb(farRight);
-        
+
         Vector3 left = HexMetrics.WallLerp(nearLeft, farLeft);
         Vector3 right = HexMetrics.WallLerp(nearRight, farRight);
 
@@ -163,7 +198,64 @@ public class HexFeatureManager : MonoBehaviour
         Vector3 right, HexCell rightCell
     )
     {
-        AddWallSegment(pivot, left, pivot, right);
+        if (pivotCell.IsUnderwater)
+        {
+            return;
+        }
+        bool hasLeftCell = !leftCell.IsUnderwater && pivotCell.GetEdgeType(leftCell) != HexEdgeType.Cliff;
+        bool hasRightCell = !rightCell.IsUnderwater && pivotCell.GetEdgeType(rightCell) != HexEdgeType.Cliff;
+
+        switch (hasLeftCell, hasRightCell)
+        {
+
+            case (true, true):
+                AddWallSegment(pivot, left, pivot, right);
+                break;
+            //为什么两个AddWallWedge参数顺序不同？
+            //你能解答吗？
+            case (true, false):
+                if (leftCell.Elevation < rightCell.Elevation)
+                {
+                    AddWallWedge(pivot, left, right);
+                }
+                else
+                {
+                    AddWallCap(pivot, left);
+                }
+                break;
+            case (false, true):
+                if (rightCell.Elevation < leftCell.Elevation)
+                {
+                    AddWallWedge(right, pivot, left);
+                }
+                else
+                {
+                    AddWallCap(right, pivot);
+                }
+
+                break;
+        }
+    }
+
+    void AddWallWedge(Vector3 near, Vector3 far, Vector3 point)
+    {
+        near = HexMetrics.Perturb(near);
+        far = HexMetrics.Perturb(far);
+        point = HexMetrics.Perturb(point);
+
+        Vector3 center = HexMetrics.WallLerp(near, far);
+        Vector3 thickness = HexMetrics.WallThicknessOffset(near, far);
+
+        Vector3 v1, v2, v3, v4;
+        Vector3 pointTop = point;
+        point.y = center.y;
+
+        v1 = v3 = center - thickness;
+        v2 = v4 = center + thickness;
+        v3.y = v4.y = pointTop.y = center.y + HexMetrics.wallHeight;
+        walls.AddQuadUnperturbed(v1, point, v3, pointTop);
+        walls.AddQuadUnperturbed(point, v2, pointTop, v4);
+        walls.AddTriangleUnperturbed(pointTop, v3, v4);
     }
 
     public void DrawGizmos(GizmoMode gizmoMode)

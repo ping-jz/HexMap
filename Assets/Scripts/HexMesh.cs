@@ -64,7 +64,7 @@ public class HexMesh : MonoBehaviour
         triangles.Add(vertexIndex + 2);
     }
 
-    public void AddTriangleUnPerturb(Vector3 v1, Vector3 v2, Vector3 v3)
+    public void AddTriangleUnperturbed(Vector3 v1, Vector3 v2, Vector3 v3)
     {
         int vertexIndex = vertices.Count;
         vertices.Add(v1);
