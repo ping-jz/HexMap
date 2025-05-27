@@ -626,6 +626,8 @@ public class HexGridChunk : MonoBehaviour
 
         }
 
+        features.AddWall(e1, cell, e2, neighbor);
+
         HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
         if (direction <= HexDirection.Right && nextNeighbor != null)
         {
@@ -655,7 +657,6 @@ public class HexGridChunk : MonoBehaviour
                 TriangulateCorner(v5, nextNeighbor, e1.v5, cell, e2.v5, neighbor);
             }
         }
-
     }
 
     void TriangulateWaterfaillInWater(
@@ -798,6 +799,8 @@ public class HexGridChunk : MonoBehaviour
             terrain.AddTriangle(bottom, left, right);
             terrain.AddTriangleColor(bottomCell.Color, leftCell.Color, rightCell.Color);
         }
+
+        features.AddWall(bottom, bottomCell, left, leftCell, right, rightCell);
     }
 
     void TriangulateCornerTerraces(
@@ -1063,6 +1066,8 @@ public class HexGridChunk : MonoBehaviour
             Gizmos.color = Color.green;
             roads.DrawGizmos();
         }
+
+        features.DrawGizmos(gizmoMode);
     }
 
 }

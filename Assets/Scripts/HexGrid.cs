@@ -10,7 +10,8 @@ public enum GizmoMode
     Terrian = 0b0001,
     River = 0b0010,
     Road = 0b0100,
-    All = 0b111
+    Wall = 0b1000,
+    All = 0b1111
 }
 
 public class HexGrid : MonoBehaviour
@@ -22,7 +23,6 @@ public class HexGrid : MonoBehaviour
     private HexGridChunk chunkPrefab;
     [SerializeField]
     private TextMeshPro cellLabelPrefab;
-    private int terrainTypeIndex;
     [SerializeField]
     private Texture2D noiseSource;
     [SerializeField]

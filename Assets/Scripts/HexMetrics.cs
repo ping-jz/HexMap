@@ -36,6 +36,8 @@ public static class HexMetrics
     //水面大小，解决问题之一。陡峭的悬崖会遮挡岸边
     public const float waterFactor = 0.6f;
     public const float waterBlendFactor = 1f - waterFactor;
+    public const float wallHeight = 3f;
+    public const float wallThickness = 0.75f;
 
     public static Color[] colors;
 
@@ -48,6 +50,15 @@ public static class HexMetrics
         new float[] {0.0f, 0.4f, 0.6f},
         new float[] {0.4f, 0.6f, 0.8f}
     };
+
+    public static Vector3 WallThicknessOffset(Vector3 near, Vector3 far)
+    {
+        Vector3 offset;
+        offset.x = far.x - near.x;
+        offset.y = 0f;
+        offset.z = far.z - near.z;
+        return offset.normalized * (wallThickness * 0.5f);
+    }
 
     public static float[] GetFeatureThresholds(int level)
     {
