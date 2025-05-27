@@ -736,7 +736,7 @@ public class HexGridChunk : MonoBehaviour
                             left, leftCell,
                             right, rightCell
                         );
-                        return;
+                        break;
                     }
                 case HexEdgeType.Flat:
                     {
@@ -745,7 +745,7 @@ public class HexGridChunk : MonoBehaviour
                             right, rightCell,
                             bottom, bottomCell
                         );
-                        return;
+                        break;
                     }
                 case HexEdgeType.Cliff:
                     {
@@ -754,7 +754,7 @@ public class HexGridChunk : MonoBehaviour
                             left, leftCell,
                             right, rightCell
                         );
-                        return;
+                        break;
                     }
                 default:
                     throw new ArgumentOutOfRangeException(

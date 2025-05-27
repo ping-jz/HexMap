@@ -94,15 +94,23 @@ public class HexFeatureManager : MonoBehaviour
             return;
         }
 
-        AddWallSegment(near.v1, far.v1, near.v5, far.v5);
+        AddWallSegment(near.v1, far.v1, near.v2, far.v2);
+        AddWallSegment(near.v2, far.v2, near.v3, far.v3);
+        AddWallSegment(near.v3, far.v3, near.v4, far.v4);
+        AddWallSegment(near.v4, far.v4, near.v5, far.v5);
     }
 
     void AddWallSegment(
         Vector3 nearLeft, Vector3 farLeft, Vector3 nearRight, Vector3 farRight
     )
     {
-        Vector3 left = Vector3.Lerp(nearLeft, farLeft, 0.5f);
-        Vector3 right = Vector3.Lerp(nearRight, farRight, 0.5f);
+        nearLeft = HexMetrics.Perturb(nearLeft);
+        nearRight = HexMetrics.Perturb(nearRight);
+        farLeft = HexMetrics.Perturb(farLeft);
+        farRight = HexMetrics.Perturb(farRight);
+        
+        Vector3 left = HexMetrics.WallLerp(nearLeft, farLeft);
+        Vector3 right = HexMetrics.WallLerp(nearRight, farRight);
 
         Vector3 leftThicknessOffset =
             HexMetrics.WallThicknessOffset(nearLeft, farLeft);
@@ -117,7 +125,7 @@ public class HexFeatureManager : MonoBehaviour
         v2 = v4 = right - rightThicknessOffset;
         v3.y = leftTop;
         v4.y = rightTop;
-        walls.AddQuad(v1, v2, v3, v4);
+        walls.AddQuadUnperturbed(v1, v2, v3, v4);
 
         Vector3 nearTopLeft = v3, farTopLeft = v4;
 
@@ -125,11 +133,11 @@ public class HexFeatureManager : MonoBehaviour
         v2 = v4 = right + rightThicknessOffset;
         v3.y = leftTop;
         v4.y = rightTop;
-        walls.AddQuad(v2, v1, v4, v3);
+        walls.AddQuadUnperturbed(v2, v1, v4, v3);
 
         Vector3 nearTopRight = v3, farTopRight = v4;
 
-        walls.AddQuad(nearTopLeft, farTopLeft, nearTopRight, farTopRight);
+        walls.AddQuadUnperturbed(nearTopLeft, farTopLeft, nearTopRight, farTopRight);
     }
 
     public void AddWall(
