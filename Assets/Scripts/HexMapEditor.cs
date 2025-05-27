@@ -15,7 +15,7 @@ enum EditorFlags
     Drag = 0b00000100,
     ApplyWaterLevel = 0b00001000,
     ApplyUrbanLevel = 0b00010000,
-    ApplyFarmLevel  = 0b00100000,
+    ApplyFarmLevel = 0b00100000,
     ApplyPlantLevel = 0b01000000,
 
     RiverIgnore = 0b001_00000000,
@@ -27,6 +27,11 @@ enum EditorFlags
     RoadYes = 0b010_000_00000000,
     RoadNo = 0b100_000_00000000,
     RoadOpts = 0b111_000_00000000,
+
+    WallIgnore = 0b001_000_000_00000000,
+    WallYes = 0b010_000_000_00000000,
+    WallNo = 0b100_000_000_00000000,
+    WallOpts = 0b111_000_000_00000000,
 }
 
 static class EditorFlagsExtensions
@@ -121,6 +126,9 @@ public class HexMapEditor : MonoBehaviour
         root.Q<RadioButtonGroup>("Road").RegisterValueChangedCallback(change => SetRoadMode(change.newValue));
         SetRoadMode(0);
 
+        root.Q<RadioButtonGroup>("Wall").RegisterValueChangedCallback(change => SetWallMode(change.newValue));
+        SetWallMode(0);
+
         root.Q<Button>("SaveButton").RegisterCallback<MouseUpEvent>(ent => Save());
         root.Q<Button>("LoadButton").RegisterCallback<MouseUpEvent>(ent => Load());
 
@@ -144,12 +152,12 @@ public class HexMapEditor : MonoBehaviour
 
         root.Q<SliderInt>("FarmLevel").RegisterValueChangedCallback(change => framLevel = change.newValue);
         root.Q<SliderInt>("FarmLevel").value = framLevel;
-        
-         root.Q<Toggle>("ApplyPlantLevel").RegisterValueChangedCallback(change =>
-            flags = change.newValue ?
-            flags.With(EditorFlags.ApplyPlantLevel) :
-            flags.Without(EditorFlags.ApplyPlantLevel)
-        );
+
+        root.Q<Toggle>("ApplyPlantLevel").RegisterValueChangedCallback(change =>
+           flags = change.newValue ?
+           flags.With(EditorFlags.ApplyPlantLevel) :
+           flags.Without(EditorFlags.ApplyPlantLevel)
+       );
         root.Q<Toggle>("ApplyPlantLevel").value = flags.Has(EditorFlags.ApplyPlantLevel);
 
         root.Q<SliderInt>("PlantLevel").RegisterValueChangedCallback(change => plantLevel = change.newValue);
@@ -296,6 +304,11 @@ public class HexMapEditor : MonoBehaviour
             refrechCells(cell.RemoveRoads());
         }
 
+        if (flags.HasNot(EditorFlags.WallIgnore))
+        {
+            cell.Walled = flags.Has(EditorFlags.WallYes);
+        }
+
         if (flags.Has(EditorFlags.Drag))
         {
             HexCell otherCell = cell.GetNeighbor(dragDirection.Opposite());
@@ -398,6 +411,29 @@ public class HexMapEditor : MonoBehaviour
             case 2:
                 flags = flags.With(EditorFlags.RoadNo);
                 break;
+        }
+    }
+
+    public void SetWallMode(int mode)
+    {
+        SetWallMode(mode, EditorFlags.WallOpts, EditorFlags.WallIgnore, EditorFlags.WallYes, EditorFlags.WallNo);
+    }
+
+    void SetWallMode(int mode, EditorFlags opts, EditorFlags ignore, EditorFlags yes, EditorFlags no)
+    {
+        flags = flags.Without(opts);
+        switch (mode)
+        {
+            case 0:
+                flags = flags.With(ignore);
+                break;
+            case 1:
+                flags = flags.With(yes);
+                break;
+            case 2:
+                flags = flags.With(no);
+                break;
+            default: throw new IndexOutOfRangeException($"Invalid mode: {mode}, with flags {opts} {ignore} {yes} {no}");
         }
     }
 

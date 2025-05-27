@@ -426,10 +426,7 @@ public class HexCell : MonoBehaviour
         }
         set
         {
-            if (urbanLevel != value)
-            {
-                urbanLevel = value;
-            }
+            urbanLevel = value;
         }
     }
 
@@ -441,10 +438,7 @@ public class HexCell : MonoBehaviour
         }
         set
         {
-            if (farmLevel != value)
-            {
-                farmLevel = value;
-            }
+            farmLevel = value;
         }
     }
 
@@ -456,12 +450,18 @@ public class HexCell : MonoBehaviour
         }
         set
         {
-            if (plantLevel != value)
-            {
-                plantLevel = value;
-            }
+            plantLevel = value;
         }
     }
+
+   	public bool Walled {
+		get {
+			return flags.Has(HexCellFlags.Wall);
+		}
+		set {
+            flags = value ? flags.With(HexCellFlags.Wall) : flags.Without(HexCellFlags.Wall);
+		}
+	}
 
 
     public bool IsValidRiverDestination(HexCell neighbor)

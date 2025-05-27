@@ -23,15 +23,15 @@ public enum HexCellFlags
     RiverIn = 0b111111_000000,
 
     RiverOutTR = 0b000001_000000_000000,
-    RiverOutR = 0b000010_000000_000000,
+    RiverOutR  = 0b000010_000000_000000,
     RiverOutBR = 0b000100_000000_000000,
     RiverOutBL = 0b001000_000000_000000,
-    RiverOutL = 0b010000_000000_000000,
+    RiverOutL  = 0b010000_000000_000000,
     RiverOutTL = 0b100000_000000_000000,
-
-    RiverOut = 0b111111_000000_000000,
-
-    River = 0b111111_111111_000000,
+    RiverOut   = 0b111111_000000_000000,
+    River      = 0b111111_111111_000000,
+    
+    Wall = 0b1_000000_000000_000000,
 }
 
 public static class HexCellFlagsExtensions

@@ -33,6 +33,11 @@
 			choices="---,Yes,No"
 			value="0"
 			name="Road" />
+        <engine:RadioButtonGroup
+            label="Wall"
+			choices="---,Yes,No"
+			value="0"
+			name="Wall" />
         <engine:Label text="Brush Size" />
         <engine:SliderInt value="0" high-value="4" name="BrushSize" />
         <engine:Toggle label="Labels" value="false" name="ShowUI" />

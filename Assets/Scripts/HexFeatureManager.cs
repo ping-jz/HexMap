@@ -5,6 +5,8 @@ public class HexFeatureManager : MonoBehaviour
 {
     [SerializeField]
     private HexFeatureCollection[] urbanPrefabs, farmPrefabs, plantPrefabs;
+    [SerializeField]
+    private HexMesh walls;
 
     private Transform container;
 
@@ -17,11 +19,12 @@ public class HexFeatureManager : MonoBehaviour
         }
         container = new GameObject("Features Container").transform;
         container.SetParent(transform, false);
+        walls.Clear();
     }
 
     public void Apply()
     {
-
+        walls.Apply();
     }
 
     public void AddFeature(HexCell cell, Vector3 position)
@@ -42,11 +45,11 @@ public class HexFeatureManager : MonoBehaviour
         {
             transforms.Add(urban);
         }
-            if (farm)
+        if (farm)
         {
             transforms.Add(farm);
         }
-            if (plant)
+        if (plant)
         {
             transforms.Add(plant);
         }
