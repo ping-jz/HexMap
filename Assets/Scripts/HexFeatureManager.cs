@@ -7,6 +7,8 @@ public class HexFeatureManager : MonoBehaviour
     private HexFeatureCollection[] urbanPrefabs, farmPrefabs, plantPrefabs;
     [SerializeField]
     private HexMesh walls;
+    [SerializeField]
+    private Transform wallTower;
 
     private Transform container;
 
@@ -30,11 +32,6 @@ public class HexFeatureManager : MonoBehaviour
     public void AddFeature(HexCell cell, Vector3 position)
     {
         HexHash hash = HexMetrics.SampleHashGrid(position);
-        //why multi 0.25.increase the probability ？
-        if (hash.a >= cell.UrbanLevel * 0.25f)
-        {
-            return;
-        }
 
         Transform urban = PickPrefab(urbanPrefabs, cell.UrbanLevel, hash.a, hash.d);
         Transform farm = PickPrefab(farmPrefabs, cell.FarmLevel, hash.b, hash.d);
@@ -52,6 +49,10 @@ public class HexFeatureManager : MonoBehaviour
         if (plant)
         {
             transforms.Add(plant);
+        }
+        if (transforms.Count == 0)
+        {
+            return;
         }
         Transform prefab = transforms[(int)(hash.e * transforms.Count)];
         if (!prefab)
@@ -175,6 +176,35 @@ public class HexFeatureManager : MonoBehaviour
         walls.AddQuadUnperturbed(nearTopLeft, farTopLeft, nearTopRight, farTopRight);
     }
 
+    void AddWallTower(
+        Vector3 pivot, Vector3 farLeft, Vector3 farRight
+    )
+    {
+        HexHash hash = HexMetrics.SampleHashGrid(
+                (pivot + farLeft + farRight) * (1f / 3f)
+        );
+
+        if (hash.e > HexMetrics.wallTowerThreshold)
+        {
+            return;
+        }
+
+        pivot = HexMetrics.Perturb(pivot);
+        farLeft = HexMetrics.Perturb(farLeft);
+        farRight = HexMetrics.Perturb(farRight);
+
+        Vector3 left = HexMetrics.WallLerp(pivot, farLeft);
+        Vector3 right = HexMetrics.WallLerp(pivot, farRight);
+
+        Transform towerInstance = Instantiate(wallTower);
+        towerInstance.transform.localPosition = (left + right) * 0.5f;
+        Vector3 rightDirection = right - left;
+        rightDirection.y = 0f;
+        towerInstance.transform.right = rightDirection;
+        towerInstance.SetParent(container, false);
+    }
+
+
     public void AddWall(
         Vector3 c1, HexCell cell1,
         Vector3 c2, HexCell cell2,
@@ -210,6 +240,7 @@ public class HexFeatureManager : MonoBehaviour
 
             case (true, true):
                 AddWallSegment(pivot, left, pivot, right);
+                AddWallTower(pivot, left, right);
                 break;
             //为什么两个AddWallWedge参数顺序不同？
             //你能解答吗？

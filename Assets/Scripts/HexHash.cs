@@ -13,7 +13,7 @@ public struct HexHash
 		hash.c = Random.value * 0.9999f;
 		hash.d = Random.value * 0.9999f;
 		hash.e = Random.value * 0.9999f;
-				hash.f = Random.value * 0.9999f;
+		hash.f = Random.value * 0.9999f;
 		return hash;
 	}
 }

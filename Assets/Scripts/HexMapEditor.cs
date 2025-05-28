@@ -65,7 +65,7 @@ public class HexMapEditor : MonoBehaviour
     int urbanLevel;
     int framLevel;
     int plantLevel;
-    EditorFlags flags = EditorFlags.ApplyColor.With(EditorFlags.ApplyElevation);
+    EditorFlags flags;
     int brushSize;
     HexDirection dragDirection;
     HexCell previousCell;
