@@ -40,6 +40,7 @@ public static class HexMetrics
     public const float wallYOffset = -1f;
     public const float wallThickness = 0.75f;
     public const float wallElevationOffset = verticalTerraceStepSize;
+    public const float bridgeDesignLength = 7f;
 
     public static Color[] colors;
 

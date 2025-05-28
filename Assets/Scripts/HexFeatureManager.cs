@@ -8,7 +8,7 @@ public class HexFeatureManager : MonoBehaviour
     [SerializeField]
     private HexMesh walls;
     [SerializeField]
-    private Transform wallTower;
+    private Transform wallTower, bridge;
 
     private Transform container;
 
@@ -287,6 +287,20 @@ public class HexFeatureManager : MonoBehaviour
         walls.AddQuadUnperturbed(v1, point, v3, pointTop);
         walls.AddQuadUnperturbed(point, v2, pointTop, v4);
         walls.AddTriangleUnperturbed(pointTop, v3, v4);
+    }
+
+    public void AddBridge(Vector3 roadCenter1, Vector3 roadCenter2)
+    {
+        roadCenter1 = HexMetrics.Perturb(roadCenter1);
+        roadCenter2 = HexMetrics.Perturb(roadCenter2);
+        Transform instance = Instantiate(bridge);
+        instance.localPosition = (roadCenter1 + roadCenter2) * 0.5f;
+        instance.forward = roadCenter2 - roadCenter1;
+        float length = Vector3.Distance(roadCenter1, roadCenter2);
+        instance.localScale = new Vector3(
+            1f, 1f, length * (1f / HexMetrics.bridgeDesignLength)
+        );
+        instance.SetParent(container, false);
     }
 
     public void DrawGizmos(GizmoMode gizmoMode)
