@@ -13,6 +13,7 @@ public class HexCell : MonoBehaviour
     private int elevation;
     private int chunkIndex;
     private int waterLevel;
+    private int specialIndex;
     private HexCellFlags flags;
     private int urbanLevel, farmLevel, plantLevel;
     public RectTransform uiRect;
@@ -113,17 +114,22 @@ public class HexCell : MonoBehaviour
             return defaultEnumer;
         }
 
-        flags = flags.WithRoad(d);
+
         HexCell neighbor = neighbors[(int)d];
-        if (neighbor)
+        if (neighbor == null)
         {
-            neighbor.flags = neighbor.flags.WithRoad(d.Opposite());
-            return new HexCell[] { this, neighbor };
+            return defaultEnumer;
         }
-        else
+
+        if (IsSpecial || neighbor.IsSpecial)
         {
-            return new HexCell[] { this };
+            return defaultEnumer;
         }
+
+        flags = flags.WithRoad(d);
+        neighbor.flags = neighbor.flags.WithRoad(d.Opposite());
+        return new HexCell[] { this, neighbor };
+
     }
 
 
@@ -204,9 +210,11 @@ public class HexCell : MonoBehaviour
         }
 
         flags = flags.WithRiverOut(direction);
+        specialIndex = 0;
 
         affecetd = affecetd.Concat(neighbor.RemoveIncomingRiver());
         neighbor.flags = neighbor.flags.WithRiverIn(direction.Opposite());
+        neighbor.specialIndex = 0;
 
         affecetd = affecetd.Concat(RemoveRoad(direction));
         return affecetd;
@@ -454,14 +462,37 @@ public class HexCell : MonoBehaviour
         }
     }
 
-   	public bool Walled {
-		get {
-			return flags.Has(HexCellFlags.Wall);
-		}
-		set {
+    public bool Walled
+    {
+        get
+        {
+            return flags.Has(HexCellFlags.Wall);
+        }
+        set
+        {
             flags = value ? flags.With(HexCellFlags.Wall) : flags.Without(HexCellFlags.Wall);
-		}
-	}
+        }
+    }
+
+    public int SpecialIndex
+    {
+        get
+        {
+            return specialIndex;
+        }
+        set
+        {
+            specialIndex = value;
+        }
+    }
+
+    public bool IsSpecial
+    {
+        get
+        {
+            return specialIndex > 0;
+        }
+    }
 
 
     public bool IsValidRiverDestination(HexCell neighbor)
@@ -478,6 +509,7 @@ public class HexCell : MonoBehaviour
         writer.Write(urbanLevel);
         writer.Write(farmLevel);
         writer.Write(plantLevel);
+        writer.Write(specialIndex);
     }
 
     public void Load(BinaryReader reader)
@@ -489,5 +521,6 @@ public class HexCell : MonoBehaviour
         urbanLevel = reader.ReadInt32();
         farmLevel = reader.ReadInt32();
         plantLevel = reader.ReadInt32();
+        specialIndex = reader.ReadInt32();
     }
 }

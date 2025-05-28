@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class HexFeatureManager : MonoBehaviour
@@ -9,6 +10,8 @@ public class HexFeatureManager : MonoBehaviour
     private HexMesh walls;
     [SerializeField]
     private Transform wallTower, bridge;
+    [SerializeField]
+    private Transform[] specials;
 
     private Transform container;
 
@@ -31,6 +34,11 @@ public class HexFeatureManager : MonoBehaviour
 
     public void AddFeature(HexCell cell, Vector3 position)
     {
+        if (cell.IsSpecial)
+        {
+            return;
+        }
+
         HexHash hash = HexMetrics.SampleHashGrid(position);
 
         Transform urban = PickPrefab(urbanPrefabs, cell.UrbanLevel, hash.a, hash.d);
@@ -301,6 +309,15 @@ public class HexFeatureManager : MonoBehaviour
             1f, 1f, length * (1f / HexMetrics.bridgeDesignLength)
         );
         instance.SetParent(container, false);
+    }
+
+    public void AddSpecialFeature(HexCell cell, Vector3 position)
+    {
+        Transform instance = Instantiate(specials[cell.SpecialIndex - 1]);
+        instance.localPosition = HexMetrics.Perturb(position);
+        instance.SetParent(container, false);
+        HexHash hash = HexMetrics.SampleHashGrid(position);
+        instance.localRotation = Quaternion.Euler(0f, 360f * hash.e, 0f);
     }
 
     public void DrawGizmos(GizmoMode gizmoMode)

@@ -23,6 +23,8 @@
     	<engine:SliderInt value="0" high-value="3" name="FarmLevel" />
         <engine:Toggle label="Plant" value="true" name="ApplyPlantLevel" />
     	<engine:SliderInt value="0" high-value="3" name="PlantLevel" />
+		<engine:Toggle label="Special" value="true" name="ApplySpecialIndex" />
+    	<engine:SliderInt value="0" high-value="3" name="SpecialIndex" />
         <engine:RadioButtonGroup
             label="River"
 			choices="---,Yes,No"

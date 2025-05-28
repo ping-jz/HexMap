@@ -10,28 +10,29 @@ using UnityEngine.UIElements;
 enum EditorFlags
 {
     Nothing = 0,
-    ApplyElevation = 0b00000001,
-    ApplyColor = 0b00000010,
-    Drag = 0b00000100,
-    ApplyWaterLevel = 0b00001000,
-    ApplyUrbanLevel = 0b00010000,
-    ApplyFarmLevel = 0b00100000,
-    ApplyPlantLevel = 0b01000000,
+    ApplyElevation = 0b000000001,
+    ApplyColor = 0b000000010,
+    Drag = 0b000000100,
+    ApplyWaterLevel = 0b000001000,
+    ApplyUrbanLevel = 0b000010000,
+    ApplyFarmLevel = 0b000100000,
+    ApplyPlantLevel = 0b001000000,
+    ApplySpecialIndex = 0b010000000,
 
-    RiverIgnore = 0b001_00000000,
-    RiverYes = 0b010_00000000,
-    RiverNo = 0b100_00000000,
-    RiverOpts = 0b111_00000000,
+    RiverIgnore = 0b001_000000000,
+    RiverYes = 0b010_000000000,
+    RiverNo = 0b100_000000000,
+    RiverOpts = 0b111_000000000,
 
-    RoadIgnore = 0b001_000_00000000,
-    RoadYes = 0b010_000_00000000,
-    RoadNo = 0b100_000_00000000,
-    RoadOpts = 0b111_000_00000000,
+    RoadIgnore = 0b001_000_000000000,
+    RoadYes = 0b010_000_000000000,
+    RoadNo = 0b100_000_000000000,
+    RoadOpts = 0b111_000_000000000,
 
-    WallIgnore = 0b001_000_000_00000000,
-    WallYes = 0b010_000_000_00000000,
-    WallNo = 0b100_000_000_00000000,
-    WallOpts = 0b111_000_000_00000000,
+    WallIgnore = 0b001_000_000_000000000,
+    WallYes = 0b010_000_000_000000000,
+    WallNo = 0b100_000_000_000000000,
+    WallOpts = 0b111_000_000_000000000,
 }
 
 static class EditorFlagsExtensions
@@ -67,6 +68,7 @@ public class HexMapEditor : MonoBehaviour
     int plantLevel;
     EditorFlags flags;
     int brushSize;
+    int specialIndex;
     HexDirection dragDirection;
     HexCell previousCell;
 
@@ -162,6 +164,16 @@ public class HexMapEditor : MonoBehaviour
 
         root.Q<SliderInt>("PlantLevel").RegisterValueChangedCallback(change => plantLevel = change.newValue);
         root.Q<SliderInt>("PlantLevel").value = plantLevel;
+
+        root.Q<Toggle>("ApplySpecialIndex").RegisterValueChangedCallback(change =>
+           flags = change.newValue ?
+           flags.With(EditorFlags.ApplySpecialIndex) :
+           flags.Without(EditorFlags.ApplySpecialIndex)
+       );
+        root.Q<Toggle>("ApplySpecialIndex").value = flags.Has(EditorFlags.ApplySpecialIndex);
+
+        root.Q<SliderInt>("SpecialIndex").RegisterValueChangedCallback(change => specialIndex = change.newValue);
+        root.Q<SliderInt>("SpecialIndex").value = specialIndex;
     }
 
     void Update()
@@ -252,6 +264,14 @@ public class HexMapEditor : MonoBehaviour
         if (cell == null)
         {
             return;
+        }
+
+        if (flags.Has(EditorFlags.ApplySpecialIndex) &&
+                !cell.HasRiver &&
+                !cell.IsUnderwater)
+        {
+            cell.SpecialIndex = specialIndex;
+            cell.RemoveRoads();
         }
 
         if (flags.Has(EditorFlags.ApplyColor))

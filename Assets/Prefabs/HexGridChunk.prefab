@@ -560,6 +560,10 @@ MonoBehaviour:
   walls: {fileID: 4252362781899072141}
   wallTower: {fileID: 3935756336029602787, guid: e47dc645575d0164fb6386e340a4ef05, type: 3}
   bridge: {fileID: 4000012598710820, guid: 7ff1183a619294044b77ee97fa538a98, type: 3}
+  specials:
+  - {fileID: 4000013750885840, guid: 5ebccdf1b67f3ea46bc60c3c457bc99f, type: 3}
+  - {fileID: 4000012893891830, guid: e865b589a43316d49b534636ef919fbb, type: 3}
+  - {fileID: 4000011263270592, guid: 299209fa44a70f6499f44a0906c37be5, type: 3}
 --- !u!1 &4886450317385575496
 GameObject:
   m_ObjectHideFlags: 0
