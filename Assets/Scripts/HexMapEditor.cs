@@ -59,7 +59,11 @@ public class HexMapEditor : MonoBehaviour
     [SerializeField]
     private HexGrid hexGrid;
     [SerializeField]
-    private UIDocument sidePanels;
+    private UIDocument sidePanels, newMapPanel;
+    [SerializeField]
+    private HexMapEditorSaveLoad saveLoad;
+    [SerializeField]
+    private HexMapCamera hexMapCamera;
     private int activeTerrianType;
     int elevation;
     int waterLevel;
@@ -87,6 +91,26 @@ public class HexMapEditor : MonoBehaviour
     }
 
     private void RegisterEvents()
+    {
+        registerSidePanel();
+    }
+
+    private void registerNewMapPanel()
+    {
+        VisualElement root = newMapPanel.rootVisualElement;
+        if (root == null)
+        {
+            return;
+        }
+
+        root.Q<Button>("SmallMapButton").RegisterCallback<MouseUpEvent>(ent => CreateSmallMap());
+        root.Q<Button>("MediumMapButton").RegisterCallback<MouseUpEvent>(ent => CreateMediumMap());
+        root.Q<Button>("LargeMapButton").RegisterCallback<MouseUpEvent>(ent => CreateLargeMap());
+
+        root.Q<Button>("CancelMapButton").RegisterCallback<MouseUpEvent>(ent => CloseNewMapPanel());
+    }
+
+    private void registerSidePanel()
     {
         VisualElement root = sidePanels.rootVisualElement;
         if (root == null)
@@ -131,8 +155,8 @@ public class HexMapEditor : MonoBehaviour
         root.Q<RadioButtonGroup>("Wall").RegisterValueChangedCallback(change => SetWallMode(change.newValue));
         SetWallMode(0);
 
-        root.Q<Button>("SaveButton").RegisterCallback<MouseUpEvent>(ent => Save());
-        root.Q<Button>("LoadButton").RegisterCallback<MouseUpEvent>(ent => Load());
+        root.Q<Button>("SaveButton").RegisterCallback<MouseUpEvent>(ent => saveLoad.Open(true, hexGrid, hexMapCamera));
+        root.Q<Button>("LoadButton").RegisterCallback<MouseUpEvent>(ent => saveLoad.Open(false, hexGrid, hexMapCamera));
 
 
         root.Q<Toggle>("ApplyUrbanLevel").RegisterValueChangedCallback(change =>
@@ -174,6 +198,42 @@ public class HexMapEditor : MonoBehaviour
 
         root.Q<SliderInt>("SpecialIndex").RegisterValueChangedCallback(change => specialIndex = change.newValue);
         root.Q<SliderInt>("SpecialIndex").value = specialIndex;
+
+        root.Q<Button>("NewMapButton").RegisterCallback<MouseUpEvent>(ent => OpenNewMapPanel());
+    }
+
+    void OpenNewMapPanel()
+    {
+        newMapPanel.gameObject.SetActive(true);
+        registerNewMapPanel();
+    }
+
+
+    void CloseNewMapPanel()
+    {
+        newMapPanel.gameObject.SetActive(false);
+    }
+
+    void CreateMap(int x, int z)
+    {
+        hexGrid.CreateMap(x, z);
+        hexMapCamera.AdjustPosition(0f, 0f);
+        CloseNewMapPanel();
+    }
+
+    public void CreateSmallMap()
+    {
+        CreateMap(20, 15);
+    }
+
+    public void CreateMediumMap()
+    {
+        CreateMap(40, 30);
+    }
+
+    public void CreateLargeMap()
+    {
+        CreateMap(80, 60);
     }
 
     void Update()
@@ -462,6 +522,8 @@ public class HexMapEditor : MonoBehaviour
         string path = Path.Combine(Application.dataPath, "test.map");
         using (BinaryWriter write = new BinaryWriter(File.Open(path, FileMode.Create)))
         {
+            int version = 1;
+            write.Write(version);
             hexGrid.Save(write);
         }
     }
@@ -471,8 +533,17 @@ public class HexMapEditor : MonoBehaviour
         string path = Path.Combine(Application.dataPath, "test.map");
         using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
         {
-            hexGrid.Load(reader);
-        }
+            int version = reader.ReadInt32();
+            if (version == 1)
+            {
+                hexGrid.Load(reader);
+                hexMapCamera.AdjustPosition(0f, 0f);
+            }
+            else
+            {
+                Debug.LogWarning($"Unknown map format {version}");
+            }
 
+        }
     }
 }

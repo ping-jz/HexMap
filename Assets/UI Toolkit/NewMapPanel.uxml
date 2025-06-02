@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:engine="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+>
+    <Style src="Side Panel Styles.uss"/>
+	<engine:VisualElement name="backgroundPanel" class="backgroundPanel">
+	    <engine:VisualElement name="newMapPanel" class="centerPanel">
+	        <engine:Button text="Small" name="SmallMapButton" />
+		    <engine:Button text="Medium" name="MediumMapButton" />
+		    <engine:Button text="Large" name="LargeMapButton" />
+		    <engine:Button text="Cancel" name="CancelMapButton" style="margin-top:10px"/>
+		</engine:VisualElement>
+	</engine:VisualElement>
+</engine:UXML>

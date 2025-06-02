@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:engine="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+>
+    <Style src="Side Panel Styles.uss"/>
+	<engine:VisualElement name="backgroundPanel" class="backgroundPanel">
+	    <engine:VisualElement name="saveMapPanel" class="centerPanel">
+		    <engine:Label text="asdfa" name="MenuText"/>
+		    <engine:DropdownField name="MapList">
+		    </engine:DropdownField>
+			 <engine:TextField placeholder-text="Enter or select a map name" name="nameInput"/>
+		     <engine:VisualElement style="flex-direction: row;">
+		         <engine:Button text="save" name="SaveLoadButton" />
+		         <engine:Button text="delete" name="deleteMapButton" />
+		         <engine:Button text="cancel" name="CancelButton"/>
+		     </engine:VisualElement>
+		</engine:VisualElement>
+	</engine:VisualElement>
+</engine:UXML>

@@ -79,7 +79,7 @@ public class HexMapCamera : MonoBehaviour
 
     //https://catlikecoding.com/unity/tutorials/hex-map/part-5/#2.2
     //具体思考过程看这里
-    void AdjustPosition(float xDelta, float zDelta)
+    public void AdjustPosition(float xDelta, float zDelta)
     {
         //归一化的含义我还不是很清楚，规范化之后的数值就是[-1,1]之间，可以当作方向来使用了
         Vector3 direction = transform.localRotation * new Vector3(xDelta, 0f, zDelta).normalized;
@@ -97,10 +97,10 @@ public class HexMapCamera : MonoBehaviour
 
     Vector3 ClampPosition(Vector3 position)
     {
-        float xMax = (grid.ChunkCountX * HexMetrics.chunkSizeX - 0.5f) * (2f * HexMetrics.innerRadius);
+        float xMax = (grid.CellCountX - 0.5f) * (2f * HexMetrics.innerRadius);
         position.x = Mathf.Clamp(position.x, 0f, xMax);
 
-        float zMax = (grid.ChunkCountZ * HexMetrics.chunkSizeZ - 1) * (1.5f * HexMetrics.outerRadius);
+        float zMax = (grid.CellCountZ - 1) * (1.5f * HexMetrics.outerRadius);
         position.z = Mathf.Clamp(position.z, 0, zMax);
         return position;
     }

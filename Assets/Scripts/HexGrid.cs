@@ -26,12 +26,12 @@ public class HexGrid : MonoBehaviour
     [SerializeField]
     private Texture2D noiseSource;
     [SerializeField]
-    private int chunkCountX = 4, chunkCountZ = 3;
+    private int cellCountX = 20, cellCountZ = 15;
     [SerializeField]
     GizmoMode gizmos;
     [SerializeField]
     private int seed;
-    private int cellCountX = 6, cellCountZ = 6;
+    private int chunkCountX, chunkCountZ;
     HexCell[] cells;
     HexGridChunk[] chunks;
 
@@ -45,17 +45,50 @@ public class HexGrid : MonoBehaviour
         get { return chunkCountZ; }
     }
 
+    public int CellCountX
+    {
+        get { return cellCountX; }
+    }
+
+    public int CellCountZ
+    {
+        get { return cellCountZ; }
+    }
+
     void Awake()
     {
         HexMetrics.noiseSource = noiseSource;
         HexMetrics.InitializeHashGrid(seed);
 
-        cellCountX = chunkCountX * HexMetrics.chunkSizeX;
-        cellCountZ = chunkCountZ * HexMetrics.chunkSizeZ;
+        CreateMap(cellCountX, cellCountZ);
+    }
+
+    public bool CreateMap(int x, int z)
+    {
+        if (
+            x <= 0 || x % HexMetrics.chunkSizeX != 0 ||
+            z <= 0 || z % HexMetrics.chunkSizeZ != 0
+        )
+        {
+            Debug.LogError("Unsupported map size.");
+            return false;
+        }
+        if (chunks != null)
+        {
+            foreach (HexGridChunk chunk in chunks)
+            {
+                Destroy(chunk.gameObject);
+            }
+        }
+        cellCountX = x;
+        cellCountZ = z;
+        chunkCountX = cellCountX / HexMetrics.chunkSizeX;
+        chunkCountZ = cellCountZ / HexMetrics.chunkSizeZ;
 
         CreateChunks();
         CreateCell();
         ShowUI(false);
+        return true;
     }
 
     void OnEnable()
@@ -191,6 +224,8 @@ public class HexGrid : MonoBehaviour
 
     public void Save(BinaryWriter writer)
     {
+        writer.Write(cellCountX);
+        writer.Write(cellCountZ);
         foreach (HexCell cell in cells)
         {
             cell.Save(writer);
@@ -199,6 +234,11 @@ public class HexGrid : MonoBehaviour
 
     public void Load(BinaryReader reader)
     {
+        if (!CreateMap(reader.ReadInt32(), reader.ReadInt32()))
+        {
+            return;
+        }
+        
         foreach (HexCell cell in cells)
         {
             cell.Load(reader);

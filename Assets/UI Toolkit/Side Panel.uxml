@@ -17,14 +17,6 @@
     	<engine:SliderInt value="0" high-value="6" name="Elevation" />
         <engine:Toggle label="Water" value="true" name="ApplyWaterLevel" />
     	<engine:SliderInt value="0" high-value="6" name="WaterLevel" />
-        <engine:Toggle label="Urban" value="true" name="ApplyUrbanLevel" />
-    	<engine:SliderInt value="0" high-value="3" name="UrbanLevel" />
-        <engine:Toggle label="Farm" value="true" name="ApplyFarmLevel" />
-    	<engine:SliderInt value="0" high-value="3" name="FarmLevel" />
-        <engine:Toggle label="Plant" value="true" name="ApplyPlantLevel" />
-    	<engine:SliderInt value="0" high-value="3" name="PlantLevel" />
-		<engine:Toggle label="Special" value="true" name="ApplySpecialIndex" />
-    	<engine:SliderInt value="0" high-value="3" name="SpecialIndex" />
         <engine:RadioButtonGroup
             label="River"
 			choices="---,Yes,No"
@@ -47,5 +39,18 @@
 			<engine:Button text="Save" name="SaveButton" />
 			<engine:Button text="Load" name="LoadButton" />
 		</engine:VisualElement>
+		
+	</engine:VisualElement>
+	
+	<engine:VisualElement name="RightPanel" class="sidePanel" style="right:0">
+	 <engine:Toggle label="Urban" value="true" name="ApplyUrbanLevel" />
+    	<engine:SliderInt value="0" high-value="3" name="UrbanLevel" />
+        <engine:Toggle label="Farm" value="true" name="ApplyFarmLevel" />
+    	<engine:SliderInt value="0" high-value="3" name="FarmLevel" />
+        <engine:Toggle label="Plant" value="true" name="ApplyPlantLevel" />
+    	<engine:SliderInt value="0" high-value="3" name="PlantLevel" />
+		<engine:Toggle label="Special" value="true" name="ApplySpecialIndex" />
+    	<engine:SliderInt value="0" high-value="3" name="SpecialIndex" />
+	    <engine:Button text="NewMap" name="NewMapButton" />
 	</engine:VisualElement>
 </engine:UXML>
