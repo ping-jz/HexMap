@@ -42,7 +42,7 @@ public class HexMapEditorSaveLoad : MonoBehaviour
         FillList(field);
         field.RegisterValueChangedCallback(ent => setSelectedPath(ent.newValue));
 
-        // root.Q<Button>("LargeMapButton").RegisterCallback<MouseUpEvent>(ent => CreateLargeMap());
+        root.Q<Button>("deleteMapButton").RegisterCallback<MouseUpEvent>(ent => Delete());
 
         root.Q<Button>("CancelButton").RegisterCallback<MouseUpEvent>(ent => Close());
     }
@@ -87,6 +87,7 @@ public class HexMapEditorSaveLoad : MonoBehaviour
         string[] paths = Directory.GetFiles(Application.dataPath, "*.map");
         Array.Sort(paths);
         dropdownField.choices.Clear();
+        dropdownField.value = "";
         foreach (string path in paths)
         {
             dropdownField.choices.Add(Path.GetFileNameWithoutExtension(path));
