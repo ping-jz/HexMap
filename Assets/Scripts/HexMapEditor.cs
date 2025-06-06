@@ -78,7 +78,6 @@ public class HexMapEditor : MonoBehaviour
 
     void Awake()
     {
-        HexMetrics.colors = colors;
 
         SelectTerrianType(1);
         RegisterEvents();
@@ -86,7 +85,6 @@ public class HexMapEditor : MonoBehaviour
 
     void OnValidate()
     {
-        HexMetrics.colors = colors;
         RegisterEvents();
     }
 

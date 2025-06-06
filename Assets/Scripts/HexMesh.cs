@@ -6,10 +6,11 @@ using System;
 public enum MeshFlags
 {
     Nothing = 0,
-    Collider = 0b0001,
-    Color = 0b0010,
-    UVCoordinates = 0b0100,
-    UVCoordinates1 = 0b1000,
+    Collider = 0b00001,
+    Color = 0b00010,
+    UVCoordinates = 0b00100,
+    UVCoordinates1 = 0b01000,
+    TerrainTypes = 0b10000
 }
 
 public static class MeshFlagsExtensions
@@ -32,7 +33,7 @@ public static class MeshFlagsExtensions
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class HexMesh : MonoBehaviour
 {
-    [NonSerialized] List<Vector3> vertices;
+    [NonSerialized] List<Vector3> vertices, terrainTypes;
     [NonSerialized] List<int> triangles;
     [NonSerialized] List<Color> colors;
     [NonSerialized] List<Vector2> uvs;
@@ -198,6 +199,21 @@ public class HexMesh : MonoBehaviour
         uv1s.Add(new Vector2(uMax, vMax));
     }
 
+    public void AddTriangleTerrainTypes(Vector3 types)
+    {
+        terrainTypes.Add(types);
+        terrainTypes.Add(types);
+        terrainTypes.Add(types);
+    }
+
+    public void AddQuadTerrainTypes(Vector3 types)
+    {
+        terrainTypes.Add(types);
+        terrainTypes.Add(types);
+        terrainTypes.Add(types);
+        terrainTypes.Add(types);
+    }
+
 
     public void Clear()
     {
@@ -215,6 +231,10 @@ public class HexMesh : MonoBehaviour
         if (flags.Has(MeshFlags.UVCoordinates1))
         {
             uv1s = ListPool<Vector2>.Get();
+        }
+        if (flags.Has(MeshFlags.TerrainTypes))
+        {
+            terrainTypes = ListPool<Vector3>.Get();
         }
     }
 
@@ -247,6 +267,12 @@ public class HexMesh : MonoBehaviour
         {
             hexMesh.SetUVs(1, uv1s);
             ListPool<Vector2>.Add(uv1s);
+        }
+
+        if (flags.Has(MeshFlags.TerrainTypes))
+        {
+            hexMesh.SetUVs(2, terrainTypes);
+            ListPool<Vector3>.Add(terrainTypes);
         }
     }
 

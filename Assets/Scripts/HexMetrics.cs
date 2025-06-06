@@ -41,9 +41,6 @@ public static class HexMetrics
     public const float wallThickness = 0.75f;
     public const float wallElevationOffset = verticalTerraceStepSize;
     public const float bridgeDesignLength = 7f;
-
-    public static Color[] colors;
-
     public const int hashGridSize = 256;
 
     static HexHash[] hashGrid;
