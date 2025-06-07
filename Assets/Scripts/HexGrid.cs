@@ -2,6 +2,9 @@ using TMPro;
 using UnityEngine;
 using System;
 using System.IO;
+using System.Collections;
+using UnityEditor.Search;
+using System.Collections.Generic;
 
 [Flags]
 public enum GizmoMode
@@ -223,11 +226,65 @@ public class HexGrid : MonoBehaviour
 
     public void FindDistancesTo(HexCell cell)
     {
+        StopAllCoroutines();
+        StartCoroutine(search(cell));
+    }
+
+    private IEnumerator search(HexCell cell)
+    {
         foreach (HexCell c in cells)
         {
-            c.Distance = cell.Coordinates.DistanceTo(c.Coordinates);  
+            c.Distance = int.MaxValue;
         }
 
+        WaitForSeconds delay = new WaitForSeconds(1 / 1000f);
+        Queue<HexCell> frontier = new Queue<HexCell>();
+        cell.Distance = 0;
+        frontier.Enqueue(cell);
+        while (frontier.Count > 0)
+        {
+            yield return delay;
+            HexCell current = frontier.Dequeue();
+            for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
+            {
+                HexCell neighbor = current.GetNeighbor(d);
+                if (!neighbor || neighbor.Distance != int.MaxValue)
+                {
+                    continue;
+                }
+
+                if (neighbor.IsUnderwater)
+                {
+                    continue;
+                }
+
+                HexEdgeType edgeType = current.GetEdgeType(neighbor);
+
+                if (edgeType == HexEdgeType.Cliff)
+                {
+                    continue;
+                }
+
+                int distance = current.Distance;
+                if (current.HasRoadThroughEdge(d))
+                {
+                    distance += 1;
+                }
+                else if (current.Walled != neighbor.Walled)
+                {
+                    continue;
+                }
+                else
+                {
+                    distance += edgeType == HexEdgeType.Flat ? 5 : 10;
+                    distance += neighbor.UrbanLevel + neighbor.FarmLevel +
+                        neighbor.PlantLevel;
+                }
+
+                neighbor.Distance = distance;
+                frontier.Enqueue(neighbor);
+            }
+        }
     }
 
     public void Save(BinaryWriter writer)
@@ -242,6 +299,7 @@ public class HexGrid : MonoBehaviour
 
     public void Load(BinaryReader reader)
     {
+        StopAllCoroutines();
         if (!CreateMap(reader.ReadInt32(), reader.ReadInt32()))
         {
             return;

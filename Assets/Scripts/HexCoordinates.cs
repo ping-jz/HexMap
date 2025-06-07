@@ -45,7 +45,7 @@ public struct HexCoordinates
 
     private int distanceTo(int a, int b)
     {
-        return (a < b ? b - a : a - b);
+        return a < b ? b - a : a - b;
     }
 
     public static HexCoordinates FromOffsetCoordinates(int x, int z)

@@ -497,7 +497,7 @@ public class HexCell : MonoBehaviour
     void UpdateDistanceLabel()
     {
         TextMeshPro label = uiRect.GetComponent<TextMeshPro>();
-        label.text = distance.ToString();
+        label.text = distance == int.MaxValue ? "" : distance.ToString();
     }
 
     public int Distance
