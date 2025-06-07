@@ -18,6 +18,7 @@ enum EditorFlags
     ApplyFarmLevel = 0b000100000,
     ApplyPlantLevel = 0b001000000,
     ApplySpecialIndex = 0b010000000,
+    EditModel = 0b100000000,
 
     RiverIgnore = 0b001_000000000,
     RiverYes = 0b010_000000000,
@@ -64,6 +65,8 @@ public class HexMapEditor : MonoBehaviour
     private HexMapEditorSaveLoad saveLoad;
     [SerializeField]
     private HexMapCamera hexMapCamera;
+    [SerializeField]
+    private Material terrainMaterial;
     private int activeTerrianType;
     int elevation;
     int waterLevel;
@@ -78,9 +81,10 @@ public class HexMapEditor : MonoBehaviour
 
     void Awake()
     {
-
         SelectTerrianType(1);
         RegisterEvents();
+        ShowGrid(false);
+        SetEditerMode(true);
     }
 
     void OnValidate()
@@ -142,7 +146,8 @@ public class HexMapEditor : MonoBehaviour
         root.Q<SliderInt>("BrushSize").RegisterValueChangedCallback(change => SetBrushSize(change.newValue));
         root.Q<SliderInt>("BrushSize").value = brushSize;
 
-        root.Q<Toggle>("ShowUI").RegisterValueChangedCallback(change => hexGrid.ShowUI(change.newValue));
+        root.Q<Toggle>("EditerMode").RegisterValueChangedCallback(change => SetEditerMode(change.newValue));
+        root.Q<Toggle>("ShowGrid").RegisterValueChangedCallback(change => ShowGrid(change.newValue));
 
         root.Q<RadioButtonGroup>("River").RegisterValueChangedCallback(change => SetRiverMode(change.newValue));
         SetRiverMode(0);
@@ -266,7 +271,14 @@ public class HexMapEditor : MonoBehaviour
             {
                 flags = flags.Without(EditorFlags.Drag);
             }
-            EditCells(cell);
+            if (flags.Has(EditorFlags.EditModel))
+            {
+                EditCells(cell);
+            }
+            else
+            {
+                hexGrid.FindDistancesTo(cell);
+            }
             previousCell = cell;
         }
         else
@@ -515,6 +527,24 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
+    public void ShowGrid(bool visible)
+    {
+        if (visible)
+        {
+            terrainMaterial.EnableKeyword("_SHOW_GRID");
+        }
+        else
+        {
+            terrainMaterial.DisableKeyword("_SHOW_GRID");
+        }
+    }
+
+    public void SetEditerMode(bool toggle)
+    {
+        flags = toggle ? flags.With(EditorFlags.EditModel) : flags.Without(EditorFlags.EditModel);
+        hexGrid.ShowUI(!toggle);
+    }
+
     public void Save()
     {
         string path = Path.Combine(Application.dataPath, "test.map");
@@ -529,6 +559,7 @@ public class HexMapEditor : MonoBehaviour
     public void Load()
     {
         string path = Path.Combine(Application.dataPath, "test.map");
+        SetEditerMode(true);
         using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
         {
             int version = reader.ReadInt32();

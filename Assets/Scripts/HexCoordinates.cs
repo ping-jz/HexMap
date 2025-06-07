@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [System.Serializable]
@@ -35,6 +36,16 @@ public struct HexCoordinates
         {
             return -X - Z;
         }
+    }
+
+    public int DistanceTo(HexCoordinates other)
+    {
+        return (distanceTo(X, other.x) + distanceTo(Y, other.Y) + distanceTo(Z, other.Z)) / 2;
+    }
+
+    private int distanceTo(int a, int b)
+    {
+        return (a < b ? b - a : a - b);
     }
 
     public static HexCoordinates FromOffsetCoordinates(int x, int z)

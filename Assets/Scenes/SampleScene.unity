@@ -777,6 +777,7 @@ MonoBehaviour:
   newMapPanel: {fileID: 773933542}
   saveLoad: {fileID: 2001973517}
   hexMapCamera: {fileID: 894289761}
+  terrainMaterial: {fileID: 2100000, guid: 0873c74fa859d3647872d7ba7dc5a35b, type: 2}
 --- !u!114 &1991754006
 MonoBehaviour:
   m_ObjectHideFlags: 0

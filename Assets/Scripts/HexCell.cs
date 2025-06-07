@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using TMPro;
 
 public class HexCell : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class HexCell : MonoBehaviour
     private int chunkIndex;
     private int waterLevel;
     private int specialIndex;
+    private int distance;
     private HexCellFlags flags;
     private int urbanLevel, farmLevel, plantLevel;
     public RectTransform uiRect;
@@ -404,7 +406,7 @@ public class HexCell : MonoBehaviour
             flags.RiverInToDirection() : flags.RiverOutToDirection();
         }
     }
-    
+
     public int TerrainTypeIndex
     {
         get
@@ -490,6 +492,25 @@ public class HexCell : MonoBehaviour
     public bool IsValidRiverDestination(HexCell neighbor)
     {
         return neighbor && (elevation >= neighbor.elevation || waterLevel == neighbor.elevation);
+    }
+
+    void UpdateDistanceLabel()
+    {
+        TextMeshPro label = uiRect.GetComponent<TextMeshPro>();
+        label.text = distance.ToString();
+    }
+
+    public int Distance
+    {
+        get
+        {
+            return distance;
+        }
+        set
+        {
+            distance = value;
+            UpdateDistanceLabel();
+        }
     }
 
     public void Save(BinaryWriter writer)

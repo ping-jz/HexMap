@@ -138,7 +138,6 @@ public class HexGrid : MonoBehaviour
 
         TextMeshPro label = Instantiate(cellLabelPrefab);
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
-        label.SetText(cell.Coordinates.ToStringOnSeparateLines());
         cell.uiRect = label.rectTransform;
         cell.Elevation = 0;
 
@@ -222,6 +221,15 @@ public class HexGrid : MonoBehaviour
         }
     }
 
+    public void FindDistancesTo(HexCell cell)
+    {
+        foreach (HexCell c in cells)
+        {
+            c.Distance = cell.Coordinates.DistanceTo(c.Coordinates);  
+        }
+
+    }
+
     public void Save(BinaryWriter writer)
     {
         writer.Write(cellCountX);
@@ -238,7 +246,7 @@ public class HexGrid : MonoBehaviour
         {
             return;
         }
-        
+
         foreach (HexCell cell in cells)
         {
             cell.Load(reader);
