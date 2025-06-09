@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine.UI;
+using System;
 
-public class HexCell : MonoBehaviour
+public class HexCell : MonoBehaviour, IEquatable<HexCell>
 {
     [SerializeField]
     private HexCoordinates coordinates;
@@ -527,6 +528,18 @@ public class HexCell : MonoBehaviour
         highlight.color = color;
     }
 
+    public HexCell PathFrom { get; set; }
+
+    public int SearchHeuristic { get; set; }
+
+    public int SearchPriority
+    {
+        get
+        {
+            return distance + SearchHeuristic;
+        }
+    }
+
     public void Save(BinaryWriter writer)
     {
         writer.Write(terrainTypeIndex);
@@ -549,5 +562,10 @@ public class HexCell : MonoBehaviour
         farmLevel = reader.ReadInt32();
         plantLevel = reader.ReadInt32();
         specialIndex = reader.ReadInt32();
+    }
+
+    public bool Equals(HexCell other)
+    {
+        return this == other;
     }
 }

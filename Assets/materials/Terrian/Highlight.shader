@@ -1,15 +1,14 @@
-Shader "Custom/Hightlight"
-{
-    Properties
-    {
-        [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
+Shader "Custom/Highlight" {
+	Properties {
+		[PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
 		_Color ("Tint", Color) = (1,1,1,1)
 		[MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
 		[HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
 		[HideInInspector] _Flip ("Flip", Vector) = (1,1,1,1)
 		[PerRendererData] _AlphaTex ("External Alpha", 2D) = "white" {}
 		[PerRendererData] _EnableExternalAlpha ("Enable External Alpha", Float) = 0
-    }
+	}
+
 	SubShader {
 		Tags { 
 			"Queue"="Transparent+10" 
