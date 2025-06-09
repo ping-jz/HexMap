@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
+using UnityEngine.UI;
 
 public class HexCell : MonoBehaviour
 {
@@ -511,6 +512,19 @@ public class HexCell : MonoBehaviour
             distance = value;
             UpdateDistanceLabel();
         }
+    }
+
+    public void DisableHighlight()
+    {
+        Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+        highlight.enabled = false;
+    }
+
+    public void EnableHighlight(Color color)
+    {
+        Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+        highlight.enabled = true;
+        highlight.color = color;
     }
 
     public void Save(BinaryWriter writer)
