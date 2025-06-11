@@ -275,7 +275,7 @@ public class HexMapEditor : MonoBehaviour
             {
                 EditCells(cell);
             }
-            else if (Input.GetKey(KeyCode.LeftShift))
+            else if (Input.GetKey(KeyCode.LeftShift) && searchFromCell != cell)
             {
                 if (searchFromCell)
                 {
@@ -285,13 +285,13 @@ public class HexMapEditor : MonoBehaviour
                 searchFromCell.EnableHighlight(Color.blue);
                 if (searchToCell)
                 {
-                    hexGrid.FindPath(searchFromCell, searchToCell);
+                    hexGrid.FindPath(searchFromCell, searchToCell, 24);
                 }
             }
-            else if (searchFromCell && searchFromCell != cell)
+            else if (searchFromCell && searchFromCell != cell && searchToCell != cell)
             {
                 searchToCell = cell;
-                hexGrid.FindPath(searchFromCell, searchToCell);
+                hexGrid.FindPath(searchFromCell, searchToCell, 24);
             }
             previousCell = cell;
         }
@@ -572,6 +572,7 @@ public class HexMapEditor : MonoBehaviour
 
     public void Load()
     {
+        
         string path = Path.Combine(Application.dataPath, "test.map");
         SetEditerMode(true);
         using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))

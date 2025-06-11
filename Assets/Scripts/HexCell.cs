@@ -496,10 +496,10 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         return neighbor && (elevation >= neighbor.elevation || waterLevel == neighbor.elevation);
     }
 
-    void UpdateDistanceLabel()
+    public void SetLabel(string text)
     {
         TextMeshPro label = uiRect.GetComponent<TextMeshPro>();
-        label.text = distance == int.MaxValue ? "" : distance.ToString();
+        label.text = text;
     }
 
     public int Distance
@@ -511,7 +511,6 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         set
         {
             distance = value;
-            UpdateDistanceLabel();
         }
     }
 
@@ -539,6 +538,8 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
             return distance + SearchHeuristic;
         }
     }
+
+    public int SearchPhase { get; set; }
 
     public void Save(BinaryWriter writer)
     {
