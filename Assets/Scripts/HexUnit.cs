@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 
 public class HexUnit : MonoBehaviour
@@ -42,6 +43,21 @@ public class HexUnit : MonoBehaviour
     {
         location.Unit = null;
         Destroy(gameObject);
+    }
+
+    public void Save(BinaryWriter writer)
+    {
+        location.Coordinates.Save(writer);
+        writer.Write(orientation);
+    }
+
+    public static void Load(BinaryReader reader, HexGrid grid)
+    {
+        HexCoordinates coordinates = HexCoordinates.Load(reader);
+        float orientation = reader.ReadSingle();
+        grid.AddUnit(
+            Instantiate(grid.UnitPrefab), grid.GetCell(coordinates), orientation
+        );
     }
 
 

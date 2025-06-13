@@ -98,7 +98,7 @@ public class HexMapEditorSaveLoad : MonoBehaviour
     {
         using (BinaryWriter write = new BinaryWriter(File.Open(path, FileMode.Create)))
         {
-            int version = 1;
+            int version = 2;
             write.Write(version);
             hexGrid.Save(write);
         }
@@ -109,9 +109,9 @@ public class HexMapEditorSaveLoad : MonoBehaviour
         using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
         {
             int version = reader.ReadInt32();
-            if (version == 1)
+            if (version <= 2)
             {
-                hexGrid.Load(reader);
+                hexGrid.Load(reader, version);
                 hexMapCamera.AdjustPosition(0f, 0f);
             }
             else

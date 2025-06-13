@@ -66,8 +66,6 @@ public class HexMapEditor : MonoBehaviour
     private HexMapCamera hexMapCamera;
     [SerializeField]
     private Material terrainMaterial;
-    [SerializeField]
-    private HexUnit unitPrefab;
     private int activeTerrianType;
     int elevation;
     int waterLevel;
@@ -259,7 +257,6 @@ public class HexMapEditor : MonoBehaviour
                     CreateUnit();
                 }
             }
-
         }
         else
         {
@@ -317,10 +314,7 @@ public class HexMapEditor : MonoBehaviour
         HexCell cell = GetCellUnderCursor();
         if (cell && !cell.Unit)
         {
-            HexUnit unit = Instantiate(unitPrefab);
-            unit.transform.SetParent(hexGrid.transform, false);
-            unit.Location = cell;
-            unit.Orientation = UnityEngine.Random.Range(0f, 360f);
+            hexGrid.AddUnit(Instantiate(hexGrid.UnitPrefab), cell, UnityEngine.Random.Range(0f, 360f));
         }
     }
 
@@ -329,7 +323,7 @@ public class HexMapEditor : MonoBehaviour
         HexCell cell = GetCellUnderCursor();
         if (cell && cell.Unit)
         {
-            cell.Unit.Die();
+            hexGrid.RemoveUnit(cell.Unit);
         }
     }
 
@@ -612,37 +606,5 @@ public class HexMapEditor : MonoBehaviour
     {
         flags = toggle ? flags.With(EditorFlags.EditModel) : flags.Without(EditorFlags.EditModel);
         hexGrid.ShowUI(!toggle);
-    }
-
-    public void Save()
-    {
-        string path = Path.Combine(Application.dataPath, "test.map");
-        using (BinaryWriter write = new BinaryWriter(File.Open(path, FileMode.Create)))
-        {
-            int version = 1;
-            write.Write(version);
-            hexGrid.Save(write);
-        }
-    }
-
-    public void Load()
-    {
-
-        string path = Path.Combine(Application.dataPath, "test.map");
-        SetEditerMode(true);
-        using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
-        {
-            int version = reader.ReadInt32();
-            if (version == 1)
-            {
-                hexGrid.Load(reader);
-                hexMapCamera.AdjustPosition(0f, 0f);
-            }
-            else
-            {
-                Debug.LogWarning($"Unknown map format {version}");
-            }
-
-        }
     }
 }

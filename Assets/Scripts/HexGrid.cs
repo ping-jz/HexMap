@@ -2,11 +2,7 @@ using TMPro;
 using UnityEngine;
 using System;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.IO.LowLevel.Unsafe;
-using NUnit.Framework.Constraints;
-using System.Security.Cryptography;
 
 [Flags]
 public enum GizmoMode
@@ -36,9 +32,13 @@ public class HexGrid : MonoBehaviour
     GizmoMode gizmos;
     [SerializeField]
     private int seed;
+    [SerializeField]
+    private HexUnit unitPrefab;
+
     private int chunkCountX, chunkCountZ;
     HexCell[] cells;
     HexGridChunk[] chunks;
+    List<HexUnit> units = new List<HexUnit>();
 
     public int ChunkCountX
     {
@@ -60,6 +60,14 @@ public class HexGrid : MonoBehaviour
         get { return cellCountZ; }
     }
 
+    public HexUnit UnitPrefab
+    {
+        get
+        {
+            return unitPrefab;
+        }
+    }
+
     void Awake()
     {
         HexMetrics.noiseSource = noiseSource;
@@ -79,6 +87,7 @@ public class HexGrid : MonoBehaviour
             return false;
         }
         ClearPath();
+        ClearUnits();
         if (chunks != null)
         {
             foreach (HexGridChunk chunk in chunks)
@@ -243,6 +252,19 @@ public class HexGrid : MonoBehaviour
         ShowPath(speed);
     }
 
+    public void AddUnit(HexUnit unit, HexCell location, float orientation)
+    {
+        units.Add(unit);
+        unit.transform.SetParent(transform, false);
+        unit.Location = location;
+        unit.Orientation = orientation;
+    }
+
+    public void RemoveUnit(HexUnit unit)
+    {
+        units.Remove(unit);
+        unit.Die();
+    }
 
 
     /// <summary>
@@ -379,6 +401,15 @@ public class HexGrid : MonoBehaviour
         currentPathFrom = currentPathTo = null;
     }
 
+    void ClearUnits()
+    {
+        for (int i = 0; i < units.Count; i++)
+        {
+            units[i].Die();
+        }
+        units.Clear();
+    }
+
     public void Save(BinaryWriter writer)
     {
         writer.Write(cellCountX);
@@ -387,11 +418,18 @@ public class HexGrid : MonoBehaviour
         {
             cell.Save(writer);
         }
+
+        writer.Write(units.Count);
+        foreach (HexUnit unit in units)
+        {
+            unit.Save(writer);
+        }
     }
 
-    public void Load(BinaryReader reader)
+    public void Load(BinaryReader reader, int version)
     {
         ClearPath();
+        ClearUnits();
         StopAllCoroutines();
         if (!CreateMap(reader.ReadInt32(), reader.ReadInt32()))
         {
@@ -401,6 +439,15 @@ public class HexGrid : MonoBehaviour
         foreach (HexCell cell in cells)
         {
             cell.Load(reader);
+        }
+
+        if (version >= 2)
+        {
+            int unitCount = reader.ReadInt32();
+            for (int i = 0; i < unitCount; i++)
+            {
+                HexUnit.Load(reader, this);
+            }
         }
 
         foreach (HexGridChunk chunk in chunks)
