@@ -541,6 +541,8 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
 
     public int SearchPhase { get; set; }
 
+    public HexUnit Unit { get; set; }
+
     public void Save(BinaryWriter writer)
     {
         writer.Write(terrainTypeIndex);

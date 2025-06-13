@@ -274,6 +274,7 @@ public class HexGrid : MonoBehaviour
 
             int currentTurn = current.Distance / speed;
 
+            //还是有很多重复计算
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
                 HexCell neighbor = current.GetNeighbor(d);

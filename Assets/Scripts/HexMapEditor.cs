@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
@@ -67,6 +66,8 @@ public class HexMapEditor : MonoBehaviour
     private HexMapCamera hexMapCamera;
     [SerializeField]
     private Material terrainMaterial;
+    [SerializeField]
+    private HexUnit unitPrefab;
     private int activeTerrianType;
     int elevation;
     int waterLevel;
@@ -241,12 +242,24 @@ public class HexMapEditor : MonoBehaviour
 
     void Update()
     {
-        if (
-            Input.GetMouseButton(0) &&
-            !EventSystem.current.IsPointerOverGameObject()
-        )
+        if (!EventSystem.current.IsPointerOverGameObject())
         {
-            HandleInput();
+            if (Input.GetMouseButton(0))
+            {
+                HandleInput();
+            }
+            else if (Input.GetKeyDown(KeyCode.U))
+            {
+                if (Input.GetKey(KeyCode.LeftShift))
+                {
+                    DestroyUnit();
+                }
+                else
+                {
+                    CreateUnit();
+                }
+            }
+
         }
         else
         {
@@ -257,12 +270,10 @@ public class HexMapEditor : MonoBehaviour
 
     void HandleInput()
     {
-
-        Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        if (Physics.Raycast(inputRay, out hit))
+        HexCell cell = GetCellUnderCursor();
+        if (cell)
         {
-            HexCell cell = hexGrid.GetCell(hit.point);
+
             if (previousCell && previousCell != cell)
             {
                 ValidateDrag(cell);
@@ -299,6 +310,39 @@ public class HexMapEditor : MonoBehaviour
         {
             previousCell = null;
         }
+    }
+
+    void CreateUnit()
+    {
+        HexCell cell = GetCellUnderCursor();
+        if (cell && !cell.Unit)
+        {
+            HexUnit unit = Instantiate(unitPrefab);
+            unit.transform.SetParent(hexGrid.transform, false);
+            unit.Location = cell;
+            unit.Orientation = UnityEngine.Random.Range(0f, 360f);
+        }
+    }
+
+    void DestroyUnit()
+    {
+        HexCell cell = GetCellUnderCursor();
+        if (cell && cell.Unit)
+        {
+            cell.Unit.Die();
+        }
+    }
+
+    private HexCell GetCellUnderCursor()
+    {
+        Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (Physics.Raycast(inputRay, out hit))
+        {
+            return hexGrid.GetCell(hit.point);
+        }
+
+        return null; ;
     }
 
     void ValidateDrag(HexCell cell)
@@ -394,7 +438,7 @@ public class HexMapEditor : MonoBehaviour
         if (flags.Has(EditorFlags.ApplyWaterLevel))
         {
             cell.WaterLevel = waterLevel;
-            hexGrid.GetChunk(cell).Refresh();
+            refrechCells(cell);
             refrechCells(cell.RemoveInvalidRiver());
         }
 
@@ -431,19 +475,21 @@ public class HexMapEditor : MonoBehaviour
             }
         }
 
+        refrechCells(cell);
+        refrechCells(cell.Neighbors);
+    }
+
+    void refrechCells(HexCell cell)
+    {
+
         HexGridChunk chunk = hexGrid.GetChunk(cell);
         if (chunk)
         {
             chunk.Refresh();
-            foreach (HexCell neighbor in cell.Neighbors)
-            {
-                if (
-                    neighbor != null &&
-                    (chunk = hexGrid.GetChunk(neighbor)) != null)
-                {
-                    chunk.Refresh();
-                }
-            }
+        }
+        if (cell.Unit)
+        {
+            cell.Unit.ValidateLocation();
         }
     }
 
@@ -451,7 +497,16 @@ public class HexMapEditor : MonoBehaviour
     {
         foreach (HexCell cell in cells)
         {
-            hexGrid.GetChunk(cell).Refresh();
+            if (!cell)
+            {
+                continue;
+            }
+
+            refrechCells(cell);
+            if (cell.Unit)
+            {
+                cell.Unit.ValidateLocation();
+            }
         }
     }
 
@@ -572,7 +627,7 @@ public class HexMapEditor : MonoBehaviour
 
     public void Load()
     {
-        
+
         string path = Path.Combine(Application.dataPath, "test.map");
         SetEditerMode(true);
         using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
