@@ -197,6 +197,15 @@ public class HexGrid : MonoBehaviour
         cell.ChunkIdx = chunkIdx;
         chunk.AddCell(localX + localZ * HexMetrics.chunkSizeX, cell);
     }
+    public HexCell GetCell(Ray ray)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit))
+        {
+            return GetCell(hit.point);
+        }
+        return null;
+    }
 
     //从屏幕坐标转换世界坐标，然后转换为本地坐标
     //遇到问题之后多回来看看
@@ -241,14 +250,15 @@ public class HexGrid : MonoBehaviour
     }
 
     HexCell currentPathFrom, currentPathTo;
-    bool currentPathExists;
 
     public void FindPath(HexCell from, HexCell to, int speed)
     {
         ClearPath();
-        currentPathFrom = from;
-        currentPathTo = to;
-        currentPathExists = search(from, to, speed);
+        if (search(from, to, speed))
+        {
+            currentPathFrom = from;
+            currentPathTo = to;
+        }
         ShowPath(speed);
     }
 
@@ -305,7 +315,7 @@ public class HexGrid : MonoBehaviour
                     continue;
                 }
 
-                if (neighbor.IsUnderwater)
+                if (neighbor.IsUnderwater || neighbor.Unit)
                 {
                     continue;
                 }
@@ -364,7 +374,7 @@ public class HexGrid : MonoBehaviour
 
     void ShowPath(int speed)
     {
-        if (currentPathExists)
+        if (HasPath)
         {
             HexCell current = currentPathTo;
             while (current != currentPathFrom)
@@ -374,14 +384,15 @@ public class HexGrid : MonoBehaviour
                 current.EnableHighlight(Color.white);
                 current = current.PathFrom;
             }
+
+            currentPathFrom.EnableHighlight(Color.blue);
+            currentPathTo.EnableHighlight(Color.red);
         }
-        currentPathFrom.EnableHighlight(Color.blue);
-        currentPathTo.EnableHighlight(Color.red);
     }
 
-    void ClearPath()
+    public void ClearPath()
     {
-        if (currentPathExists)
+        if (HasPath)
         {
             HexCell current = currentPathTo;
             while (current != currentPathFrom)
@@ -390,15 +401,18 @@ public class HexGrid : MonoBehaviour
                 current.DisableHighlight();
                 current = current.PathFrom;
             }
-            current.DisableHighlight();
-            currentPathExists = false;
-        }
-        else if (currentPathFrom)
-        {
             currentPathFrom.DisableHighlight();
             currentPathTo.DisableHighlight();
         }
         currentPathFrom = currentPathTo = null;
+    }
+
+    public bool HasPath
+    {
+        get
+        {
+            return currentPathFrom && currentPathTo;
+        }
     }
 
     void ClearUnits()

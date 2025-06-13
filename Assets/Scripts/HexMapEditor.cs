@@ -76,14 +76,13 @@ public class HexMapEditor : MonoBehaviour
     int brushSize;
     int specialIndex;
     HexDirection dragDirection;
-    HexCell previousCell, searchFromCell, searchToCell;
-
+    HexCell previousCell;
     void Awake()
     {
         SelectTerrianType(1);
         RegisterEvents();
         ShowGrid(false);
-        SetEditerMode(true);
+        SetEditMode(false);
     }
 
     void OnValidate()
@@ -145,7 +144,7 @@ public class HexMapEditor : MonoBehaviour
         root.Q<SliderInt>("BrushSize").RegisterValueChangedCallback(change => SetBrushSize(change.newValue));
         root.Q<SliderInt>("BrushSize").value = brushSize;
 
-        root.Q<Toggle>("EditerMode").RegisterValueChangedCallback(change => SetEditerMode(change.newValue));
+        root.Q<Toggle>("EditerMode").RegisterValueChangedCallback(change => SetEditMode(change.newValue));
         root.Q<Toggle>("ShowGrid").RegisterValueChangedCallback(change => ShowGrid(change.newValue));
 
         root.Q<RadioButtonGroup>("River").RegisterValueChangedCallback(change => SetRiverMode(change.newValue));
@@ -279,28 +278,8 @@ public class HexMapEditor : MonoBehaviour
             {
                 flags = flags.Without(EditorFlags.Drag);
             }
-            if (flags.Has(EditorFlags.EditModel))
-            {
-                EditCells(cell);
-            }
-            else if (Input.GetKey(KeyCode.LeftShift) && searchFromCell != cell)
-            {
-                if (searchFromCell)
-                {
-                    searchFromCell.DisableHighlight();
-                }
-                searchFromCell = cell;
-                searchFromCell.EnableHighlight(Color.blue);
-                if (searchToCell)
-                {
-                    hexGrid.FindPath(searchFromCell, searchToCell, 24);
-                }
-            }
-            else if (searchFromCell && searchFromCell != cell && searchToCell != cell)
-            {
-                searchToCell = cell;
-                hexGrid.FindPath(searchFromCell, searchToCell, 24);
-            }
+
+            EditCells(cell);
             previousCell = cell;
         }
         else
@@ -330,13 +309,7 @@ public class HexMapEditor : MonoBehaviour
     private HexCell GetCellUnderCursor()
     {
         Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        if (Physics.Raycast(inputRay, out hit))
-        {
-            return hexGrid.GetCell(hit.point);
-        }
-
-        return null; ;
+        return hexGrid.GetCell(inputRay);
     }
 
     void ValidateDrag(HexCell cell)
@@ -602,9 +575,9 @@ public class HexMapEditor : MonoBehaviour
         }
     }
 
-    public void SetEditerMode(bool toggle)
+    public void SetEditMode(bool toggle)
     {
         flags = toggle ? flags.With(EditorFlags.EditModel) : flags.Without(EditorFlags.EditModel);
-        hexGrid.ShowUI(!toggle);
     }
+    
 }
