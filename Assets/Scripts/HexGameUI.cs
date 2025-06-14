@@ -102,13 +102,16 @@ public class HexGameUI : MonoBehaviour
         enabled = !toggle;
         grid.ShowUI(!toggle);
         grid.ClearPath();
+        selectedUnit = null;
+        currentCell = null;
     }
 
     void DoMove()
     {
         if (grid.HasPath)
         {
-            selectedUnit.Location = currentCell;
+           
+            selectedUnit.Travel(grid.GetPath());
             grid.ClearPath();
         }
     }

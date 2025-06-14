@@ -286,25 +286,25 @@ public class HexGrid : MonoBehaviour
     /// <returns></returns>
     private bool search(HexCell from, HexCell to, int speed)
     {
-        int searchFrontierPhase = System.DateTime.Now.Millisecond;
+        int searchFrontierPhase = (int)((DateTime.Now.Ticks - 621355968000000000) / TimeSpan.TicksPerMillisecond);
 
         PriorityQueue<HexCell> frontier = new PriorityQueue<HexCell>();
 
         from.SearchPhase = searchFrontierPhase;
         from.Distance = 0;
+        from.PathFrom = null;
         frontier.Enqueue(from, from.SearchPriority);
 
         while (frontier.Count > 0)
         {
 
             HexCell current = frontier.Dequeue();
-
             if (current == to)
             {
                 return true;
             }
 
-            int currentTurn = current.Distance / speed;
+            int currentTurn = (current.Distance - 1) / speed;
 
             //还是有很多重复计算
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
@@ -345,7 +345,7 @@ public class HexGrid : MonoBehaviour
                 }
 
                 int distance = current.Distance + moveCost;
-                int turn = distance / speed;
+                int turn = (distance - 1) / speed;
                 if (turn > currentTurn)
                 {
                     distance = turn * speed + moveCost;
@@ -379,7 +379,7 @@ public class HexGrid : MonoBehaviour
             HexCell current = currentPathTo;
             while (current != currentPathFrom)
             {
-                int turn = current.Distance / speed;
+                int turn = (current.Distance - 1) / speed;
                 current.SetLabel(turn.ToString());
                 current.EnableHighlight(Color.white);
                 current = current.PathFrom;
@@ -413,6 +413,22 @@ public class HexGrid : MonoBehaviour
         {
             return currentPathFrom && currentPathTo;
         }
+    }
+
+    public List<HexCell> GetPath()
+    {
+        if (!HasPath)
+        {
+            return null;
+        }
+        List<HexCell> paths = ListPool<HexCell>.Get();
+        for (HexCell to = currentPathTo; to != null; to = to.PathFrom)
+        {
+            paths.Add(to);
+        }
+        paths.Add(currentPathFrom);
+        paths.Reverse();
+        return paths;
     }
 
     void ClearUnits()
