@@ -38,16 +38,32 @@ public class HexUnit : MonoBehaviour
 
     IEnumerator TravelPath()
     {
+        float t = 0f;
+        Vector3 a, b, c = pathToTravel[0].Position;
         for (int i = 1; i < pathToTravel.Count; i++)
         {
-            Vector3 a = pathToTravel[i - 1].Position;
-            Vector3 b = pathToTravel[i].Position;
-            for (float t = 0f; t < 1f; t += Time.deltaTime * 4f)
+            a = c;
+            b = pathToTravel[i - 1].Position;
+            //从两个相邻的六边形的中心点开始计算，得出其共同相邻边的中心点
+            //你当时理解错就缺少点连线的概念，才没办法理解。
+            c = (b + pathToTravel[i].Position) * 0.5f;
+            for (; t < 1f; t += Time.deltaTime * 4f)
             {
-                transform.localPosition = Vector3.Lerp(a, b, t);
+                transform.localPosition = Bezier.GetPoint(a, b, c, t);
                 yield return null;
             }
+            t -= 1f;
         }
+
+        a = c;
+        b = pathToTravel[pathToTravel.Count - 1].Position;
+        c = b;
+        for (; t < 1f; t += Time.deltaTime * 4f)
+        {
+            transform.localPosition = Bezier.GetPoint(a, b, c, t);
+            yield return null;
+        }
+        transform.localPosition = location.Position;
     }
 
     public float Orientation
@@ -104,14 +120,28 @@ public class HexUnit : MonoBehaviour
             return;
         }
 
-        for (int i = 1; i < pathToTravel.Count; i++)
         {
-            Vector3 a = pathToTravel[i - 1].Position;
-            Vector3 b = pathToTravel[i].Position;
-
-            for (float t = 0f; t < 1.0f; t += 0.1f)
+            Vector3 a, b, c = pathToTravel[0].Position;
+            //点连线
+            for (int i = 1; i < pathToTravel.Count; i++)
             {
-                Gizmos.DrawSphere(Vector3.Lerp(a, b, t), 2f);
+                a = c;
+                b = pathToTravel[i - 1].Position;
+                //从两个相邻的六边形的中心点开始计算，得出其共同相邻边的中心点
+                //你当时理解错就缺少点连线的概念，才没办法理解。
+                c = (b + pathToTravel[i].Position) * 0.5f;
+                for (float t = 0f; t < 1.0f; t += 0.1f)
+                {
+                    Gizmos.DrawSphere(Bezier.GetPoint(a, b, c, t), 2f);
+                }
+            }
+
+            a = c;
+            b = pathToTravel[pathToTravel.Count - 1].Position;
+            c = b;
+            for (float t = 0f; t < 1f; t += 0.1f)
+            {
+                Gizmos.DrawSphere(Bezier.GetPoint(a, b, c, t), 2f);
             }
         }
     }
