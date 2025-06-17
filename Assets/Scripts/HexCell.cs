@@ -417,8 +417,10 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         }
         set
         {
-
-            terrainTypeIndex = value;
+            if (terrainTypeIndex != value)
+            {
+                terrainTypeIndex = value;
+            }
         }
     }
 
@@ -531,6 +533,10 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
 
     public int SearchHeuristic { get; set; }
 
+    public HexCellShaderData ShaderData { get; set; }
+
+    public int Index { get; set; }
+
     public int SearchPriority
     {
         get
@@ -558,6 +564,7 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     public void Load(BinaryReader reader)
     {
         terrainTypeIndex = reader.ReadInt32();
+        ShaderData.RefreshTerrain(this);
         Elevation = reader.ReadInt32();
         waterLevel = reader.ReadInt32();
         flags = (HexCellFlags)reader.ReadInt32();

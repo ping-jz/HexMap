@@ -1,22 +1,39 @@
-#include "../HexMetrics.hlsl"
+#include "../HexCellData.hlsl"
 
-float4 GetTerrianColor(UnityTexture2DArray textures, float3 worldPosition, float terrian, float color) {
+void GetVertexCellData_float(
+    float3 Indices,
+    float3 Weights,
+    out float4 Terrain
+) {
+    float4 cell0 = GetCellData(Indices.x);
+    float4 cell1 = GetCellData(Indices.y);
+    float4 cell2 = GetCellData(Indices.z);
+
+    Terrain.x = cell0.w;
+    Terrain.y = cell1.w;
+    Terrain.z = cell2.w;
+    Terrain.w = 1.0;
+}
+
+//根据给定的素材，使用世界坐标，素材下标，然后color应该是权重的意思
+//来进行素材采样
+float4 GetTerrianColor(UnityTexture2DArray textures, float3 worldPosition, float terrian, float weight) {
     float3 uvw = float3(worldPosition.xz * 0.02, terrian);
     float4 c = textures.Sample(textures.samplerstate, uvw);
-    return c * color;
+    return c * weight;
 }
 
 void FgetFragmentDataTerrian_float(
     UnityTexture2DArray Textures,
     UnityTexture2D Grid,
     float3 WorldPosition,
-    float4 color,
+    float4 weights,
     float4 terrian,
     bool showGrid,
     out float3 BaseColor) {
-    float4 c = GetTerrianColor(Textures, WorldPosition, terrian.x, color.x) + 
-               GetTerrianColor(Textures, WorldPosition, terrian.y, color.y) + 
-               GetTerrianColor(Textures, WorldPosition, terrian.z, color.z);
+    float4 c = GetTerrianColor(Textures, WorldPosition, terrian.x, weights.x) + 
+               GetTerrianColor(Textures, WorldPosition, terrian.y, weights.y) + 
+               GetTerrianColor(Textures, WorldPosition, terrian.z, weights.z);
 
     BaseColor = c.rgb;
 

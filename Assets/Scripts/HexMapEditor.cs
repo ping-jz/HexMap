@@ -367,26 +367,31 @@ public class HexMapEditor : MonoBehaviour
         {
             cell.SpecialIndex = specialIndex;
             cell.RemoveRoads();
+            RefreshCellWithDependents(cell);
         }
 
         if (flags.Has(EditorFlags.ApplyColor))
         {
             cell.TerrainTypeIndex = activeTerrianType;
+            cell.ShaderData.RefreshTerrain(cell);
         }
 
         if (flags.Has(EditorFlags.ApplyUrbanLevel))
         {
             cell.UrbanLevel = urbanLevel;
+            RefreshCellWithDependents(cell);
         }
 
         if (flags.Has(EditorFlags.ApplyFarmLevel))
         {
             cell.FarmLevel = framLevel;
+            RefreshCellWithDependents(cell);
         }
 
         if (flags.Has(EditorFlags.ApplyPlantLevel))
         {
             cell.PlantLevel = plantLevel;
+            RefreshCellWithDependents(cell);
         }
 
         if (flags.Has(EditorFlags.ApplyElevation))
@@ -422,6 +427,7 @@ public class HexMapEditor : MonoBehaviour
         if (flags.HasNot(EditorFlags.WallIgnore))
         {
             cell.Walled = flags.Has(EditorFlags.WallYes);
+            RefreshCellWithDependents(cell);
         }
 
         if (flags.Has(EditorFlags.Drag))
@@ -441,7 +447,10 @@ public class HexMapEditor : MonoBehaviour
                 }
             }
         }
+    }
 
+    private void RefreshCellWithDependents(HexCell cell)
+    {
         refrechCells(cell);
         refrechCells(cell.Neighbors);
     }
@@ -579,5 +588,5 @@ public class HexMapEditor : MonoBehaviour
     {
         flags = toggle ? flags.With(EditorFlags.EditModel) : flags.Without(EditorFlags.EditModel);
     }
-    
+
 }
