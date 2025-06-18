@@ -21,6 +21,26 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     private HexCellFlags flags;
     private int urbanLevel, farmLevel, plantLevel;
     public RectTransform uiRect;
+    int visibility;
+
+
+    public void IncreaseVisibility()
+    {
+        visibility += 1;
+        if (visibility == 1)
+        {
+            ShaderData.RefreshVisibility(this);
+        }
+    }
+
+    public void DecreaseVisibility()
+    {
+        visibility = Math.Max(0, visibility - 1);
+        if (visibility == 0)
+        {
+            ShaderData.RefreshVisibility(this);
+        }
+    }
 
     public HexCell GetNeighbor(HexDirection direction)
     {
@@ -542,6 +562,14 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         get
         {
             return distance + SearchHeuristic;
+        }
+    }
+
+    public bool IsVisible
+    {
+        get
+        {
+            return visibility > 0;
         }
     }
 
