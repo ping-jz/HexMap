@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Water
+  m_Name: OpenWater
   m_Shader: {fileID: -6465566751694194690, guid: 12171df6db1426449b8f9d5556db2f18, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

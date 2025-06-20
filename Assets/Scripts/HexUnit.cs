@@ -70,7 +70,10 @@ public class HexUnit : MonoBehaviour
                 transform.localPosition = Bezier.GetPoint(a, b, c, t);
                 Vector3 d = Bezier.GetDerivative(a, b, c, t);
                 d.y = 0f;
-                transform.localRotation = Quaternion.LookRotation(d);
+                if (d != Vector3.zero)
+                {
+                    transform.localRotation = Quaternion.LookRotation(d);
+                }
                 yield return null;
             }
             Grid.DecreaseVisibility(pathToTravel[i], visionRange);
