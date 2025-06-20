@@ -18,3 +18,43 @@ float4 GetCellData(float uvComponent) {
     data.w *= 255;
     return data;
 }
+
+float4 GetCellData(float2 cellDataCoordinates) {
+    float2 uv2 = cellDataCoordinates + 0.5;
+    uv2.x *= _HexCellData_TexelSize.x;
+    uv2.y *= _HexCellData_TexelSize.y;
+    return SAMPLE_TEXTURE2D_LOD(_HexCellData, sampler_HexCellData, uv2, 0);
+}
+
+#define HEX_ANGLED_EDGE_VECTOR float2(1, sqrt(3))
+
+// 2025-06-20 先抄答案吧
+// Features and Visibility计算特色中提到计算格子坐标的方法失效了
+// Calculate hex-based modulo to find position vector.
+float2 HexModulo(float2 p)
+{
+	return p - HEX_ANGLED_EDGE_VECTOR * floor(p / HEX_ANGLED_EDGE_VECTOR);
+}
+
+// 2025-06-20 先抄答案吧
+// Features and Visibility计算特色中提到计算格子坐标的方法失效了
+// Get hex grid data analytically derived from world-space XZ position.
+float2 GetHexGridData(float2 worldPositionXZ)
+{
+	float2 p = WoldToHexSpace(worldPositionXZ);
+	
+	// Vectors from nearest two cell centers to position.
+	float2 gridOffset = HEX_ANGLED_EDGE_VECTOR * 0.5;
+	float2 a = HexModulo(p) - gridOffset;
+	float2 b = HexModulo(p - gridOffset) - gridOffset;
+	bool aIsNearest = dot(a, a) < dot(b, b);
+
+	float2 vectorFromCenterToPosition = aIsNearest ? a : b;
+
+
+	float2 cellCenter = p - vectorFromCenterToPosition;
+    float2 cellOffsetCoordinates;
+	cellOffsetCoordinates.x = cellCenter.x - (aIsNearest ? 0.5 : 0.0);
+	cellOffsetCoordinates.y = cellCenter.y / OUTER_TO_INNER;
+	return cellOffsetCoordinates;
+}
