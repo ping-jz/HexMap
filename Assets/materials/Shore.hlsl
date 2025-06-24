@@ -6,14 +6,15 @@ void GetVertexDataWaterShore_float(
     bool editMode,
     float3 Indices,
     float3 Weights,
-    out float Visibility
+    out float2 Visibility
 ) {
     float4 cell0 = GetCellData(editMode, Indices.x);
     float4 cell1 = GetCellData(editMode, Indices.y);
     float4 cell2 = GetCellData(editMode, Indices.z);
 
-    Visibility = cell0.x * Weights.x + cell1.x * Weights.y + cell2.x * Weights.z;
-    Visibility = lerp(0.25, 1, Visibility);
+    Visibility.x = cell0.x * Weights.x + cell1.x * Weights.y + cell2.x * Weights.z;
+    Visibility.x = lerp(0.25, 1, Visibility.x);
+    Visibility.y = cell0.y * Weights.x + cell1.y * Weights.y + cell2.y * Weights.z;;
 }
 
 void FgetFragmentDataWaterShore_float(
@@ -22,9 +23,11 @@ void FgetFragmentDataWaterShore_float(
     float4 Color, 
     float2 ShoreUV,
     float Time,
-    float Visibility,
+    float2 Visibility,
     out float3 BaseColor,
-    out float Alpha) {
+    out float Alpha,
+    out float Exploration
+    ) {
 
     float shore = ShoreUV.y;
     float foam = Foam(shore, WorldPosition.xz, Time, NoiseTexture);
@@ -32,6 +35,7 @@ void FgetFragmentDataWaterShore_float(
     waves *= 1 - shore;
     
     float4 c = saturate(Color + max(foam, waves));
-    BaseColor = c.rgb * Visibility;
+    BaseColor = c.rgb * Visibility.x;
     Alpha = c.a;
+    Exploration = Visibility.y;
 }

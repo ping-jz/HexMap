@@ -20,7 +20,7 @@ void GetVertexDataFeature_float(
 
 	Visibility.x = cellData.x;
 	Visibility.x = lerp(0.25, 1, Visibility.x);
-	Visibility.y = 1;
+	Visibility.y = cellData.y;
 }
 
 // 2025-06-20 先抄答案吧
@@ -28,6 +28,9 @@ void GetVertexDataFeature_float(
 void FgetFragmentDataFeature_float(
     float4 Color,
     float2 Visibility,
-    out float3 BaseColor) {
+    out float3 BaseColor,
+    out float Exploration
+    ) {
     BaseColor = Color * Visibility.x;
+    Exploration = Visibility.y;
 }
