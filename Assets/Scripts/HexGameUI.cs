@@ -66,9 +66,9 @@ public class HexGameUI : MonoBehaviour
         }
 
 
-        if (currentCell && IsValidDestination(currentCell))
+        if (currentCell && selectedUnit.IsValidDestination(currentCell))
         {
-            grid.FindPath(selectedUnit.Location, currentCell, 24);
+            grid.FindPath(selectedUnit.Location, currentCell, selectedUnit);
         }
         else
         {
@@ -123,8 +123,4 @@ public class HexGameUI : MonoBehaviour
         }
     }
 
-    public bool IsValidDestination(HexCell cell)
-    {
-        return !cell.IsUnderwater && !cell.Unit;
-    }
 }

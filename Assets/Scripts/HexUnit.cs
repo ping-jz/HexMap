@@ -16,6 +16,14 @@ public class HexUnit : MonoBehaviour
 
     public HexGrid Grid { get; set; }
 
+    public int Speed
+    {
+        get
+        {
+            return 24;
+        }
+    }
+
     public HexCell Location
     {
         get
@@ -180,6 +188,41 @@ public class HexUnit : MonoBehaviour
                 currentTravelLocation = null;
             }
         }
+    }
+
+
+    public bool IsValidDestination(HexCell cell)
+    {
+        return cell.IsExplored && !cell.IsUnderwater && !cell.Unit;
+    }
+
+    public int getMoveCost(HexCell fromCell, HexCell toCell, HexDirection d)
+    {
+        HexEdgeType edgeType = fromCell.GetEdgeType(toCell);
+
+        if (edgeType == HexEdgeType.Cliff)
+        {
+            return -1;
+        }
+
+        //int distance = current.Distance;
+        int moveCost = 0;
+        if (fromCell.HasRoadThroughEdge(d))
+        {
+            moveCost += 1;
+        }
+        else if (fromCell.Walled != toCell.Walled)
+        {
+            return -1;
+        }
+        else
+        {
+            moveCost += edgeType == HexEdgeType.Flat ? 5 : 10;
+            moveCost += toCell.UrbanLevel + toCell.FarmLevel +
+                toCell.PlantLevel;
+        }
+
+        return moveCost;
     }
 
     void OnDrawGizmos()
