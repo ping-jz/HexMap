@@ -245,15 +245,11 @@ public class HexGrid : MonoBehaviour
 
     public IEnumerator ShowUI(bool visible)
     {
-        if (chunks != null)
+        foreach (HexGridChunk chunk in chunks)
         {
-            foreach (HexGridChunk chunk in chunks)
-            {
-                chunk.ShowUI(visible);
-                yield return null;
-            }
+            chunk.ShowUI(visible);
+            yield return null;
         }
-
     }
 
     HexCell currentPathFrom, currentPathTo;

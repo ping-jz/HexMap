@@ -29,6 +29,7 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         visibility += 1;
         if (visibility == 1)
         {
+            IsExplored = true;
             ShaderData.RefreshVisibility(this);
         }
     }
@@ -577,6 +578,18 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
 
     public HexUnit Unit { get; set; }
 
+    public bool IsExplored
+    {
+        get
+        {
+            return flags.Has(HexCellFlags.Explored);
+        }
+        private set
+        {
+            flags = flags.With(HexCellFlags.Explored);
+        }
+    }
+
     public void Save(BinaryWriter writer)
     {
         writer.Write(terrainTypeIndex);
@@ -592,7 +605,6 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     public void Load(BinaryReader reader)
     {
         terrainTypeIndex = reader.ReadInt32();
-        ShaderData.RefreshTerrain(this);
         Elevation = reader.ReadInt32();
         waterLevel = reader.ReadInt32();
         flags = (HexCellFlags)reader.ReadInt32();
@@ -600,6 +612,8 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         farmLevel = reader.ReadInt32();
         plantLevel = reader.ReadInt32();
         specialIndex = reader.ReadInt32();
+        ShaderData.RefreshTerrain(this);
+        ShaderData.RefreshVisibility(this);
     }
 
     public bool Equals(HexCell other)

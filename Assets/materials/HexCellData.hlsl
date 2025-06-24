@@ -6,7 +6,7 @@ float4 _HexCellData_TexelSize;
 
 float4 FilterCellData(bool editMode, float4 data) {
     if (editMode) {
-        data.x = 1;
+        data.xy = 1;
     } 
         
     return data;

@@ -19,8 +19,9 @@ void GetVertexCellData_float(
     Visibility.x = cell0.x;
     Visibility.y = cell1.x;
     Visibility.z = cell2.x;
-    Visibility.w = 0.0;
-    Visibility = lerp(0.25, 1, Visibility);
+    Visibility.xyz = lerp(0.25, 1, Visibility.xyz);
+    Visibility.w = 
+        cell0.y * Weights.x + cell1.y * Weights.y + cell2.y * Weights.z;
 }
 
 //根据给定的素材，使用世界坐标，素材下标，然后color应该是权重的意思
@@ -39,18 +40,23 @@ void FgetFragmentDataTerrian_float(
     float4 terrian,
     float4 visibility,
     bool showGrid,
-    out float3 BaseColor) {
+    out float3 BaseColor,
+    out float Exploration
+    ) {
     float4 c = GetTerrianColor(Textures, WorldPosition, terrian.x, weights.x, visibility.x) + 
                GetTerrianColor(Textures, WorldPosition, terrian.y, weights.y, visibility.y) + 
                GetTerrianColor(Textures, WorldPosition, terrian.z, weights.z, visibility.z);
 
-    BaseColor = c.rgb;
 
+    
+    float4 grid = 1;
     if(showGrid) {
         float2 gridUV = WorldPosition.xz;
         gridUV.x *= 1 / (4 * OUTER_RADIUS * OUTER_TO_INNER);
         gridUV.y *= 1 / (2 * 15.0);
-        float4 grid = Grid.Sample(Grid.samplerstate, gridUV);
-        BaseColor *= grid;
+        grid = Grid.Sample(Grid.samplerstate, gridUV);
     }
+
+    BaseColor = c.rgb * grid;
+    Exploration = visibility.w;
 }
