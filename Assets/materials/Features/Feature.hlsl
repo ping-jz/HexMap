@@ -11,11 +11,12 @@
 //细节等你熟悉之后在纠结吧
 //https://catlikecoding.com/unity/tutorials/hex-map/part-20/#4
 void GetVertexDataFeature_float(
+    bool editMode,
     float3 position,
     out float2 Visibility
 ) {
     float2 cellOffsetCoordinates = GetHexGridData(position.xz);
-	float4 cellData = GetCellData(cellOffsetCoordinates);
+	float4 cellData = GetCellData(editMode, cellOffsetCoordinates);
 
 	Visibility.x = cellData.x;
 	Visibility.x = lerp(0.25, 1, Visibility.x);

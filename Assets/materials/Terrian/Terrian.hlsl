@@ -1,14 +1,15 @@
 #include "../HexCellData.hlsl"
 
 void GetVertexCellData_float(
+    bool editMode,
     float3 Indices,
     float3 Weights,
     out float4 Terrain,
     out float4 Visibility
 ) {
-    float4 cell0 = GetCellData(Indices.x);
-    float4 cell1 = GetCellData(Indices.y);
-    float4 cell2 = GetCellData(Indices.z);
+    float4 cell0 = GetCellData(editMode, Indices.x);
+    float4 cell1 = GetCellData(editMode, Indices.y);
+    float4 cell2 = GetCellData(editMode, Indices.z);
 
     Terrain.x = cell0.w;
     Terrain.y = cell1.w;

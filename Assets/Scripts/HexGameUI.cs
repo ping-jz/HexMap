@@ -99,11 +99,18 @@ public class HexGameUI : MonoBehaviour
 
     public void SetEditMode(bool toggle)
     {
+        StopAllCoroutines();
         enabled = !toggle;
-        grid.ShowUI(!toggle);
+        StartCoroutine(grid.ShowUI(!toggle));
         grid.ClearPath();
         selectedUnit = null;
         currentCell = null;
+        if (toggle) {
+			Shader.EnableKeyword("_HEX_MAP_EDIT_MODE");
+		}
+		else {
+			Shader.DisableKeyword("_HEX_MAP_EDIT_MODE");
+		}
     }
 
     void DoMove()

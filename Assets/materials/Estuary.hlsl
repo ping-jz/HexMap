@@ -3,12 +3,13 @@
 
 
 void GetVertexDataWaterEstuary_float(
+    bool editMode,
     float3 Indices,
     float3 Weights,
     out float Visibility
 ) {
-    float4 cell0 = GetCellData(Indices.x);
-    float4 cell1 = GetCellData(Indices.y);
+    float4 cell0 = GetCellData(editMode, Indices.x);
+    float4 cell1 = GetCellData(editMode, Indices.y);
 
     Visibility = cell0.x * Weights.x + cell1.x * Weights.y;
     Visibility = lerp(0.25, 1, Visibility);

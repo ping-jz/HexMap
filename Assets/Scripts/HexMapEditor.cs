@@ -79,6 +79,9 @@ public class HexMapEditor : MonoBehaviour
     HexCell previousCell;
     void Awake()
     {
+        terrainMaterial.DisableKeyword("_SHOW_GRID");
+        Shader.EnableKeyword("_HEX_MAP_EDIT_MODE");
+        
         SelectTerrianType(1);
         RegisterEvents();
         ShowGrid(false);

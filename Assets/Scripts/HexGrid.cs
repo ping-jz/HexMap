@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Collections;
 
 [Flags]
 public enum GizmoMode
@@ -242,13 +243,14 @@ public class HexGrid : MonoBehaviour
         return chunks[cell.ChunkIdx];
     }
 
-    public void ShowUI(bool visible)
+    public IEnumerator ShowUI(bool visible)
     {
         if (chunks != null)
         {
             foreach (HexGridChunk chunk in chunks)
             {
                 chunk.ShowUI(visible);
+                yield return null;
             }
         }
 

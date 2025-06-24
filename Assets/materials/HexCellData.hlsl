@@ -4,7 +4,15 @@ TEXTURE2D(_HexCellData);
 SAMPLER(sampler_HexCellData);
 float4 _HexCellData_TexelSize;
 
-float4 GetCellData(float uvComponent) {
+float4 FilterCellData(bool editMode, float4 data) {
+    if (editMode) {
+        data.x = 1;
+    } 
+        
+    return data;
+}
+
+float4 GetCellData(bool editMode, float uvComponent) {
     float2 uv;
     //二维转一维，看着不太像？？
     //实在没搞懂
@@ -16,14 +24,14 @@ float4 GetCellData(float uvComponent) {
     //应该是素材的数量就只有5个，255足够了
     float4 data = SAMPLE_TEXTURE2D_LOD(_HexCellData, sampler_HexCellData, uv, 0);
     data.w *= 255;
-    return data;
+    return FilterCellData(editMode, data);
 }
 
-float4 GetCellData(float2 cellDataCoordinates) {
+float4 GetCellData(bool editMode,  float2 cellDataCoordinates) {
     float2 uv2 = cellDataCoordinates + 0.5;
     uv2.x *= _HexCellData_TexelSize.x;
     uv2.y *= _HexCellData_TexelSize.y;
-    return SAMPLE_TEXTURE2D_LOD(_HexCellData, sampler_HexCellData, uv2, 0);
+    return FilterCellData(editMode, SAMPLE_TEXTURE2D_LOD(_HexCellData, sampler_HexCellData, uv2, 0));
 }
 
 #define HEX_ANGLED_EDGE_VECTOR float2(1, sqrt(3))

@@ -18,6 +18,7 @@ void FgetFragmentDataRoad_float(
 } 
 
 void FgetRoadViewOffset_float(
+    bool editMode,
     float3 OriginPosition, 
     float YViewOffset, 
     float3 Indices,
@@ -27,8 +28,8 @@ void FgetRoadViewOffset_float(
     Position = OriginPosition;
     Position.y += YViewOffset;
 
-    float4 cell0 = GetCellData(Indices.x);
-    float4 cell1 = GetCellData(Indices.y);
+    float4 cell0 = GetCellData(editMode, Indices.x);
+    float4 cell1 = GetCellData(editMode, Indices.y);
 
     Visibility = cell0.x * Weights.x + cell1.x * Weights.y;
     Visibility = lerp(0.25, 1, Visibility);
