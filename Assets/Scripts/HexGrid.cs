@@ -524,6 +524,9 @@ public class HexGrid : MonoBehaviour
             return;
         }
 
+        bool originModel = cellShaderData.ImmediateMode;
+        cellShaderData.ImmediateMode = true;
+
         foreach (HexCell cell in cells)
         {
             cell.Load(reader);
@@ -542,6 +545,7 @@ public class HexGrid : MonoBehaviour
         {
             chunk.Refresh();
         }
+        cellShaderData.ImmediateMode = originModel;
     }
 
     void OnDrawGizmos()

@@ -1,9 +1,15 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class HexCellShaderData : MonoBehaviour
 {
     Texture2D cellTexture;
     Color32[] cellTextureData;
+    List<HexCell> transitioningCells = new List<HexCell>();
+    const float transitionSpeed = 255f;
+
+    public bool ImmediateMode { get; set; }
 
     public void Initialize(int x, int z)
     {
@@ -36,6 +42,9 @@ public class HexCellShaderData : MonoBehaviour
                 cellTextureData[i] = new Color32(0, 0, 0, 0);
             }
         }
+
+        transitioningCells.Clear();
+        enabled = true;
     }
 
     public void RefreshTerrain(HexCell cell)
@@ -46,15 +55,69 @@ public class HexCellShaderData : MonoBehaviour
 
     public void RefreshVisibility(HexCell cell)
     {
-        cellTextureData[cell.Index].r = cell.IsVisible ? (byte)255 : (byte)0;
-        cellTextureData[cell.Index].g = cell.IsExplored ? (byte)255 : (byte)0;
+        int index = cell.Index;
+        if (ImmediateMode)
+        {
+            cellTextureData[index].r = cell.IsVisible ? (byte)255 : (byte)0;
+            cellTextureData[index].g = cell.IsExplored ? (byte)255 : (byte)0;
+        }
+        else if (cellTextureData[index].b != 255)
+        {
+            cellTextureData[index].b = 255;
+            transitioningCells.Add(cell);
+        }
+
         enabled = true;
     }
 
     void LateUpdate()
     {
+        int delta = Math.Max(1, (int)(Time.deltaTime * transitionSpeed));
+        for (int i = 0; i < transitioningCells.Count; i++)
+        {
+            if (!UpdateCellData(transitioningCells[i], delta))
+            {
+                transitioningCells[i] = transitioningCells[transitioningCells.Count - 1];
+                transitioningCells.RemoveAt(transitioningCells.Count - 1);
+                i -= 1;
+            }
+        }
         cellTexture.SetPixels32(cellTextureData);
         cellTexture.Apply();
-        enabled = false;
+        enabled = transitioningCells.Count > 0;
+    }
+
+    bool UpdateCellData(HexCell cell, int delta)
+    {
+        int index = cell.Index;
+        Color32 data = cellTextureData[index];
+        bool updating = false;
+
+        if (cell.IsExplored && data.g < 255)
+        {
+            updating = true;
+            int t = data.g + delta;
+            data.g = (byte)Math.Min(t, 255);
+        }
+
+        if (cell.IsVisible && data.r < 255)
+        {
+            updating = true;
+            int t = data.r + delta;
+            data.r = (byte)Math.Min(t, 255);
+        }
+        else if (data.r > 0)
+        {
+            updating = true;
+            int t = data.r - delta;
+            data.r = (byte)Math.Max(t, 0);
+        }
+
+        if (!updating)
+        {
+            data.b = 0;
+        }
+        cellTextureData[index] = data;
+        return updating;
     }
 }
