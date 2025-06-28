@@ -570,7 +570,7 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     {
         get
         {
-            return visibility > 0;
+            return visibility > 0 && flags.Has(HexCellFlags.Explorable);
         }
     }
 
@@ -582,11 +582,30 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     {
         get
         {
-            return flags.Has(HexCellFlags.Explored);
+            return flags.Has(HexCellFlags.Explored) && flags.Has(HexCellFlags.Explorable);
         }
         private set
         {
             flags = flags.With(HexCellFlags.Explored);
+        }
+    }
+
+    public bool Explorable
+    {
+        get
+        {
+            return flags.Has(HexCellFlags.Explorable);
+        }
+        set
+        {
+            if (value)
+            {
+                flags = flags.With(HexCellFlags.Explorable);
+            }
+            else
+            {
+                flags = flags.Without(HexCellFlags.Explorable);
+            }
         }
     }
 

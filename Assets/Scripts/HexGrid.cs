@@ -161,6 +161,7 @@ public class HexGrid : MonoBehaviour
         cell.Elevation = 0;
         cell.Index = i;
         cell.ShaderData = cellShaderData;
+        cell.Explorable = x > 0 && z > 0 && x < cellCountX - 1 && z < cellCountZ - 1;
 
         AddCellToChunk(x, z, cell);
 
@@ -466,7 +467,7 @@ public class HexGrid : MonoBehaviour
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
                 HexCell neighbor = current.GetNeighbor(d);
-                if (!neighbor || neighbor.SearchPhase == searched)
+                if (!neighbor || neighbor.SearchPhase == searched || !neighbor.Explorable)
                 {
                     continue;
                 }

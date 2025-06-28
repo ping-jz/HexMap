@@ -33,6 +33,7 @@ public enum HexCellFlags
 
     Wall = 0b1_000000_000000_000000,
     Explored = 0b10_000000_000000_000000,
+    Explorable = 0b100_000000_000000_000000,
 }
 
 public static class HexCellFlagsExtensions
