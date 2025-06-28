@@ -590,6 +590,23 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         }
     }
 
+    public int ViewElevation
+    {
+        get
+        {
+            return elevation >= waterLevel ? elevation : waterLevel;
+        }
+    }
+
+    public void ResetVisibility()
+    {
+        if (visibility > 0)
+        {
+            visibility = 0;
+            ShaderData.RefreshVisibility(this);
+        }
+    }
+
     public void Save(BinaryWriter writer)
     {
         writer.Write(terrainTypeIndex);

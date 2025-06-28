@@ -190,6 +190,14 @@ public class HexUnit : MonoBehaviour
         }
     }
 
+    public int VisionRange
+    {
+        get
+        {
+            return 3;
+        }
+    }
+
 
     public bool IsValidDestination(HexCell cell)
     {

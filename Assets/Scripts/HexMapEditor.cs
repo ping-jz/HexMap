@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
@@ -81,7 +82,7 @@ public class HexMapEditor : MonoBehaviour
     {
         terrainMaterial.DisableKeyword("_SHOW_GRID");
         Shader.EnableKeyword("_HEX_MAP_EDIT_MODE");
-        
+
         SelectTerrianType(1);
         RegisterEvents();
         ShowGrid(false);
@@ -399,7 +400,13 @@ public class HexMapEditor : MonoBehaviour
 
         if (flags.Has(EditorFlags.ApplyElevation))
         {
+            int originalViewElevation = cell.ViewElevation;
             cell.Elevation = elevation;
+            if (cell.ViewElevation != originalViewElevation)
+            {
+                hexGrid.ViewElevationChanged = true;
+            }
+            RefreshCellWithDependents(cell);
             refrechCells(cell.RemoveInvalidRiver());
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
@@ -412,7 +419,12 @@ public class HexMapEditor : MonoBehaviour
 
         if (flags.Has(EditorFlags.ApplyWaterLevel))
         {
+            int originalViewElevation = cell.ViewElevation;
             cell.WaterLevel = waterLevel;
+            if (cell.ViewElevation != originalViewElevation)
+            {
+                hexGrid.ViewElevationChanged = true;
+            }
             refrechCells(cell);
             refrechCells(cell.RemoveInvalidRiver());
         }
@@ -482,10 +494,6 @@ public class HexMapEditor : MonoBehaviour
             }
 
             refrechCells(cell);
-            if (cell.Unit)
-            {
-                cell.Unit.ValidateLocation();
-            }
         }
     }
 

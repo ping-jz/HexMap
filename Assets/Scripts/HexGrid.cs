@@ -35,7 +35,6 @@ public class HexGrid : MonoBehaviour
     private int seed;
     [SerializeField]
     private HexUnit unitPrefab;
-
     HexCellShaderData cellShaderData;
     private int chunkCountX, chunkCountZ;
     HexCell[] cells;
@@ -116,6 +115,7 @@ public class HexGrid : MonoBehaviour
         {
             HexMetrics.noiseSource = noiseSource;
             HexMetrics.InitializeHashGrid(seed);
+            ResetVisibility();
         }
     }
 
@@ -442,8 +442,9 @@ public class HexGrid : MonoBehaviour
         ListPool<HexCell>.Add(cells);
     }
 
-    List<HexCell> GetVisibleCells(HexCell from, int range)
+    List<HexCell> GetVisibleCells(HexCell fromCell, int range)
     {
+        range += fromCell.ViewElevation;
         List<HexCell> visibleCells = ListPool<HexCell>.Get();
         searchPhase += 1;
         int searchFrontierPhase = searchPhase;
@@ -451,15 +452,15 @@ public class HexGrid : MonoBehaviour
         int searched = -searchFrontierPhase;
         PriorityQueue<HexCell> frontier = new PriorityQueue<HexCell>();
 
-        from.SearchPhase = searchFrontierPhase;
-        from.Distance = 0;
-        frontier.Enqueue(from, from.SearchPriority);
-
+        fromCell.SearchPhase = searchFrontierPhase;
+        fromCell.Distance = 0;
+        frontier.Enqueue(fromCell, fromCell.SearchPriority);
+        HexCoordinates fromCoordinates = fromCell.Coordinates;
         while (frontier.Count > 0)
         {
 
             HexCell current = frontier.Dequeue();
-            from.SearchPhase = searched;
+            fromCell.SearchPhase = searched;
             visibleCells.Add(current);
             //还是有很多重复计算
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
@@ -471,7 +472,9 @@ public class HexGrid : MonoBehaviour
                 }
 
                 int distance = current.Distance + 1;
-                if (distance > range)
+                if (distance + neighbor.ViewElevation > range ||
+                    distance > fromCoordinates.DistanceTo(neighbor.Coordinates)
+                )
                 {
                     continue;
                 }
@@ -546,6 +549,33 @@ public class HexGrid : MonoBehaviour
             chunk.Refresh();
         }
         cellShaderData.ImmediateMode = originModel;
+    }
+
+    public bool ViewElevationChanged
+    {
+        get; set;
+    }
+
+    public void LateUpdate()
+    {
+        if (ViewElevationChanged)
+        {
+            ResetVisibility();
+            ViewElevationChanged = false;
+        }
+    }
+
+    public void ResetVisibility()
+    {
+        foreach (HexCell cell in cells)
+        {
+            cell.ResetVisibility();
+        }
+
+        foreach (HexUnit unit in units)
+        {
+            IncreaseVisibility(unit.Location, unit.VisionRange);
+        }
     }
 
     void OnDrawGizmos()
