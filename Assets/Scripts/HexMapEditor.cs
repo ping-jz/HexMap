@@ -67,6 +67,8 @@ public class HexMapEditor : MonoBehaviour
     private HexMapCamera hexMapCamera;
     [SerializeField]
     private Material terrainMaterial;
+    [SerializeField]
+    private HexMapGenerator mapGenerator;
     private int activeTerrianType;
     int elevation;
     int waterLevel;
@@ -86,7 +88,7 @@ public class HexMapEditor : MonoBehaviour
         SelectTerrianType(1);
         RegisterEvents();
         ShowGrid(false);
-        SetEditMode(false);
+        SetEditMode(true);
     }
 
     void OnValidate()
@@ -219,9 +221,31 @@ public class HexMapEditor : MonoBehaviour
         newMapPanel.gameObject.SetActive(false);
     }
 
+    public bool GenerateMaps
+    {
+        get
+        {
+            VisualElement root = newMapPanel.rootVisualElement;
+            if (root == null)
+            {
+                return false;
+            }
+
+            return root.Q<Toggle>("ApplyGenerate").value;
+        }
+    }
+
     void CreateMap(int x, int z)
     {
-        hexGrid.CreateMap(x, z);
+        if (GenerateMaps)
+        {
+            mapGenerator.GenerateMap(x, z);
+        }
+        else
+        {
+            hexGrid.CreateMap(x, z);
+        }
+
         hexMapCamera.AdjustPosition(0f, 0f);
         CloseNewMapPanel();
     }
@@ -377,7 +401,6 @@ public class HexMapEditor : MonoBehaviour
         if (flags.Has(EditorFlags.ApplyColor))
         {
             cell.TerrainTypeIndex = activeTerrianType;
-            cell.ShaderData.RefreshTerrain(cell);
         }
 
         if (flags.Has(EditorFlags.ApplyUrbanLevel))

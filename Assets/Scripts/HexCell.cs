@@ -441,6 +441,7 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
             if (terrainTypeIndex != value)
             {
                 terrainTypeIndex = value;
+                ShaderData.RefreshTerrain(this);
             }
         }
     }

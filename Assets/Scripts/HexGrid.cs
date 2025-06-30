@@ -145,6 +145,7 @@ public class HexGrid : MonoBehaviour
 
     void CreateCell(int x, int z, int i)
     {
+        //这个思路很好，想办法运用下20250630
         Vector3 position;
         position.x = (x + z * 0.5f - z / 2) * (HexMetrics.innerRadius * 2f);
         position.y = 0f;
@@ -204,6 +205,17 @@ public class HexGrid : MonoBehaviour
         cell.ChunkIdx = chunkIdx;
         chunk.AddCell(localX + localZ * HexMetrics.chunkSizeX, cell);
     }
+
+    public HexCell GetCell(int xOffset, int zOffset)
+    {
+        return cells[xOffset + zOffset * cellCountX];
+    }
+
+    public HexCell GetCell(int cellIndex)
+    {
+        return cells[cellIndex];
+    }
+
     public HexCell GetCell(Ray ray)
     {
         RaycastHit hit;
