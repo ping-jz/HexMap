@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
 
-public class PriorityQueue<T> where T : IEquatable<T>
+public class PriorityQueue<T>
 {
     private List<(T item, int priority)> heap = new List<(T, int)>();
 
@@ -48,6 +49,11 @@ public class PriorityQueue<T> where T : IEquatable<T>
         }
 
         return result;
+    }
+
+    public void Clear()
+    {
+        heap.Clear();
     }
     
     public int Count => heap.Count;
