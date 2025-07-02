@@ -211,10 +211,10 @@ MonoBehaviour:
   waterLevel: 3
   elevationMinimum: -2
   elevationMaximum: 8
-  mapBorderX: 10
-  mapBorderZ: 10
-  regionCount: 0
-  regionBorder: 5
+  mapBorderX: 5
+  mapBorderZ: 5
+  regionCount: 3
+  regionBorder: 2
 --- !u!4 &315792760
 Transform:
   m_ObjectHideFlags: 0

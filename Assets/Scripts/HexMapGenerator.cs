@@ -32,6 +32,8 @@ public class HexMapGenerator : MonoBehaviour
 	private int regionCount;
 	[SerializeField, Range(0, 10)]
 	private int regionBorder = 5;
+	[SerializeField, Range(0.0f, 1.0f)]
+	private float erosionPercentage = 0.5f;
 
 	private HashSet<HexCoordinates> searchPhase;
 	private PriorityQueue<HexCell> searchFrontier;
@@ -70,6 +72,7 @@ public class HexMapGenerator : MonoBehaviour
 		}
 		CreateRegion(x, z);
 		CreateLand();
+		ErodeLand();
 		SetTerrainType();
 
 		Random.state = originalRandomState;
@@ -283,6 +286,135 @@ public class HexMapGenerator : MonoBehaviour
 				cell.TerrainTypeIndex = cell.Elevation - cell.WaterLevel;
 			}
 		}
+	}
+
+	void ErodeLand()
+	{
+		List<HexCell> erodibleCells = ListPool<HexCell>.Get();
+		for (int i = 0; i < cellCount; i++)
+		{
+			HexCell cell = grid.GetCell(i);
+			if (IsErodible(cell))
+			{
+				erodibleCells.Add(cell);
+			}
+		}
+
+		int erodibleCount = (int)(erodibleCells.Count * (1.0 - erosionPercentage));
+		while (erodibleCount < erodibleCells.Count)
+		{
+			int index = Random.Range(0, erodibleCells.Count);
+			HexCell cell = erodibleCells[index];
+			HexCell targetCell = GetErosionTarget(cell);
+
+			cell.Elevation -= 1;
+			targetCell.Elevation += 1;
+			RefreshCellWithDependents(cell);
+
+			if (!IsErodible(cell))
+			{
+				erodibleCells[index] = erodibleCells[erodibleCells.Count - 1];
+				erodibleCells.RemoveAt(erodibleCells.Count - 1);
+			}
+
+			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
+			{
+				HexCell neighbor = cell.GetNeighbor(d);
+				if (neighbor &&
+					//这个编程技巧不错，复用了{IsErodible}的判断，减少erodibleCells.Contains的调用
+					neighbor.Elevation == cell.Elevation + 2 &&
+					!erodibleCells.Contains(neighbor))
+				{
+					erodibleCells.Add(neighbor);
+				}
+			}
+
+			if (IsErodible(targetCell) && !erodibleCells.Contains(targetCell))
+			{
+				erodibleCells.Add(targetCell);
+			}
+
+			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
+			{
+				HexCell neighbor = targetCell.GetNeighbor(d);
+				if (
+					neighbor &&
+					neighbor != cell &&
+					//这个编程技巧不错，复用了{IsErodible}的判断，减少erodibleCells.Contains的调用
+					neighbor.Elevation == targetCell.Elevation + 1 &&
+					!IsErodible(neighbor)
+				)
+				{
+					erodibleCells.Remove(neighbor);
+				}
+			}
+		}
+
+		ListPool<HexCell>.Add(erodibleCells);
+	}
+
+	private void RefreshCellWithDependents(HexCell cell)
+	{
+		refrechCells(cell);
+		refrechCells(cell.Neighbors);
+	}
+
+	void refrechCells(HexCell cell)
+	{
+
+		HexGridChunk chunk = grid.GetChunk(cell);
+		if (chunk)
+		{
+			chunk.Refresh();
+		}
+		if (cell.Unit)
+		{
+			cell.Unit.ValidateLocation();
+		}
+	}
+
+	void refrechCells(IEnumerable<HexCell> cells)
+	{
+		foreach (HexCell cell in cells)
+		{
+			if (!cell)
+			{
+				continue;
+			}
+
+			refrechCells(cell);
+		}
+	}
+
+	bool IsErodible(HexCell cell)
+	{
+		int erodibleElevation = cell.Elevation - 2;
+		for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
+		{
+			HexCell neighbor = cell.GetNeighbor(d);
+			if (neighbor && neighbor.Elevation <= erodibleElevation)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	HexCell GetErosionTarget(HexCell cell)
+	{
+		List<HexCell> erodibleCells = ListPool<HexCell>.Get();
+		int erodibleElevation = cell.Elevation - 2;
+		for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
+		{
+			HexCell neighbor = cell.GetNeighbor(d);
+			if (neighbor && neighbor.Elevation <= erodibleElevation)
+			{
+				erodibleCells.Add(neighbor);
+			}
+		}
+		HexCell target = erodibleCells[Random.Range(0, erodibleCells.Count)];
+		ListPool<HexCell>.Add(erodibleCells);
+		return target;
 	}
 }
 
