@@ -205,7 +205,7 @@ MonoBehaviour:
   jitterProbability: 0.25
   chunkSizeMin: 30
   chunkSizeMax: 100
-  landPercentage: 0.293
+  landPercentage: 0.393
   highRiseProbability: 0.25
   sinkProbability: 0.2
   waterLevel: 3
@@ -213,6 +213,8 @@ MonoBehaviour:
   elevationMaximum: 8
   mapBorderX: 10
   mapBorderZ: 10
+  regionCount: 0
+  regionBorder: 5
 --- !u!4 &315792760
 Transform:
   m_ObjectHideFlags: 0
