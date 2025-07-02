@@ -200,12 +200,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grid: {fileID: 1087469152}
+  useFixedSeed: 0
+  seed: 0
   jitterProbability: 0.25
   chunkSizeMin: 30
   chunkSizeMax: 100
-  landPercentage: 0.492
+  landPercentage: 0.293
   highRiseProbability: 0.25
+  sinkProbability: 0.2
   waterLevel: 3
+  elevationMinimum: -2
+  elevationMaximum: 8
+  mapBorderX: 10
+  mapBorderZ: 10
 --- !u!4 &315792760
 Transform:
   m_ObjectHideFlags: 0
@@ -693,7 +700,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   swivel: {fileID: 423233572}
   stick: {fileID: 1165300848}
-  stickMinZoom: -550
+  stickMinZoom: -650
   stickMaxZoom: -90
   swivelMinZoom: 90
   swivelMaxZoom: 45

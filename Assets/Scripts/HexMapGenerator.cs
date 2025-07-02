@@ -26,11 +26,12 @@ public class HexMapGenerator : MonoBehaviour
 	private int elevationMinimum = -2;
 	[SerializeField, Range(6, 10)]
 	private int elevationMaximum = 8;
-
-
+	[SerializeField, Range(0, 10)]
+	private int mapBorderX = 5, mapBorderZ = 5;
 
 	private HashSet<HexCoordinates> searchPhase;
 	private PriorityQueue<HexCell> searchFrontier;
+	private int xMin, xMax, zMin, zMax;
 
 	private int cellCount;
 
@@ -54,6 +55,10 @@ public class HexMapGenerator : MonoBehaviour
 		{
 			searchFrontier = new PriorityQueue<HexCell>();
 		}
+		xMin = mapBorderX;
+		xMax = x - mapBorderX;
+		zMin = mapBorderZ;
+		zMax = z - mapBorderZ;
 		cellCount = x * z;
 		grid.CreateMap(x, z);
 
@@ -70,7 +75,7 @@ public class HexMapGenerator : MonoBehaviour
 	void CreateLand()
 	{
 		int landBudget = Mathf.RoundToInt(cellCount * landPercentage);
-		while (landBudget > 0)
+		for (int guard = 0; 0 < landBudget && guard < 10000; guard++)
 		{
 			int chunkSize = Random.Range(chunkSizeMin, chunkSizeMax + 1);
 			if (Random.value < sinkProbability)
@@ -82,13 +87,15 @@ public class HexMapGenerator : MonoBehaviour
 				landBudget = RaiseTerrain(chunkSize, landBudget);
 			}
 		}
+
+		if (landBudget > 0)
+		{
+			Debug.LogWarning($"Failed to use up  {landBudget} land budget.");
+		}
 	}
 
 	int RaiseTerrain(int chunkSize, int landBudget)
 	{
-		searchFrontier.Clear();
-		searchPhase.Clear();
-
 		HexCell firstCell = GetRandomCell();
 		firstCell.Distance = 0;
 		firstCell.SearchHeuristic = 0;
@@ -186,7 +193,7 @@ public class HexMapGenerator : MonoBehaviour
 
 	HexCell GetRandomCell()
 	{
-		return grid.GetCell(Random.Range(0, cellCount));
+		return grid.GetCell(Random.Range(xMin, xMax), Random.Range(zMin, zMax));
 	}
 
 	void SetTerrainType()
