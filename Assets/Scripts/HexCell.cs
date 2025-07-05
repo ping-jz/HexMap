@@ -618,6 +618,11 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         }
     }
 
+    public void SetMapData(float data)
+    {
+        ShaderData.SetMapData(this, data);
+    }
+
     public void ResetVisibility()
     {
         if (visibility > 0)

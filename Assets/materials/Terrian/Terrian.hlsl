@@ -2,10 +2,12 @@
 
 void GetVertexCellData_float(
     bool editMode,
+    bool showMapData,
     float3 Indices,
     float3 Weights,
     out float4 Terrain,
-    out float4 Visibility
+    out float4 Visibility,
+    out float MapData
 ) {
     float4 cell0 = GetCellData(editMode, Indices.x);
     float4 cell1 = GetCellData(editMode, Indices.y);
@@ -22,6 +24,11 @@ void GetVertexCellData_float(
     Visibility.xyz = lerp(0.25, 1, Visibility.xyz);
     Visibility.w = 
         cell0.y * Weights.x + cell1.y * Weights.y + cell2.y * Weights.z;
+    //for debug only
+    MapData = -1.0;
+    if (showMapData) {
+        MapData = cell0.z * Weights + cell1.z * Weights.y + cell2.z * Weights.z;
+    }
 }
 
 //根据给定的素材，使用世界坐标，素材下标，然后color应该是权重的意思
@@ -35,6 +42,8 @@ float4 GetTerrianColor(UnityTexture2DArray textures, float3 worldPosition, float
 void FgetFragmentDataTerrian_float(
     UnityTexture2DArray Textures,
     UnityTexture2D Grid,
+    //for debug only
+    float mapData,
     float3 WorldPosition,
     float4 weights,
     float4 terrian,
@@ -56,7 +65,12 @@ void FgetFragmentDataTerrian_float(
         gridUV.y *= 1 / (2 * 15.0);
         grid = Grid.Sample(Grid.samplerstate, gridUV);
     }
+    if(0 <= mapData) {
+        //for debug only
+        BaseColor = mapData * grid;
+    } else {
+        BaseColor = c.rgb * grid;
+    }
 
-    BaseColor = c.rgb * grid;
     Exploration = visibility.w;
 }

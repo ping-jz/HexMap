@@ -80,15 +80,14 @@ public class HexMapEditor : MonoBehaviour
     int specialIndex;
     HexDirection dragDirection;
     HexCell previousCell;
+    
     void Awake()
     {
-        terrainMaterial.DisableKeyword("_SHOW_GRID");
-        Shader.EnableKeyword("_HEX_MAP_EDIT_MODE");
-
+        ShowGrid(false);
+        ShowClimate(false);
+        SetEditMode(true);
         SelectTerrianType(1);
         RegisterEvents();
-        ShowGrid(false);
-        SetEditMode(true);
     }
 
     void OnValidate()
@@ -152,6 +151,7 @@ public class HexMapEditor : MonoBehaviour
 
         root.Q<Toggle>("EditerMode").RegisterValueChangedCallback(change => SetEditMode(change.newValue));
         root.Q<Toggle>("ShowGrid").RegisterValueChangedCallback(change => ShowGrid(change.newValue));
+        root.Q<Toggle>("ShowClimate").RegisterValueChangedCallback(change => ShowClimate(change.newValue));
 
         root.Q<RadioButtonGroup>("River").RegisterValueChangedCallback(change => SetRiverMode(change.newValue));
         SetRiverMode(0);
@@ -615,6 +615,18 @@ public class HexMapEditor : MonoBehaviour
         else
         {
             terrainMaterial.DisableKeyword("_SHOW_GRID");
+        }
+    }
+
+    public void ShowClimate(bool visible)
+    {
+        if (visible)
+        {
+            terrainMaterial.EnableKeyword("_SHOW_CLIMATE_DATA");
+        }
+        else
+        {
+            terrainMaterial.DisableKeyword("_SHOW_CLIMATE_DATA");
         }
     }
 

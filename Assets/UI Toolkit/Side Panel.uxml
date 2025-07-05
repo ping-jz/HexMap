@@ -30,6 +30,7 @@
 			name="Wall" />
         <engine:Toggle label="EditerMode" value="true" name="EditerMode" />
 		<engine:Toggle label="Grid" value="false" name="ShowGrid" />
+		<engine:Toggle label="Climate" value="false" name="ShowClimate" />
 	</engine:VisualElement>
 	
 	<engine:VisualElement name="RightPanel" class="sidePanel" style="right:0">

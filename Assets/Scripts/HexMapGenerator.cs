@@ -34,10 +34,13 @@ public class HexMapGenerator : MonoBehaviour
 	private int regionBorder = 5;
 	[SerializeField, Range(0.0f, 1.0f)]
 	private float erosionPercentage = 0.5f;
+	[SerializeField, Range(0f, 1f)]
+	private float evaporation = 0.5f, precipitationFactor = 0.25f;
 
 	private HashSet<HexCoordinates> searchPhase;
 	private PriorityQueue<HexCell> searchFrontier;
 	private List<MapRegin> mapRegins;
+	private List<ClimateData> climate;
 
 	private int cellCount;
 
@@ -73,6 +76,7 @@ public class HexMapGenerator : MonoBehaviour
 		CreateRegion(x, z);
 		CreateLand();
 		ErodeLand();
+		CreateClimate();
 		SetTerrainType();
 
 		Random.state = originalRandomState;
@@ -276,6 +280,61 @@ public class HexMapGenerator : MonoBehaviour
 		return grid.GetCell(Random.Range(mapRegion.xMin, mapRegion.xMax), Random.Range(mapRegion.zMin, mapRegion.zMax));
 	}
 
+	void CreateClimate()
+	{
+		if (climate == null)
+		{
+			climate = new List<ClimateData>();
+		}
+		climate.Clear();
+		ClimateData initialData = new ClimateData();
+		for (int i = 0; i < cellCount; i++)
+		{
+			climate.Add(initialData);
+		}
+
+		for (int cycle = 0; cycle < 40; cycle++)
+		{
+			for (int i = 0; i < cellCount; i++)
+			{
+				EvolveClimate(i);
+			}
+		}
+	}
+
+	void EvolveClimate(int cellIndex)
+	{
+		HexCell cell = grid.GetCell(cellIndex);
+		ClimateData cellClimate = climate[cellIndex];
+
+		if (cell.IsUnderwater)
+		{
+			cellClimate.clouds += evaporation;
+		}
+
+		if (0.0 < cellClimate.clouds)
+		{
+			float precipitation = cellClimate.clouds * precipitationFactor;
+			cellClimate.clouds -= precipitation;
+			
+			float cloudDispersal = cellClimate.clouds * (1f / 6f);
+			cellClimate.clouds = 0f;
+			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
+			{
+				HexCell neighbor = cell.GetNeighbor(d);
+				if (!neighbor)
+				{
+					continue;
+				}
+				ClimateData neighborClimate = climate[neighbor.Index];
+				neighborClimate.clouds += cloudDispersal;
+				climate[neighbor.Index] = neighborClimate;
+			}
+		}
+
+		climate[cellIndex] = cellClimate;
+	}
+
 	void SetTerrainType()
 	{
 		for (int i = 0; i < cellCount; i++)
@@ -285,6 +344,7 @@ public class HexMapGenerator : MonoBehaviour
 			{
 				cell.TerrainTypeIndex = cell.Elevation - cell.WaterLevel;
 			}
+			cell.SetMapData(climate[i].clouds);
 		}
 	}
 
@@ -421,4 +481,9 @@ public class HexMapGenerator : MonoBehaviour
 struct MapRegin
 {
 	public int xMin, xMax, zMin, zMax;
+}
+
+struct ClimateData
+{
+	public float clouds;
 }
