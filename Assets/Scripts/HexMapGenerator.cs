@@ -35,7 +35,12 @@ public class HexMapGenerator : MonoBehaviour
 	[SerializeField, Range(0.0f, 1.0f)]
 	private float erosionPercentage = 0.5f;
 	[SerializeField, Range(0f, 1f)]
-	private float evaporation = 0.5f, precipitationFactor = 0.25f;
+	private float evaporation = 0.5f,
+		precipitationFactor = 0.25f,
+		evaporationFactor = 0.5f,
+		runoffFactor = 0.25f,
+		seepageFactor = 0.125f
+	;
 
 	private HashSet<HexCoordinates> searchPhase;
 	private PriorityQueue<HexCell> searchFrontier;
@@ -311,14 +316,23 @@ public class HexMapGenerator : MonoBehaviour
 		{
 			cellClimate.clouds += evaporation;
 		}
+		else
+		{
+			float evaporation = cellClimate.moisture * evaporationFactor;
+			cellClimate.moisture -= evaporation;
+			cellClimate.clouds += evaporation;
+		}
 
 		if (0.0 < cellClimate.clouds)
 		{
 			float precipitation = cellClimate.clouds * precipitationFactor;
 			cellClimate.clouds -= precipitation;
-			
+			cellClimate.moisture += precipitation;
+
 			float cloudDispersal = cellClimate.clouds * (1f / 6f);
 			cellClimate.clouds = 0f;
+			float runoff = cellClimate.moisture * runoffFactor * (1f / 6f);
+			float seepage = cellClimate.moisture * seepageFactor * (1f / 6f);
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
 				HexCell neighbor = cell.GetNeighbor(d);
@@ -328,6 +342,19 @@ public class HexMapGenerator : MonoBehaviour
 				}
 				ClimateData neighborClimate = climate[neighbor.Index];
 				neighborClimate.clouds += cloudDispersal;
+
+				int elevationDelta = neighbor.ViewElevation - cell.ViewElevation;
+				if (elevationDelta < 0)
+				{
+					cellClimate.moisture -= runoff;
+					neighborClimate.moisture += runoff;
+				}
+				else if (elevationDelta == 0)
+				{
+					cellClimate.moisture -= seepage;
+					neighborClimate.moisture += seepage;
+				}
+
 				climate[neighbor.Index] = neighborClimate;
 			}
 		}
@@ -344,7 +371,7 @@ public class HexMapGenerator : MonoBehaviour
 			{
 				cell.TerrainTypeIndex = cell.Elevation - cell.WaterLevel;
 			}
-			cell.SetMapData(climate[i].clouds);
+			cell.SetMapData(climate[i].moisture);
 		}
 	}
 
@@ -485,5 +512,5 @@ struct MapRegin
 
 struct ClimateData
 {
-	public float clouds;
+	public float clouds, moisture;
 }
