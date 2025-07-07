@@ -80,7 +80,7 @@ public class HexMapEditor : MonoBehaviour
     int specialIndex;
     HexDirection dragDirection;
     HexCell previousCell;
-    
+
     void Awake()
     {
         ShowGrid(false);
@@ -92,6 +92,10 @@ public class HexMapEditor : MonoBehaviour
 
     void OnValidate()
     {
+        ShowGrid(false);
+        ShowClimate(false);
+        SetEditMode(true);
+        
         RegisterEvents();
     }
 

@@ -39,13 +39,20 @@ public class HexMapGenerator : MonoBehaviour
 		precipitationFactor = 0.25f,
 		evaporationFactor = 0.5f,
 		runoffFactor = 0.25f,
-		seepageFactor = 0.125f
+		seepageFactor = 0.125f,
+		startingMoisture = 0.1f
 	;
+
+	private HexDirection windDirection = HexDirection.TopLeft;
+
+	[SerializeField, Range(1f, 10f)]
+	private float windStrength = 4f;
 
 	private HashSet<HexCoordinates> searchPhase;
 	private PriorityQueue<HexCell> searchFrontier;
 	private List<MapRegin> mapRegins;
-	private List<ClimateData> climate;
+	private List<ClimateData> climate = new List<ClimateData>();
+	private List<ClimateData> nextClimate = new List<ClimateData>();
 
 	private int cellCount;
 
@@ -287,15 +294,17 @@ public class HexMapGenerator : MonoBehaviour
 
 	void CreateClimate()
 	{
-		if (climate == null)
-		{
-			climate = new List<ClimateData>();
-		}
+		//20250707。为什么要两个，应该后续某种优化要用吧。
 		climate.Clear();
+		nextClimate.Clear();
+
 		ClimateData initialData = new ClimateData();
+		initialData.moisture = startingMoisture;
+		ClimateData nextInitialData = new ClimateData();
 		for (int i = 0; i < cellCount; i++)
 		{
 			climate.Add(initialData);
+			nextClimate.Add(nextInitialData);
 		}
 
 		for (int cycle = 0; cycle < 40; cycle++)
@@ -304,6 +313,9 @@ public class HexMapGenerator : MonoBehaviour
 			{
 				EvolveClimate(i);
 			}
+			List<ClimateData> swap = climate;
+			climate = nextClimate;
+			nextClimate = swap;
 		}
 	}
 
@@ -329,8 +341,17 @@ public class HexMapGenerator : MonoBehaviour
 			cellClimate.clouds -= precipitation;
 			cellClimate.moisture += precipitation;
 
-			float cloudDispersal = cellClimate.clouds * (1f / 6f);
-			cellClimate.clouds = 0f;
+			float cloudMaximum = 1f - cell.ViewElevation / (elevationMaximum + 1f);
+			if (cellClimate.clouds > cloudMaximum)
+			{
+				cellClimate.moisture += cellClimate.clouds - cloudMaximum;
+				cellClimate.clouds = cloudMaximum;
+			}
+
+			//为什么的云的扩散方向和风吹的方向相反
+			//20250707先用的风吹的方向，相通了再用
+			HexDirection mainDispersalDirection = windDirection.Opposite();
+			float cloudDispersal = cellClimate.clouds * (1f / (5f + windStrength));
 			float runoff = cellClimate.moisture * runoffFactor * (1f / 6f);
 			float seepage = cellClimate.moisture * seepageFactor * (1f / 6f);
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
@@ -340,8 +361,16 @@ public class HexMapGenerator : MonoBehaviour
 				{
 					continue;
 				}
-				ClimateData neighborClimate = climate[neighbor.Index];
-				neighborClimate.clouds += cloudDispersal;
+				ClimateData neighborClimate = nextClimate[neighbor.Index];
+				if (d == windDirection)
+				{
+					neighborClimate.clouds += cloudDispersal * windStrength;
+				}
+				else
+				{
+					neighborClimate.clouds += cloudDispersal;
+				}
+
 
 				int elevationDelta = neighbor.ViewElevation - cell.ViewElevation;
 				if (elevationDelta < 0)
@@ -355,11 +384,18 @@ public class HexMapGenerator : MonoBehaviour
 					neighborClimate.moisture += seepage;
 				}
 
-				climate[neighbor.Index] = neighborClimate;
+				nextClimate[neighbor.Index] = neighborClimate;
 			}
 		}
 
-		climate[cellIndex] = cellClimate;
+		ClimateData nextCellClimate = nextClimate[cellIndex];
+		nextCellClimate.moisture += cellClimate.moisture;
+		if (nextCellClimate.moisture > 1f)
+		{
+			nextCellClimate.moisture = 1f;
+		}
+		nextClimate[cellIndex] = nextCellClimate;
+		climate[cellIndex] = new ClimateData();
 	}
 
 	void SetTerrainType()
@@ -367,9 +403,33 @@ public class HexMapGenerator : MonoBehaviour
 		for (int i = 0; i < cellCount; i++)
 		{
 			HexCell cell = grid.GetCell(i);
+			float moisture = climate[i].moisture;
 			if (!cell.IsUnderwater)
 			{
-				cell.TerrainTypeIndex = cell.Elevation - cell.WaterLevel;
+				if (moisture < 0.05f)
+				{
+					cell.TerrainTypeIndex = 4;
+				}
+				else if (moisture < 0.12f)
+				{
+					cell.TerrainTypeIndex = 0;
+				}
+				else if (moisture < 0.28f)
+				{
+					cell.TerrainTypeIndex = 3;
+				}
+				else if (moisture < 0.85f)
+				{
+					cell.TerrainTypeIndex = 1;
+				}
+				else
+				{
+					cell.TerrainTypeIndex = 2;
+				}
+			}
+			else
+			{
+				cell.TerrainTypeIndex = 2;
 			}
 			cell.SetMapData(climate[i].moisture);
 		}
