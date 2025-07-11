@@ -41,7 +41,10 @@ public class HexMapGenerator : MonoBehaviour
 		runoffFactor = 0.25f,
 		seepageFactor = 0.125f,
 		startingMoisture = 0.1f,
-		extraLakeProbability = 0.25f
+		extraLakeProbability = 0.25f,
+		lowTemperature = 0f,
+		highTemperature = 1f,
+		temperatureJitter = 0.1f
 	;
 
 	private HexDirection windDirection = HexDirection.TopLeft;
@@ -50,6 +53,8 @@ public class HexMapGenerator : MonoBehaviour
 	private float windStrength = 4f;
 	[SerializeField, Range(0f, 0.2f)]
 	private float riverPercentage = 0.1f;
+	[SerializeField]
+	private HemisphereMode hemisphere;
 
 	private HashSet<HexCoordinates> searchPhase;
 	private PriorityQueue<HexCell> searchFrontier;
@@ -540,7 +545,7 @@ public class HexMapGenerator : MonoBehaviour
 			}
 
 			if (minNeighborElevation >= cell.Elevation &&
-			    Random.value < extraLakeProbability)
+				Random.value < extraLakeProbability)
 			{
 				cell.WaterLevel = cell.Elevation;
 				cell.Elevation -= 1;
@@ -554,6 +559,29 @@ public class HexMapGenerator : MonoBehaviour
 		}
 		ListPool<HexDirection>.Add(flowDirections);
 		return length;
+	}
+
+	float DeterminTemperature(HexCell cell)
+	{
+		float latitude = (float)cell.Coordinates.Z / grid.CellCountZ;
+		if (hemisphere == HemisphereMode.Both)
+		{
+			latitude *= 2;
+			if (latitude > 1f)
+			{
+				latitude = 2f - latitude;
+			}
+		}
+		else if (hemisphere == HemisphereMode.North)
+		{
+			latitude = 1f - latitude;
+		}
+
+		float temperature = Mathf.LerpUnclamped(lowTemperature, highTemperature, latitude);
+
+		temperature *= 1f - (cell.ViewElevation - waterLevel) / (elevationMaximum - waterLevel + 1f);
+		temperature += (HexMetrics.SampleNoise(cell.Position * 0.1f).w * 2f - 1f) * temperatureJitter;
+		return temperature;
 	}
 
 	void SetTerrainType()
@@ -589,7 +617,7 @@ public class HexMapGenerator : MonoBehaviour
 			{
 				cell.TerrainTypeIndex = 2;
 			}
-			cell.SetMapData(climate[i].moisture);
+			cell.SetMapData(DeterminTemperature(cell));
 		}
 	}
 
@@ -732,3 +760,9 @@ struct ClimateData
 {
 	public float clouds, moisture;
 }
+
+enum HemisphereMode
+{
+	Both, North, South
+}
+
