@@ -7,6 +7,7 @@ public static class HexMetrics
     public const float outerRadius = 10f;
 
     public const float innerRadius = outerRadius * outerToInner;
+    public const float innerDiameter = innerRadius * 2f;
 
     public const float solidFactor = 0.8f;
 
@@ -32,6 +33,7 @@ public static class HexMetrics
     public const float waterElevationOffset = -0.5f;
 
     public static Texture2D noiseSource;
+    public static int wrapSize;
 
     //水面大小，解决问题之一。陡峭的悬崖会遮挡岸边
     public const float waterFactor = 0.6f;
@@ -52,6 +54,15 @@ public static class HexMetrics
     };
 
     public const float wallTowerThreshold = 0.5f;
+
+
+    public static bool Wrapping
+    {
+        get
+        {
+            return wrapSize > 0;
+        }
+    }
 
     public static Vector3 WallThicknessOffset(Vector3 near, Vector3 far)
     {

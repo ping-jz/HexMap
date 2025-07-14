@@ -74,7 +74,7 @@ public class HexMapGenerator : MonoBehaviour
 
 	private int cellCount;
 
-	public void GenerateMap(int x, int z)
+	public void GenerateMap(int x, int z, bool wrapping)
 	{
 		Random.State originalRandomState = Random.state;
 		if (!useFixedSeed)
@@ -96,7 +96,7 @@ public class HexMapGenerator : MonoBehaviour
 		}
 
 		cellCount = x * z;
-		grid.CreateMap(x, z);
+		grid.CreateMap(x, z, wrapping);
 
 
 		for (int i = 0; i < cellCount; i++)

@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Collections;
+using System.IO.Compression;
 
 [Flags]
 public enum GizmoMode
@@ -30,6 +31,8 @@ public class HexGrid : MonoBehaviour
     [SerializeField]
     private int cellCountX = 20, cellCountZ = 15;
     [SerializeField]
+    private bool wrapping;
+    [SerializeField]
     GizmoMode gizmos;
     [SerializeField]
     private int seed;
@@ -40,6 +43,7 @@ public class HexGrid : MonoBehaviour
     HexCell[] cells;
     HexGridChunk[] chunks;
     List<HexUnit> units = new List<HexUnit>();
+
 
     public int ChunkCountX
     {
@@ -75,10 +79,10 @@ public class HexGrid : MonoBehaviour
         HexMetrics.InitializeHashGrid(seed);
 
         cellShaderData = gameObject.AddComponent<HexCellShaderData>();
-        CreateMap(cellCountX, cellCountZ);
+        CreateMap(cellCountX, cellCountZ, wrapping);
     }
 
-    public bool CreateMap(int x, int z)
+    public bool CreateMap(int x, int z, bool wrapping)
     {
         if (
             x <= 0 || x % HexMetrics.chunkSizeX != 0 ||
@@ -99,6 +103,8 @@ public class HexGrid : MonoBehaviour
         }
         cellCountX = x;
         cellCountZ = z;
+        this.wrapping = wrapping;
+        HexMetrics.wrapSize = wrapping ? cellCountX : 0;
         chunkCountX = cellCountX / HexMetrics.chunkSizeX;
         chunkCountZ = cellCountZ / HexMetrics.chunkSizeZ;
 
@@ -115,6 +121,7 @@ public class HexGrid : MonoBehaviour
         {
             HexMetrics.noiseSource = noiseSource;
             HexMetrics.InitializeHashGrid(seed);
+            HexMetrics.wrapSize = wrapping ? cellCountX : 0;
             ResetVisibility();
         }
     }
@@ -518,6 +525,7 @@ public class HexGrid : MonoBehaviour
     {
         writer.Write(cellCountX);
         writer.Write(cellCountZ);
+        writer.Write(wrapping);
         foreach (HexCell cell in cells)
         {
             cell.Save(writer);
@@ -535,7 +543,10 @@ public class HexGrid : MonoBehaviour
         ClearPath();
         ClearUnits();
         StopAllCoroutines();
-        if (!CreateMap(reader.ReadInt32(), reader.ReadInt32()))
+        int x = reader.ReadInt32();
+        int z = reader.ReadInt32();
+        bool wrapping = version >= 3 ? reader.ReadBoolean() : false;
+        if (!CreateMap(x, z, wrapping))
         {
             return;
         }

@@ -80,6 +80,7 @@ public class HexMapEditor : MonoBehaviour
     int specialIndex;
     HexDirection dragDirection;
     HexCell previousCell;
+    bool wrapping;
 
     void Awake()
     {
@@ -117,6 +118,7 @@ public class HexMapEditor : MonoBehaviour
         root.Q<Button>("LargeMapButton").RegisterCallback<MouseUpEvent>(ent => CreateLargeMap());
 
         root.Q<Button>("CancelMapButton").RegisterCallback<MouseUpEvent>(ent => CloseNewMapPanel());
+        root.Q<Toggle>("ApplyWrapping").RegisterValueChangedCallback(change => wrapping = change.newValue);
     }
 
     private void registerSidePanel()
@@ -243,11 +245,11 @@ public class HexMapEditor : MonoBehaviour
     {
         if (GenerateMaps)
         {
-            mapGenerator.GenerateMap(x, z);
+            mapGenerator.GenerateMap(x, z, wrapping);
         }
         else
         {
-            hexGrid.CreateMap(x, z);
+            hexGrid.CreateMap(x, z, wrapping);
         }
 
         hexMapCamera.AdjustPosition(0f, 0f);

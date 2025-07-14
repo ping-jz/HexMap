@@ -10,6 +10,7 @@
 	    <engine:VisualElement name="newMapPanel" class="centerPanel">
 		    <engine:Label text="Generate New Map" name="MenuText"/>
 			<engine:Toggle label="Generate" value="true" name="ApplyGenerate" />
+			<engine:Toggle label="Wrapping" value="true" name="ApplyWrapping" />
 	        <engine:Button text="Small" name="SmallMapButton" />
 		    <engine:Button text="Medium" name="MediumMapButton" />
 		    <engine:Button text="Large" name="LargeMapButton" />

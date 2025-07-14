@@ -5,6 +5,8 @@ using UnityEngine.UIElements;
 
 public class HexMapEditorSaveLoad : MonoBehaviour
 {
+    const int mapFileVersion = 3;
+
     private bool saveModle;
     private HexGrid hexGrid;
     private HexMapCamera hexMapCamera;
@@ -98,8 +100,8 @@ public class HexMapEditorSaveLoad : MonoBehaviour
     {
         using (BinaryWriter write = new BinaryWriter(File.Open(path, FileMode.Create)))
         {
-            int version = 2;
-            write.Write(version);
+         
+            write.Write(mapFileVersion);
             hexGrid.Save(write);
         }
     }
