@@ -1,3 +1,5 @@
+#include "HexCellData.hlsl"
+
 float River(float2 riverUV, float time, UnityTexture2D noiseTex) {
     float2 uv = riverUV;
 	uv.x = uv.x * 0.0625 + time * 0.005;
@@ -16,7 +18,7 @@ float Foam(float shore, float2 worldXZ, float Time, UnityTexture2D NoiseTexture)
 	shore = sqrt(shore) * 0.9;
 
 	float2 noiseUV = worldXZ + Time * 0.25;
-    float4 noise = NoiseTexture.Sample(NoiseTexture.samplerstate, noiseUV * 0.015);
+    float4 noise = NoiseTexture.Sample(NoiseTexture.samplerstate, noiseUV * (2 * TILING_SCALE));
 
     float distortion1 = noise.x * (1 - shore);
     float foam1 = sin((shore + distortion1) * 10 - Time);
@@ -32,11 +34,11 @@ float Foam(float shore, float2 worldXZ, float Time, UnityTexture2D NoiseTexture)
 float Waves(float2 worldXZ, float Time, UnityTexture2D NoiseTexture) {
 	float2 uv1 = worldXZ;
 	uv1.y += Time;
-    float4 noise1 = NoiseTexture.Sample(NoiseTexture.samplerstate, uv1 * 0.025);
+    float4 noise1 = NoiseTexture.Sample(NoiseTexture.samplerstate, uv1 * (3 * TILING_SCALE));
 
     float2 uv2 = worldXZ;
     uv2.x += Time;
-    float4 noise2 = NoiseTexture.Sample(NoiseTexture.samplerstate, uv2 * 0.025);
+    float4 noise2 = NoiseTexture.Sample(NoiseTexture.samplerstate, uv2 * (3 * TILING_SCALE));
 
     float blendWave = sin(
 		(worldXZ.x + worldXZ.y) * 0.1 + 

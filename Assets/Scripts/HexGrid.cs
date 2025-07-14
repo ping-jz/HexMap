@@ -5,6 +5,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Collections;
 using System.IO.Compression;
+using UnityEngine.UIElements;
 
 [Flags]
 public enum GizmoMode
@@ -31,19 +32,25 @@ public class HexGrid : MonoBehaviour
     [SerializeField]
     private int cellCountX = 20, cellCountZ = 15;
     [SerializeField]
-    private bool wrapping;
-    [SerializeField]
     GizmoMode gizmos;
     [SerializeField]
     private int seed;
     [SerializeField]
     private HexUnit unitPrefab;
+
     HexCellShaderData cellShaderData;
     private int chunkCountX, chunkCountZ;
     HexCell[] cells;
     HexGridChunk[] chunks;
     List<HexUnit> units = new List<HexUnit>();
+    Transform[] columns;
+    int currentCenterColumnIndex = -1;
+    bool wrapping = true;
 
+    public bool Wrapping
+    {
+        get { return wrapping; }
+    }
 
     public int ChunkCountX
     {
@@ -94,9 +101,9 @@ public class HexGrid : MonoBehaviour
         }
         ClearPath();
         ClearUnits();
-        if (chunks != null)
+        if (columns != null)
         {
-            foreach (HexGridChunk chunk in chunks)
+            foreach (Transform chunk in columns)
             {
                 Destroy(chunk.gameObject);
             }
@@ -104,6 +111,7 @@ public class HexGrid : MonoBehaviour
         cellCountX = x;
         cellCountZ = z;
         this.wrapping = wrapping;
+        currentCenterColumnIndex = -1;
         HexMetrics.wrapSize = wrapping ? cellCountX : 0;
         chunkCountX = cellCountX / HexMetrics.chunkSizeX;
         chunkCountZ = cellCountZ / HexMetrics.chunkSizeZ;
@@ -128,12 +136,22 @@ public class HexGrid : MonoBehaviour
 
     void CreateChunks()
     {
+        columns = new Transform[chunkCountX];
+        for (int x = 0; x < chunkCountX; x++)
+        {
+            columns[x] = new GameObject("Column").transform;
+            columns[x].SetParent(transform, false);
+        }
+
         chunks = new HexGridChunk[chunkCountX * chunkCountZ];
 
-        for (int i = 0; i < chunks.Length; i++)
+        for (int z = 0, i = 0; z < chunkCountZ; z++)
         {
-            HexGridChunk chunk = chunks[i] = Instantiate(chunkPrefab);
-            chunk.transform.SetParent(transform, false);
+            for (int x = 0; x < chunkCountX; x++)
+            {
+                HexGridChunk chunk = chunks[i++] = Instantiate(chunkPrefab);
+                chunk.transform.SetParent(columns[x], false);
+            }
         }
     }
 
@@ -211,6 +229,41 @@ public class HexGrid : MonoBehaviour
         int localZ = z - chunkZ * HexMetrics.chunkSizeZ;
         cell.ChunkIdx = chunkIdx;
         chunk.AddCell(localX + localZ * HexMetrics.chunkSizeX, cell);
+    }
+
+    public void CenterMap(float xPosition)
+    {
+        int centerColumnIndex = (int)
+            (xPosition / (HexMetrics.innerDiameter * HexMetrics.chunkSizeX));
+        if (centerColumnIndex == currentCenterColumnIndex)
+        {
+            return;
+        }
+
+        currentCenterColumnIndex = centerColumnIndex;
+
+        int minColumnIndex = centerColumnIndex - chunkCountX / 2;
+        int maxColumnIndex = centerColumnIndex + chunkCountX / 2;
+
+        Vector3 position;
+        position.y = position.z = 0f;
+        for (int i = 0; i < columns.Length; i++)
+        {
+            if (i < minColumnIndex)
+            {
+                position.x = chunkCountX * (HexMetrics.innerDiameter * HexMetrics.chunkSizeX);
+            }
+            else if (i > maxColumnIndex)
+            {
+                position.x = chunkCountX * -(HexMetrics.innerDiameter * HexMetrics.chunkSizeX);
+            }
+            else
+            {
+                position.x = 0f;
+            }
+            columns[i].localPosition = position;
+        }
+
     }
 
     public HexCell GetCell(int xOffset, int zOffset)

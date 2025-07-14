@@ -1,5 +1,4 @@
 #include "Water.hlsl"
-#include "HexCellData.hlsl"
 
 void GetVertexDataRiver_float(
     bool editMode,

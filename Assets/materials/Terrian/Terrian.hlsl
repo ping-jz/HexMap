@@ -34,7 +34,7 @@ void GetVertexCellData_float(
 //根据给定的素材，使用世界坐标，素材下标，然后color应该是权重的意思
 //来进行素材采样
 float4 GetTerrianColor(UnityTexture2DArray textures, float3 worldPosition, float terrian, float weight, float visibility) {
-    float3 uvw = float3(worldPosition.xz * 0.02, terrian);
+    float3 uvw = float3(worldPosition.xz * (2 * TILING_SCALE), terrian);
     float4 c = textures.Sample(textures.samplerstate, uvw);
     return c * (weight * visibility);
 }

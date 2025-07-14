@@ -69,6 +69,9 @@ public class HexMapEditor : MonoBehaviour
     private Material terrainMaterial;
     [SerializeField]
     private HexMapGenerator mapGenerator;
+    [SerializeField]
+    private bool wrapping;
+
     private int activeTerrianType;
     int elevation;
     int waterLevel;
@@ -80,7 +83,6 @@ public class HexMapEditor : MonoBehaviour
     int specialIndex;
     HexDirection dragDirection;
     HexCell previousCell;
-    bool wrapping;
 
     void Awake()
     {
@@ -96,7 +98,7 @@ public class HexMapEditor : MonoBehaviour
         ShowGrid(false);
         ShowClimate(false);
         SetEditMode(true);
-        
+
         RegisterEvents();
     }
 

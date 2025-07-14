@@ -774,7 +774,6 @@ MonoBehaviour:
   noiseSource: {fileID: 2800000, guid: 995f391b45b92634091fd2af02b8fef9, type: 3}
   cellCountX: 40
   cellCountZ: 35
-  wrapping: 1
   gizmos: 0
   seed: 1234
   unitPrefab: {fileID: 3428068996624472434, guid: 0bd42ce4b38b305428abf0f9cefb5f17, type: 3}
@@ -902,6 +901,7 @@ MonoBehaviour:
   hexMapCamera: {fileID: 894289761}
   terrainMaterial: {fileID: 2100000, guid: 0873c74fa859d3647872d7ba7dc5a35b, type: 2}
   mapGenerator: {fileID: 315792759}
+  wrapping: 1
 --- !u!114 &1991754006
 MonoBehaviour:
   m_ObjectHideFlags: 0
