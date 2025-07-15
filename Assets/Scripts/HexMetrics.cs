@@ -203,10 +203,25 @@ public static class HexMetrics
 
     public static Vector4 SampleNoise(Vector3 position)
     {
-        return noiseSource.GetPixelBilinear(
+        Vector4 sample = noiseSource.GetPixelBilinear(
             position.x * noiseScale,
             position.z * noiseScale
         );
+
+        //20250715 这段有关采样的代码没搞懂
+        if (Wrapping && position.x < innerDiameter * 1.5f)
+        {
+            Vector4 sample2 = noiseSource.GetPixelBilinear(
+                (position.x + wrapSize * innerDiameter) * noiseScale,
+                position.z * noiseScale
+            );
+
+            sample = Vector4.Lerp(
+                sample2, sample, position.x * (1f / innerDiameter) - 0.5f
+            );
+        }
+
+        return sample;
     }
 
     public static Vector3 GetSolidEdgeMiddle(HexDirection direction)

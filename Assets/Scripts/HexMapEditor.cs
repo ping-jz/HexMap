@@ -98,7 +98,7 @@ public class HexMapEditor : MonoBehaviour
         ShowGrid(false);
         ShowClimate(false);
         SetEditMode(true);
-
+        wrapping = true;
         RegisterEvents();
     }
 

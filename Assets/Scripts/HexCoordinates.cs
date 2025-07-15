@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-[System.Serializable]
+[Serializable]
 public struct HexCoordinates
 {
     [SerializeField]
@@ -26,6 +26,19 @@ public struct HexCoordinates
 
     public HexCoordinates(int x, int z)
     {
+        //20250715 搞不懂啊
+        if (HexMetrics.Wrapping)
+        {
+            int oX = x + z / 2;
+            if (oX < 0)
+            {
+                x += HexMetrics.wrapSize;
+            }
+            else if (oX >= HexMetrics.wrapSize)
+            {
+                x -= HexMetrics.wrapSize;
+            }
+        }
         this.x = x;
         this.z = z;
     }
@@ -41,7 +54,27 @@ public struct HexCoordinates
 
     public int DistanceTo(HexCoordinates other)
     {
-        return (distanceTo(X, other.x) + distanceTo(Y, other.Y) + distanceTo(Z, other.Z)) / 2;
+        int xy = distanceTo(X, other.x) + distanceTo(Y, other.Y);
+        if (HexMetrics.Wrapping)
+        {
+            other.x += HexMetrics.wrapSize;
+            int xyWrapped = distanceTo(X, other.x) + distanceTo(Y, other.Y);
+            if (xyWrapped < xy)
+            {
+                xy = xyWrapped;
+            }
+            else
+            {
+                other.x -= 2 * HexMetrics.wrapSize;
+                xyWrapped = distanceTo(X, other.x) + distanceTo(Y, other.Y);
+                if (xyWrapped < xy)
+                {
+                    xy = xyWrapped;
+                }
+            }
+        }
+
+        return (xy + distanceTo(Z, other.Z)) / 2;
     }
 
     private int distanceTo(int a, int b)

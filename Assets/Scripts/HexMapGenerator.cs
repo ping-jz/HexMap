@@ -121,12 +121,13 @@ public class HexMapGenerator : MonoBehaviour
 		}
 
 		mapRegins.Clear();
+		int borderX = grid.Wrapping ? regionBorder : mapBorderX;
 		switch (regionCount)
 		{
 			case 2:
 				{
 					MapRegin one;
-					one.xMin = mapBorderX;
+					one.xMin = borderX;
 					one.xMax = x / 2 - regionBorder;
 					one.zMin = mapBorderZ;
 					one.zMax = z - mapBorderZ;
@@ -134,7 +135,7 @@ public class HexMapGenerator : MonoBehaviour
 
 					MapRegin two;
 					two.xMin = x / 2 + regionBorder;
-					two.xMax = x - mapBorderX;
+					two.xMax = x - borderX;
 					two.zMin = mapBorderZ;
 					two.zMax = z - mapBorderZ;
 					mapRegins.Add(two);
@@ -144,7 +145,7 @@ public class HexMapGenerator : MonoBehaviour
 			case 3:
 				{
 					MapRegin one;
-					one.xMin = mapBorderX;
+					one.xMin = borderX;
 					one.xMax = x / 3 - regionBorder;
 					one.zMin = mapBorderZ;
 					one.zMax = z - mapBorderZ;
@@ -159,7 +160,7 @@ public class HexMapGenerator : MonoBehaviour
 
 					MapRegin three;
 					three.xMin = x * 2 / 3 + regionBorder;
-					three.xMax = x - mapBorderX;
+					three.xMax = x - borderX;
 					three.zMin = mapBorderZ;
 					three.zMax = z - mapBorderZ;
 					mapRegins.Add(three);
@@ -168,9 +169,13 @@ public class HexMapGenerator : MonoBehaviour
 				break;
 			default:
 				{
+					if (grid.Wrapping)
+					{
+						borderX = 0;
+					}
 					MapRegin mapRegin;
-					mapRegin.xMin = mapBorderX;
-					mapRegin.xMax = x - mapBorderX;
+					mapRegin.xMin = borderX;
+					mapRegin.xMax = x - borderX;
 					mapRegin.zMin = mapBorderZ;
 					mapRegin.zMax = z - mapBorderZ;
 					mapRegins.Add(mapRegin);

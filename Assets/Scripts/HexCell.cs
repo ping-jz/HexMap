@@ -579,6 +579,8 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
 
     public HexUnit Unit { get; set; }
 
+    public int ColumnIndex { get; set; }
+
     public bool IsExplored
     {
         get

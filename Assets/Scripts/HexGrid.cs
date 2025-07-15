@@ -186,6 +186,7 @@ public class HexGrid : MonoBehaviour
         cell.uiRect = label.rectTransform;
         cell.Elevation = 0;
         cell.Index = i;
+        cell.ColumnIndex = x / HexMetrics.chunkSizeX;
         cell.ShaderData = cellShaderData;
         cell.Explorable = x > 0 && z > 0 && x < cellCountX - 1 && z < cellCountZ - 1;
 
@@ -194,6 +195,10 @@ public class HexGrid : MonoBehaviour
         if (x > 0)
         {
             cell.SetNeighbor(HexDirection.Left, cells[i - 1]);
+            if (wrapping && x == cellCountX - 1)
+            {
+                cell.SetNeighbor(HexDirection.Right, cells[i - x]);
+            }
         }
         if (z > 0)
         {
@@ -204,6 +209,10 @@ public class HexGrid : MonoBehaviour
                 {
                     cell.SetNeighbor(HexDirection.BottomLeft, cells[i - cellCountX - 1]);
                 }
+                else if (wrapping)
+                {
+                    cell.SetNeighbor(HexDirection.BottomLeft, cells[i - 1]);
+                }
             }
             else
             {
@@ -212,6 +221,12 @@ public class HexGrid : MonoBehaviour
                 if (x < cellCountX - 1)
                 {
                     cell.SetNeighbor(HexDirection.BottomRight, cells[i - cellCountX + 1]);
+                }
+                else if (wrapping)
+                {
+                    cell.SetNeighbor(
+                        HexDirection.BottomRight, cells[i - cellCountX * 2 + 1]
+                    );
                 }
             }
         }
