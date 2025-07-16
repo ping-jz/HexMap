@@ -42,6 +42,7 @@ public class HexUnit : MonoBehaviour
             location.Unit = this;
             Grid.IncreaseVisibility(location, visionRange);
             transform.localPosition = value.Position;
+            Grid.MakeChildOfColumn(transform, value.ColumnIndex);
         }
     }
 
@@ -61,18 +62,43 @@ public class HexUnit : MonoBehaviour
         Vector3 a, b, c = pathToTravel[0].Position;
         transform.localPosition = c;
         yield return LookAt(pathToTravel[1].Position);
-        Grid.DecreaseVisibility(currentTravelLocation ? currentTravelLocation : pathToTravel[0],
-            visionRange);
+
+
+        if (!currentTravelLocation)
+        {
+            currentTravelLocation = pathToTravel[0];
+        }
+        Grid.DecreaseVisibility(currentTravelLocation, visionRange);
+        int currentColumn = currentTravelLocation.ColumnIndex;
 
         for (int i = 1; i < pathToTravel.Count; i++)
         {
             currentTravelLocation = pathToTravel[i];
             a = c;
             b = pathToTravel[i - 1].Position;
+
+            int nextColumn = currentTravelLocation.ColumnIndex;
+            if (currentColumn != nextColumn)
+            {
+                if (nextColumn < currentColumn - 1)
+                {
+                    a.x -= HexMetrics.innerDiameter * HexMetrics.wrapSize;
+                    b.x -= HexMetrics.innerDiameter * HexMetrics.wrapSize;
+                }
+                else if (nextColumn > currentColumn + 1)
+                {
+                    a.x += HexMetrics.innerDiameter * HexMetrics.wrapSize;
+                    b.x += HexMetrics.innerDiameter * HexMetrics.wrapSize;
+                }
+                Grid.MakeChildOfColumn(transform, nextColumn);
+                currentColumn = nextColumn;
+            }
+
             //从两个相邻的六边形的中心点开始计算，得出其共同相邻边的中心点
             //你当时理解错就缺少点连线的概念，才没办法理解。
             c = (b + currentTravelLocation.Position) * 0.5f;
             Grid.IncreaseVisibility(pathToTravel[i], visionRange);
+
             for (; t < 1f; t += Time.deltaTime * speed)
             {
                 transform.localPosition = Bezier.GetPoint(a, b, c, t);
@@ -110,6 +136,19 @@ public class HexUnit : MonoBehaviour
 
     IEnumerator LookAt(Vector3 point)
     {
+        if (HexMetrics.Wrapping)
+        {
+            float xDistance = point.x - transform.localPosition.x;
+            if (xDistance < -HexMetrics.innerRadius * HexMetrics.wrapSize)
+            {
+                point.x += HexMetrics.innerRadius * HexMetrics.wrapSize;
+            }
+            else if (xDistance > HexMetrics.innerRadius * HexMetrics.wrapSize)
+            {
+                point.x -= HexMetrics.innerRadius * HexMetrics.wrapSize;
+            }
+        }
+
         point.y = transform.localPosition.y;
         Quaternion fromRotation = transform.localRotation;
         Quaternion toRotation =
