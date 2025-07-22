@@ -111,7 +111,7 @@ public class HexMapEditorSaveLoad : MonoBehaviour
         using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
         {
             int version = reader.ReadInt32();
-            if (version <= 2)
+            if (version <= 3)
             {
                 hexGrid.Load(reader, version);
                 hexMapCamera.AdjustPosition(0f, 0f);

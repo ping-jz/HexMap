@@ -247,7 +247,7 @@ public class HexMapGenerator : MonoBehaviour
 
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = current.GetNeighbor(d);
+				HexCell neighbor = current.GetNeighbor(grid, d);
 				if (neighbor && !searchPhase.Contains(neighbor.Coordinates))
 				{
 					searchPhase.Add(neighbor.Coordinates);
@@ -295,7 +295,7 @@ public class HexMapGenerator : MonoBehaviour
 
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = current.GetNeighbor(d);
+				HexCell neighbor = current.GetNeighbor(grid, d);
 				if (neighbor && !searchPhase.Contains(neighbor.Coordinates))
 				{
 					searchPhase.Add(neighbor.Coordinates);
@@ -380,7 +380,7 @@ public class HexMapGenerator : MonoBehaviour
 			float seepage = cellClimate.moisture * seepageFactor * (1f / 6f);
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = cell.GetNeighbor(d);
+				HexCell neighbor = cell.GetNeighbor(grid, d);
 				if (!neighbor)
 				{
 					continue;
@@ -465,8 +465,14 @@ public class HexMapGenerator : MonoBehaviour
 			if (!origin.IsUnderwater)
 			{
 				bool isValidOrigin = true;
-				foreach (HexCell neighbor in origin.Neighbors)
+				foreach (int neighborIndex in origin.Neighbors)
 				{
+					if (neighborIndex < 0)
+					{
+						continue;
+					}
+
+					HexCell neighbor = grid.GetCell(neighborIndex);
 					if (neighbor && (neighbor.HasRiver || neighbor.IsUnderwater))
 					{
 						isValidOrigin = false;
@@ -496,7 +502,7 @@ public class HexMapGenerator : MonoBehaviour
 			int minNeighborElevation = int.MaxValue;
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = cell.GetNeighbor(d);
+				HexCell neighbor = cell.GetNeighbor(grid, d);
 				if (!neighbor)
 				{
 					continue;
@@ -527,7 +533,7 @@ public class HexMapGenerator : MonoBehaviour
 
 				if (neighbor.HasOutgoingRiver)
 				{
-					cell.SetOutgoingRiver(d);
+					cell.SetOutgoingRiver(grid, d);
 					return length;
 				}
 
@@ -567,9 +573,9 @@ public class HexMapGenerator : MonoBehaviour
 			}
 
 			direction = flowDirections[Random.Range(0, flowDirections.Count)];
-			cell.SetOutgoingRiver(direction);
+			cell.SetOutgoingRiver(grid, direction);
 			length += 1;
-			cell = cell.GetNeighbor(direction);
+			cell = cell.GetNeighbor(grid, direction);
 			RefreshCellWithDependents(cell);
 		}
 		ListPool<HexDirection>.Add(flowDirections);
@@ -652,7 +658,7 @@ public class HexMapGenerator : MonoBehaviour
 					cellBiome.plant += 1;
 				}
 
-				cell.TerrainTypeIndex = cellBiome.terrain;
+				cell.SetTerrainTypeIndex(grid, cellBiome.terrain);
 				cell.PlantLevel = cellBiome.plant;
 				refrechCells(cell);
 			}
@@ -666,7 +672,7 @@ public class HexMapGenerator : MonoBehaviour
 						HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++
 					)
 					{
-						HexCell neighbor = cell.GetNeighbor(d);
+						HexCell neighbor = cell.GetNeighbor(grid, d);
 						if (!neighbor)
 						{
 							continue;
@@ -716,9 +722,9 @@ public class HexMapGenerator : MonoBehaviour
 				{
 					terrain = 2;
 				}
-				cell.TerrainTypeIndex = terrain;
+				cell.SetTerrainTypeIndex(grid, terrain);
 			}
-			cell.SetMapData(moisture);
+			cell.SetMapData(grid, moisture);
 		}
 	}
 
@@ -753,7 +759,7 @@ public class HexMapGenerator : MonoBehaviour
 
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = cell.GetNeighbor(d);
+				HexCell neighbor = cell.GetNeighbor(grid, d);
 				if (neighbor &&
 					//这个编程技巧不错，复用了{IsErodible}的判断，减少erodibleCells.Contains的调用
 					neighbor.Elevation == cell.Elevation + 2 &&
@@ -770,7 +776,7 @@ public class HexMapGenerator : MonoBehaviour
 
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = targetCell.GetNeighbor(d);
+				HexCell neighbor = targetCell.GetNeighbor(grid, d);
 				if (
 					neighbor &&
 					neighbor != cell &&
@@ -790,7 +796,13 @@ public class HexMapGenerator : MonoBehaviour
 	private void RefreshCellWithDependents(HexCell cell)
 	{
 		refrechCells(cell);
-		refrechCells(cell.Neighbors);
+		foreach (int cellIndex in cell.Neighbors)
+		{
+			if (cellIndex >= 0)
+			{
+				refrechCells(grid.GetCell(cellIndex));
+			}
+		}
 	}
 
 	void refrechCells(HexCell cell)
@@ -825,7 +837,7 @@ public class HexMapGenerator : MonoBehaviour
 		int erodibleElevation = cell.Elevation - 2;
 		for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 		{
-			HexCell neighbor = cell.GetNeighbor(d);
+			HexCell neighbor = cell.GetNeighbor(grid, d);
 			if (neighbor && neighbor.Elevation <= erodibleElevation)
 			{
 				return true;
@@ -840,7 +852,7 @@ public class HexMapGenerator : MonoBehaviour
 		int erodibleElevation = cell.Elevation - 2;
 		for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 		{
-			HexCell neighbor = cell.GetNeighbor(d);
+			HexCell neighbor = cell.GetNeighbor(grid, d);
 			if (neighbor && neighbor.Elevation <= erodibleElevation)
 			{
 				erodibleCells.Add(neighbor);

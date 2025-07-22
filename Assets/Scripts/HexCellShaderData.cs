@@ -6,12 +6,13 @@ public class HexCellShaderData : MonoBehaviour
 {
     Texture2D cellTexture;
     Color32[] cellTextureData;
-    List<HexCell> transitioningCells = new List<HexCell>();
+    List<int> transitioningCellIndices = new List<int>();
     const float transitionSpeed = 255f;
+    HexGrid grid;
 
     public bool ImmediateMode { get; set; }
 
-    public void Initialize(int x, int z)
+    public void Initialize(HexGrid grid, int x, int z)
     {
         if (cellTexture)
         {
@@ -44,7 +45,8 @@ public class HexCellShaderData : MonoBehaviour
             }
         }
 
-        transitioningCells.Clear();
+        transitioningCellIndices.Clear();
+        this.grid = grid;
         enabled = true;
     }
 
@@ -65,7 +67,7 @@ public class HexCellShaderData : MonoBehaviour
         else if (cellTextureData[index].b != 255)
         {
             cellTextureData[index].b = 255;
-            transitioningCells.Add(cell);
+            transitioningCellIndices.Add(cell.Index);
         }
 
         enabled = true;
@@ -74,31 +76,31 @@ public class HexCellShaderData : MonoBehaviour
     public void SetMapData(HexCell cell, float data)
     {
         //for debug only
-       	cellTextureData[cell.Index].b =
-			data < 0f ? (byte)0 : (data < 1f ? (byte)(data * 254f) : (byte)254);
+        cellTextureData[cell.Index].b =
+            data < 0f ? (byte)0 : (data < 1f ? (byte)(data * 254f) : (byte)254);
         enabled = true;
     }
 
     void LateUpdate()
     {
         int delta = Math.Max(1, (int)(Time.deltaTime * transitionSpeed));
-        for (int i = 0; i < transitioningCells.Count; i++)
+        for (int i = 0; i < transitioningCellIndices.Count; i++)
         {
-            if (!UpdateCellData(transitioningCells[i], delta))
+            if (!UpdateCellData(transitioningCellIndices[i], delta))
             {
-                transitioningCells[i] = transitioningCells[transitioningCells.Count - 1];
-                transitioningCells.RemoveAt(transitioningCells.Count - 1);
+                transitioningCellIndices[i] = transitioningCellIndices[transitioningCellIndices.Count - 1];
+                transitioningCellIndices.RemoveAt(transitioningCellIndices.Count - 1);
                 i -= 1;
             }
         }
         cellTexture.SetPixels32(cellTextureData);
         cellTexture.Apply();
-        enabled = transitioningCells.Count > 0;
+        enabled = transitioningCellIndices.Count > 0;
     }
 
-    bool UpdateCellData(HexCell cell, int delta)
+    bool UpdateCellData(int index, int delta)
     {
-        int index = cell.Index;
+        HexCell cell = grid.GetCell(index);
         Color32 data = cellTextureData[index];
         bool updating = false;
 

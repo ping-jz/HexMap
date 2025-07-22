@@ -6,8 +6,9 @@ public class HexGameUI : MonoBehaviour
 {
     [SerializeField]
     private UIDocument sidePanels;
-    public HexGrid grid;
-    HexCell currentCell;
+    [SerializeField]
+    HexGrid grid;
+    int currentCellIndex;
     HexUnit selectedUnit;
 
     void Awake()
@@ -66,7 +67,7 @@ public class HexGameUI : MonoBehaviour
             return;
         }
 
-
+        HexCell currentCell = grid.GetCell(currentCellIndex);
         if (currentCell && selectedUnit.IsValidDestination(currentCell))
         {
             grid.FindPath(selectedUnit.Location, currentCell, selectedUnit);
@@ -81,9 +82,10 @@ public class HexGameUI : MonoBehaviour
     {
         HexCell cell =
             grid.GetCell(Camera.main.ScreenPointToRay(Input.mousePosition));
-        if (cell != currentCell)
+        int index = cell ? cell.Index : -1;
+        if (index != currentCellIndex)
         {
-            currentCell = cell;
+            currentCellIndex = cell.Index;
             return true;
         }
         return false;
@@ -91,10 +93,11 @@ public class HexGameUI : MonoBehaviour
 
     void DoSelection()
     {
+        grid.ClearPath();
         UpdateCurrentCell();
-        if (currentCell)
+        if (currentCellIndex >= 0)
         {
-            selectedUnit = currentCell.Unit;
+            selectedUnit = grid.GetCell(currentCellIndex).Unit;
         }
     }
 
@@ -105,20 +108,22 @@ public class HexGameUI : MonoBehaviour
         StartCoroutine(grid.ShowUI(!toggle));
         grid.ClearPath();
         selectedUnit = null;
-        currentCell = null;
-        if (toggle) {
-			Shader.EnableKeyword("_HEX_MAP_EDIT_MODE");
-		}
-		else {
-			Shader.DisableKeyword("_HEX_MAP_EDIT_MODE");
-		}
+        currentCellIndex = -1;
+        if (toggle)
+        {
+            Shader.EnableKeyword("_HEX_MAP_EDIT_MODE");
+        }
+        else
+        {
+            Shader.DisableKeyword("_HEX_MAP_EDIT_MODE");
+        }
     }
 
     void DoMove()
     {
         if (grid.HasPath)
         {
-           
+
             selectedUnit.Travel(grid.GetPath());
             grid.ClearPath();
         }

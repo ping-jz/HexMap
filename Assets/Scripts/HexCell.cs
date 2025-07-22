@@ -6,12 +6,14 @@ using TMPro;
 using UnityEngine.UI;
 using System;
 
-public class HexCell : MonoBehaviour, IEquatable<HexCell>
+[Serializable]
+public class HexCell : IEquatable<HexCell>
 {
     [SerializeField]
     private HexCoordinates coordinates;
     [SerializeField]
-    private HexCell[] neighbors;
+    private int[] neighborsIndex = { -1, -1, -1, -1, -1, -1};
+
     private int terrainTypeIndex;
     private int elevation;
     private int chunkIndex;
@@ -24,39 +26,40 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     int visibility;
 
 
-    public void IncreaseVisibility()
+    public void IncreaseVisibility(HexGrid grid)
     {
         visibility += 1;
         if (visibility == 1)
         {
             IsExplored = true;
-            ShaderData.RefreshVisibility(this);
+            grid.ShaderData.RefreshVisibility(this);
         }
     }
 
-    public void DecreaseVisibility()
+    public void DecreaseVisibility(HexGrid grid)
     {
         visibility = Math.Max(0, visibility - 1);
         if (visibility == 0)
         {
-            ShaderData.RefreshVisibility(this);
+            grid.ShaderData.RefreshVisibility(this);
         }
     }
 
-    public HexCell GetNeighbor(HexDirection direction)
+    public HexCell GetNeighbor(HexGrid grid, HexDirection direction)
     {
-        return neighbors[(int)direction];
+        int idx = neighborsIndex[(int)direction];
+        return idx >= 0 ? grid.GetCell(idx) : null;
     }
 
     public void SetNeighbor(HexDirection direction, HexCell cell)
     {
-        neighbors[(int)direction] = cell;
-        cell.neighbors[(int)direction.Opposite()] = this;
+        neighborsIndex[(int)direction] = cell.Index;
+        cell.neighborsIndex[(int)direction.Opposite()] = Index;
     }
 
-    public HexEdgeType GetEdgeType(HexDirection direction)
+    public HexEdgeType GetEdgeType(HexGrid grid, HexDirection direction)
     {
-        return HexMetrics.GetEdgeType(elevation, neighbors[(int)direction].elevation);
+        return HexMetrics.GetEdgeType(elevation, grid.GetCell(neighborsIndex[(int)direction]).elevation);
     }
 
     public HexEdgeType GetEdgeType(HexCell otherCell)
@@ -75,12 +78,12 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         set
         {
             elevation = value;
-            Vector3 position = transform.localPosition;
+            Vector3 position = Position;
             position.y = value * HexMetrics.elevationStep;
             position.y +=
                 (HexMetrics.SampleNoise(position).y * 2f - 1f) *
                 HexMetrics.elevationPerturbStrength;
-            transform.localPosition = position;
+            Position = position;
 
             Vector3 uiPosition = uiRect.localPosition;
             uiPosition.z = -position.y;
@@ -88,32 +91,32 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         }
     }
 
-    public IEnumerable<HexCell> RemoveInvalidRiver()
+    public IEnumerable<HexCell> RemoveInvalidRiver(HexGrid grid)
     {
         IEnumerable<HexCell> affeceted = defaultEnumer;
         if (
             flags.HasAny(HexCellFlags.RiverOut) &&
-             !IsValidRiverDestination(GetNeighbor(flags.RiverOutToDirection()))
+             !IsValidRiverDestination(GetNeighbor(grid, flags.RiverOutToDirection()))
         )
         {
-            affeceted = affeceted.Concat(RemoveOutgoingRiver());
+            affeceted = affeceted.Concat(RemoveOutgoingRiver(grid));
         }
 
         if (
             flags.HasAny(HexCellFlags.RiverIn) &&
-            !IsValidRiverDestination(GetNeighbor(flags.RiverInToDirection()))
+            !IsValidRiverDestination(GetNeighbor(grid, flags.RiverInToDirection()))
             )
         {
-            affeceted = affeceted.Concat(RemoveIncomingRiver());
+            affeceted = affeceted.Concat(RemoveIncomingRiver(grid));
         }
 
         return affeceted;
     }
 
-    public IEnumerable<HexCell> RemoveRoad(HexDirection d)
+    public IEnumerable<HexCell> RemoveRoad(HexGrid grid, HexDirection d)
     {
         flags = flags.WithoutRoad(d);
-        HexCell neighbor = neighbors[(int)d];
+        HexCell neighbor = GetNeighbor(grid, d);
         if (neighbor)
         {
             neighbor.flags = neighbor.flags.WithoutRoad(d.Opposite());
@@ -125,22 +128,22 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         }
     }
 
-    public int GetElevationDifference(HexDirection direction)
+    public int GetElevationDifference(HexGrid grid, HexDirection direction)
     {
-        HexCell neighbor = GetNeighbor(direction);
+        HexCell neighbor = GetNeighbor(grid, direction);
         int difference = elevation - (neighbor ? neighbor.elevation : 0);
         return difference >= 0 ? difference : -difference;
     }
 
-    public IEnumerable<HexCell> AddRoad(HexDirection d)
+    public IEnumerable<HexCell> AddRoad(HexGrid grid, HexDirection d)
     {
-        if (HasRiverThroughEdge(d) || GetElevationDifference(d) > 1)
+        if (HasRiverThroughEdge(d) || GetElevationDifference(grid, d) > 1)
         {
             return defaultEnumer;
         }
 
 
-        HexCell neighbor = neighbors[(int)d];
+        HexCell neighbor = GetNeighbor(grid, d);
         if (neighbor == null)
         {
             return defaultEnumer;
@@ -158,14 +161,14 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     }
 
 
-    public IEnumerable<HexCell> RemoveRoads()
+    public IEnumerable<HexCell> RemoveRoads(HexGrid grid)
     {
         IEnumerable<HexCell> affected = defaultEnumer;
         for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
         {
             if (HasRoadThroughEdge(d))
             {
-                affected = affected.Concat(RemoveRoad(d));
+                affected = affected.Concat(RemoveRoad(grid, d));
             }
         }
 
@@ -176,14 +179,14 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     /// 
     /// </summary>
     /// <returns>发生了改变的网格</returns>
-    public IEnumerable<HexCell> RemoveOutgoingRiver()
+    public IEnumerable<HexCell> RemoveOutgoingRiver(HexGrid grid)
     {
         if (!flags.HasAny(HexCellFlags.RiverOut))
         {
             return defaultEnumer;
         }
 
-        HexCell neighbor = GetNeighbor(flags.RiverOutToDirection());
+        HexCell neighbor = GetNeighbor(grid, flags.RiverOutToDirection());
         flags = flags.Without(HexCellFlags.RiverOut);
         neighbor.flags = neighbor.flags.Without(HexCellFlags.RiverIn);
         return new HexCell[] { this, neighbor };
@@ -193,55 +196,55 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
     /// 
     /// </summary>
     /// <returns>发生了改变的网格</returns>
-    public IEnumerable<HexCell> RemoveIncomingRiver()
+    public IEnumerable<HexCell> RemoveIncomingRiver(HexGrid grid)
     {
         if (!flags.HasAny(HexCellFlags.RiverIn))
         {
             return defaultEnumer;
         }
 
-        HexCell neighbor = GetNeighbor(flags.RiverInToDirection());
+        HexCell neighbor = GetNeighbor(grid, flags.RiverInToDirection());
         flags = flags.Without(HexCellFlags.RiverIn);
         neighbor.flags = neighbor.flags.Without(HexCellFlags.RiverOut);
         return new HexCell[] { this, neighbor };
     }
 
-    public IEnumerable<HexCell> RemoveRivers()
+    public IEnumerable<HexCell> RemoveRivers(HexGrid grid)
     {
-        IEnumerable<HexCell> affected1 = RemoveOutgoingRiver();
-        IEnumerable<HexCell> affecetd2 = RemoveIncomingRiver();
+        IEnumerable<HexCell> affected1 = RemoveOutgoingRiver(grid);
+        IEnumerable<HexCell> affecetd2 = RemoveIncomingRiver(grid);
 
         return affected1.Concat(affecetd2);
     }
 
-    public IEnumerable<HexCell> SetOutgoingRiver(HexDirection direction)
+    public IEnumerable<HexCell> SetOutgoingRiver(HexGrid grid, HexDirection direction)
     {
         if (flags.HasRiverOut(direction))
         {
             return defaultEnumer;
         }
 
-        HexCell neighbor = GetNeighbor(direction);
+        HexCell neighbor = GetNeighbor(grid, direction);
         if (!IsValidRiverDestination(neighbor))
         {
             return defaultEnumer;
         }
 
         IEnumerable<HexCell> affecetd = defaultEnumer;
-        affecetd = affecetd.Concat(RemoveOutgoingRiver());
+        affecetd = affecetd.Concat(RemoveOutgoingRiver(grid));
         if (flags.HasRiverIn(direction))
         {
-            affecetd = affecetd.Concat(RemoveIncomingRiver());
+            affecetd = affecetd.Concat(RemoveIncomingRiver(grid));
         }
 
         flags = flags.WithRiverOut(direction);
         specialIndex = 0;
 
-        affecetd = affecetd.Concat(neighbor.RemoveIncomingRiver());
+        affecetd = affecetd.Concat(neighbor.RemoveIncomingRiver(grid));
         neighbor.flags = neighbor.flags.WithRiverIn(direction.Opposite());
         neighbor.specialIndex = 0;
 
-        affecetd = affecetd.Concat(RemoveRoad(direction));
+        affecetd = affecetd.Concat(RemoveRoad(grid, direction));
         return affecetd;
     }
 
@@ -330,10 +333,7 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
 
     public Vector3 Position
     {
-        get
-        {
-            return transform.localPosition;
-        }
+        get; set;
     }
 
     public int ChunkIdx
@@ -384,11 +384,11 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         }
     }
 
-    public HexCell[] Neighbors
+    public int[] Neighbors
     {
         get
         {
-            return neighbors;
+            return neighborsIndex;
         }
     }
 
@@ -436,13 +436,14 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         {
             return terrainTypeIndex;
         }
-        set
+    }
+
+    public void SetTerrainTypeIndex(HexGrid grid, int value)
+    {
+        if (terrainTypeIndex != value)
         {
-            if (terrainTypeIndex != value)
-            {
-                terrainTypeIndex = value;
-                ShaderData.RefreshTerrain(this);
-            }
+            terrainTypeIndex = value;
+            grid.ShaderData.RefreshTerrain(this);
         }
     }
 
@@ -551,11 +552,9 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         highlight.color = color;
     }
 
-    public HexCell PathFrom { get; set; }
+    public int PathFromIndex { get; set; }
 
     public int SearchHeuristic { get; set; }
-
-    public HexCellShaderData ShaderData { get; set; }
 
     public int Index { get; set; }
 
@@ -620,17 +619,17 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         }
     }
 
-    public void SetMapData(float data)
+    public void SetMapData(HexGrid grid, float data)
     {
-        ShaderData.SetMapData(this, data);
+        grid.ShaderData.SetMapData(this, data);
     }
 
-    public void ResetVisibility()
+    public void ResetVisibility(HexGrid grid)
     {
         if (visibility > 0)
         {
             visibility = 0;
-            ShaderData.RefreshVisibility(this);
+            grid.ShaderData.RefreshVisibility(this);
         }
     }
 
@@ -646,7 +645,7 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         writer.Write(specialIndex);
     }
 
-    public void Load(BinaryReader reader)
+    public void Load(HexGrid grid, BinaryReader reader)
     {
         terrainTypeIndex = reader.ReadInt32();
         Elevation = reader.ReadInt32();
@@ -656,12 +655,14 @@ public class HexCell : MonoBehaviour, IEquatable<HexCell>
         farmLevel = reader.ReadInt32();
         plantLevel = reader.ReadInt32();
         specialIndex = reader.ReadInt32();
-        ShaderData.RefreshTerrain(this);
-        ShaderData.RefreshVisibility(this);
+        grid.ShaderData.RefreshTerrain(this);
+        grid.ShaderData.RefreshVisibility(this);
     }
 
     public bool Equals(HexCell other)
     {
         return this == other;
     }
+    
+    public static implicit operator bool(HexCell cell) => cell != null;
 }

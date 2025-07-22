@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
@@ -82,7 +80,7 @@ public class HexMapEditor : MonoBehaviour
     int brushSize;
     int specialIndex;
     HexDirection dragDirection;
-    HexCell previousCell;
+    int previousCellIndex;
 
     void Awake()
     {
@@ -295,7 +293,7 @@ public class HexMapEditor : MonoBehaviour
         }
         else
         {
-            previousCell = null;
+            previousCellIndex = -1;
         }
     }
 
@@ -306,7 +304,7 @@ public class HexMapEditor : MonoBehaviour
         if (cell)
         {
 
-            if (previousCell && previousCell != cell)
+            if (previousCellIndex >= 0 && previousCellIndex != cell.Index)
             {
                 ValidateDrag(cell);
             }
@@ -316,11 +314,11 @@ public class HexMapEditor : MonoBehaviour
             }
 
             EditCells(cell);
-            previousCell = cell;
+            previousCellIndex = cell.Index;
         }
         else
         {
-            previousCell = null;
+            previousCellIndex = -1;
         }
     }
 
@@ -356,7 +354,7 @@ public class HexMapEditor : MonoBehaviour
             dragDirection++
         )
         {
-            if (previousCell.GetNeighbor(dragDirection) == cell)
+            if (hexGrid.GetCell(previousCellIndex).GetNeighbor(hexGrid, dragDirection) == cell)
             {
                 flags = flags.With(EditorFlags.Drag);
                 return;
@@ -402,13 +400,13 @@ public class HexMapEditor : MonoBehaviour
                 !cell.IsUnderwater)
         {
             cell.SpecialIndex = specialIndex;
-            cell.RemoveRoads();
+            cell.RemoveRoads(hexGrid);
             RefreshCellWithDependents(cell);
         }
 
         if (flags.Has(EditorFlags.ApplyColor))
         {
-            cell.TerrainTypeIndex = activeTerrianType;
+            cell.SetTerrainTypeIndex(hexGrid, activeTerrianType);
         }
 
         if (flags.Has(EditorFlags.ApplyUrbanLevel))
@@ -438,12 +436,12 @@ public class HexMapEditor : MonoBehaviour
                 hexGrid.ViewElevationChanged = true;
             }
             RefreshCellWithDependents(cell);
-            refrechCells(cell.RemoveInvalidRiver());
+            refrechCells(cell.RemoveInvalidRiver(hexGrid));
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
-                if (cell.HasRoadThroughEdge(d) && cell.GetElevationDifference(d) > 1)
+                if (cell.HasRoadThroughEdge(d) && cell.GetElevationDifference(hexGrid, d) > 1)
                 {
-                    refrechCells(cell.RemoveRoad(d));
+                    refrechCells(cell.RemoveRoad(hexGrid, d));
                 }
             }
         }
@@ -457,17 +455,17 @@ public class HexMapEditor : MonoBehaviour
                 hexGrid.ViewElevationChanged = true;
             }
             refrechCells(cell);
-            refrechCells(cell.RemoveInvalidRiver());
+            refrechCells(cell.RemoveInvalidRiver(hexGrid));
         }
 
         if (flags.Has(EditorFlags.RiverNo))
         {
-            refrechCells(cell.RemoveRivers());
+            refrechCells(cell.RemoveRivers(hexGrid));
         }
 
         if (flags.Has(EditorFlags.RoadNo))
         {
-            refrechCells(cell.RemoveRoads());
+            refrechCells(cell.RemoveRoads(hexGrid));
         }
 
         if (flags.HasNot(EditorFlags.WallIgnore))
@@ -478,18 +476,18 @@ public class HexMapEditor : MonoBehaviour
 
         if (flags.Has(EditorFlags.Drag))
         {
-            HexCell otherCell = cell.GetNeighbor(dragDirection.Opposite());
+            HexCell otherCell = cell.GetNeighbor(hexGrid, dragDirection.Opposite());
             if (otherCell)
             {
 
                 if (flags.Has(EditorFlags.RiverYes))
                 {
-                    refrechCells(otherCell.SetOutgoingRiver(dragDirection));
+                    refrechCells(otherCell.SetOutgoingRiver(hexGrid, dragDirection));
                 }
 
                 if (flags.Has(EditorFlags.RoadYes))
                 {
-                    refrechCells(otherCell.AddRoad(dragDirection));
+                    refrechCells(otherCell.AddRoad(hexGrid, dragDirection));
                 }
             }
         }
@@ -498,7 +496,13 @@ public class HexMapEditor : MonoBehaviour
     private void RefreshCellWithDependents(HexCell cell)
     {
         refrechCells(cell);
-        refrechCells(cell.Neighbors);
+        foreach (int cellIndex in cell.Neighbors)
+        {
+            if (cellIndex >= 0)
+            {
+                refrechCells(hexGrid.GetCell(cellIndex));
+            }
+        }
     }
 
     void refrechCells(HexCell cell)
