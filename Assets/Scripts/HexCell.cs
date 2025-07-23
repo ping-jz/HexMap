@@ -19,31 +19,11 @@ public class HexCell : IEquatable<HexCell>
     private int chunkIndex;
     private int waterLevel;
     private int specialIndex;
-    private int distance;
     private HexCellFlags flags;
     private int urbanLevel, farmLevel, plantLevel;
     public RectTransform uiRect;
-    int visibility;
 
-
-    public void IncreaseVisibility(HexGrid grid)
-    {
-        visibility += 1;
-        if (visibility == 1)
-        {
-            IsExplored = true;
-            grid.ShaderData.RefreshVisibility(this);
-        }
-    }
-
-    public void DecreaseVisibility(HexGrid grid)
-    {
-        visibility = Math.Max(0, visibility - 1);
-        if (visibility == 0)
-        {
-            grid.ShaderData.RefreshVisibility(this);
-        }
-    }
+    public void MarkAsExplored() => flags = flags.With(HexCellFlags.Explored);
 
     public HexCell GetNeighbor(HexGrid grid, HexDirection direction)
     {
@@ -527,18 +507,6 @@ public class HexCell : IEquatable<HexCell>
         label.text = text;
     }
 
-    public int Distance
-    {
-        get
-        {
-            return distance;
-        }
-        set
-        {
-            distance = value;
-        }
-    }
-
     public void DisableHighlight()
     {
         Image highlight = uiRect.GetChild(0).GetComponent<Image>();
@@ -552,29 +520,7 @@ public class HexCell : IEquatable<HexCell>
         highlight.color = color;
     }
 
-    public int PathFromIndex { get; set; }
-
-    public int SearchHeuristic { get; set; }
-
     public int Index { get; set; }
-
-    public int SearchPriority
-    {
-        get
-        {
-            return distance + SearchHeuristic;
-        }
-    }
-
-    public bool IsVisible
-    {
-        get
-        {
-            return visibility > 0 && flags.Has(HexCellFlags.Explorable);
-        }
-    }
-
-    public int SearchPhase { get; set; }
 
     public HexUnit Unit { get; set; }
 
@@ -622,15 +568,6 @@ public class HexCell : IEquatable<HexCell>
     public void SetMapData(HexGrid grid, float data)
     {
         grid.ShaderData.SetMapData(this, data);
-    }
-
-    public void ResetVisibility(HexGrid grid)
-    {
-        if (visibility > 0)
-        {
-            visibility = 0;
-            grid.ShaderData.RefreshVisibility(this);
-        }
     }
 
     public void Save(BinaryWriter writer)

@@ -67,7 +67,7 @@ public class HexMapGenerator : MonoBehaviour
 	private HemisphereMode hemisphere;
 
 	private HashSet<HexCoordinates> searchPhase;
-	private PriorityQueue<HexCell> searchFrontier;
+	private PriorityQueue<int> searchFrontier;
 	private List<MapRegin> mapRegins;
 	private List<ClimateData> climate = new List<ClimateData>();
 	private List<ClimateData> nextClimate = new List<ClimateData>();
@@ -92,7 +92,7 @@ public class HexMapGenerator : MonoBehaviour
 		}
 		if (searchFrontier == null)
 		{
-			searchFrontier = new PriorityQueue<HexCell>();
+			searchFrontier = new PriorityQueue<int>();
 		}
 
 		cellCount = x * z;
@@ -217,16 +217,15 @@ public class HexMapGenerator : MonoBehaviour
 	int RaiseTerrain(int chunkSize, int landBudget, MapRegin mapRegin)
 	{
 		HexCell firstCell = GetRandomCell(mapRegin);
-		firstCell.Distance = 0;
-		firstCell.SearchHeuristic = 0;
-		searchFrontier.Enqueue(firstCell, firstCell.SearchPriority);
+		grid.SearchData[firstCell.Index] = new HexCellSearchData();
+		searchFrontier.Enqueue(firstCell.Index, grid.SearchData[firstCell.Index].SearchPriority);
 		HexCoordinates center = firstCell.Coordinates;
 
 		int rise = Random.value < highRiseProbability ? 2 : 1;
 		int size = 0;
 		while (size < chunkSize && searchFrontier.Count > 0)
 		{
-			HexCell current = searchFrontier.Dequeue();
+			HexCell current = grid.GetCell(searchFrontier.Dequeue());
 			int originalElevation = current.Elevation;
 			int elevation = originalElevation + rise;
 			if (elevation > elevationMaximum)
@@ -251,9 +250,9 @@ public class HexMapGenerator : MonoBehaviour
 				if (neighbor && !searchPhase.Contains(neighbor.Coordinates))
 				{
 					searchPhase.Add(neighbor.Coordinates);
-					neighbor.Distance = neighbor.Coordinates.DistanceTo(center);
-					neighbor.SearchHeuristic = Random.value < jitterProbability ? 1 : 0;
-					searchFrontier.Enqueue(neighbor, neighbor.SearchPriority);
+					grid.SearchData[neighbor.Index].distance = neighbor.Coordinates.DistanceTo(center);
+					grid.SearchData[neighbor.Index].heuristic = Random.value < jitterProbability ? 1 : 0;
+					searchFrontier.Enqueue(neighbor.Index, grid.SearchData[firstCell.Index].SearchPriority);
 				}
 			}
 		}
@@ -269,16 +268,15 @@ public class HexMapGenerator : MonoBehaviour
 		searchPhase.Clear();
 
 		HexCell firstCell = GetRandomCell(mapRegin);
-		firstCell.Distance = 0;
-		firstCell.SearchHeuristic = 0;
-		searchFrontier.Enqueue(firstCell, firstCell.SearchPriority);
+		grid.SearchData[firstCell.Index] = new HexCellSearchData();
+		searchFrontier.Enqueue(firstCell.Index, grid.SearchData[firstCell.Index].SearchPriority);
 		HexCoordinates center = firstCell.Coordinates;
 
 		int sink = Random.value < highRiseProbability ? 2 : 1;
 		int size = 0;
 		while (size < chunkSize && searchFrontier.Count > 0)
 		{
-			HexCell current = searchFrontier.Dequeue();
+			HexCell current = grid.GetCell(searchFrontier.Dequeue());
 			int originalElevation = current.Elevation;
 			int elevation = originalElevation - sink;
 			if (elevation < elevationMinimum)
@@ -299,9 +297,9 @@ public class HexMapGenerator : MonoBehaviour
 				if (neighbor && !searchPhase.Contains(neighbor.Coordinates))
 				{
 					searchPhase.Add(neighbor.Coordinates);
-					neighbor.Distance = neighbor.Coordinates.DistanceTo(center);
-					neighbor.SearchHeuristic = Random.value < jitterProbability ? 1 : 0;
-					searchFrontier.Enqueue(neighbor, neighbor.SearchPriority);
+					grid.SearchData[neighbor.Index].distance = neighbor.Coordinates.DistanceTo(center);
+					grid.SearchData[neighbor.Index].heuristic = Random.value < jitterProbability ? 1 : 0;
+					searchFrontier.Enqueue(neighbor.Index, grid.SearchData[neighbor.Index].SearchPriority);
 				}
 			}
 		}

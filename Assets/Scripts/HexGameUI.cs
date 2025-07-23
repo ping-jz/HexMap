@@ -67,10 +67,11 @@ public class HexGameUI : MonoBehaviour
             return;
         }
 
-        HexCell currentCell = grid.GetCell(currentCellIndex);
-        if (currentCell && selectedUnit.IsValidDestination(currentCell))
+
+        if (currentCellIndex >= 0 &&
+            selectedUnit.IsValidDestination(grid.GetCell(currentCellIndex)))
         {
-            grid.FindPath(selectedUnit.Location, currentCell, selectedUnit);
+            grid.FindPath(selectedUnit.Location, grid.GetCell(currentCellIndex), selectedUnit);
         }
         else
         {
@@ -85,7 +86,7 @@ public class HexGameUI : MonoBehaviour
         int index = cell ? cell.Index : -1;
         if (index != currentCellIndex)
         {
-            currentCellIndex = cell.Index;
+            currentCellIndex = index;
             return true;
         }
         return false;
@@ -123,7 +124,6 @@ public class HexGameUI : MonoBehaviour
     {
         if (grid.HasPath)
         {
-
             selectedUnit.Travel(grid.GetPath());
             grid.ClearPath();
         }
