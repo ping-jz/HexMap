@@ -87,6 +87,10 @@ public class HexMapEditorSaveLoad : MonoBehaviour
     void FillList(DropdownField dropdownField)
     {
         string[] paths = Directory.GetFiles(Application.dataPath, "*.map");
+        if (paths.Length == 0)
+        {
+            paths = new string[] { "" };
+        }
         Array.Sort(paths);
         dropdownField.choices.Clear();
         dropdownField.value = "";
@@ -100,7 +104,7 @@ public class HexMapEditorSaveLoad : MonoBehaviour
     {
         using (BinaryWriter write = new BinaryWriter(File.Open(path, FileMode.Create)))
         {
-         
+
             write.Write(mapFileVersion);
             hexGrid.Save(write);
         }

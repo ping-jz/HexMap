@@ -70,15 +70,16 @@ public class HexMapEditor : MonoBehaviour
     [SerializeField]
     private bool wrapping;
 
-    private int activeTerrianType;
+
     int elevation;
     int waterLevel;
-    int urbanLevel;
-    int framLevel;
-    int plantLevel;
+    byte activeTerrianType;
+    byte urbanLevel;
+    byte framLevel;
+    byte plantLevel;
+    byte specialIndex;
     EditorFlags flags;
     int brushSize;
-    int specialIndex;
     HexDirection dragDirection;
     int previousCellIndex;
 
@@ -179,7 +180,7 @@ public class HexMapEditor : MonoBehaviour
         );
         root.Q<Toggle>("ApplyUrbanLevel").value = flags.Has(EditorFlags.ApplyUrbanLevel);
 
-        root.Q<SliderInt>("UrbanLevel").RegisterValueChangedCallback(change => urbanLevel = change.newValue);
+        root.Q<SliderInt>("UrbanLevel").RegisterValueChangedCallback(change => urbanLevel = (byte)change.newValue);
         root.Q<SliderInt>("UrbanLevel").value = urbanLevel;
 
         root.Q<Toggle>("ApplyFarmLevel").RegisterValueChangedCallback(change =>
@@ -189,7 +190,7 @@ public class HexMapEditor : MonoBehaviour
        );
         root.Q<Toggle>("ApplyFarmLevel").value = flags.Has(EditorFlags.ApplyFarmLevel);
 
-        root.Q<SliderInt>("FarmLevel").RegisterValueChangedCallback(change => framLevel = change.newValue);
+        root.Q<SliderInt>("FarmLevel").RegisterValueChangedCallback(change => framLevel = (byte)change.newValue);
         root.Q<SliderInt>("FarmLevel").value = framLevel;
 
         root.Q<Toggle>("ApplyPlantLevel").RegisterValueChangedCallback(change =>
@@ -199,7 +200,7 @@ public class HexMapEditor : MonoBehaviour
        );
         root.Q<Toggle>("ApplyPlantLevel").value = flags.Has(EditorFlags.ApplyPlantLevel);
 
-        root.Q<SliderInt>("PlantLevel").RegisterValueChangedCallback(change => plantLevel = change.newValue);
+        root.Q<SliderInt>("PlantLevel").RegisterValueChangedCallback(change => plantLevel = (byte)change.newValue);
         root.Q<SliderInt>("PlantLevel").value = plantLevel;
 
         root.Q<Toggle>("ApplySpecialIndex").RegisterValueChangedCallback(change =>
@@ -209,7 +210,7 @@ public class HexMapEditor : MonoBehaviour
        );
         root.Q<Toggle>("ApplySpecialIndex").value = flags.Has(EditorFlags.ApplySpecialIndex);
 
-        root.Q<SliderInt>("SpecialIndex").RegisterValueChangedCallback(change => specialIndex = change.newValue);
+        root.Q<SliderInt>("SpecialIndex").RegisterValueChangedCallback(change => specialIndex = (byte)change.newValue);
         root.Q<SliderInt>("SpecialIndex").value = specialIndex;
 
         root.Q<Button>("NewMapButton").RegisterCallback<MouseUpEvent>(ent => OpenNewMapPanel());
@@ -537,7 +538,7 @@ public class HexMapEditor : MonoBehaviour
         flags = index > 0 ? flags.With(EditorFlags.ApplyColor) : flags.Without(EditorFlags.ApplyColor);
         if (flags.Has(EditorFlags.ApplyColor))
         {
-            activeTerrianType = index - 1;
+            activeTerrianType = (byte)(index - 1);
         }
     }
 

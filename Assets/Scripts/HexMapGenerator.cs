@@ -252,7 +252,7 @@ public class HexMapGenerator : MonoBehaviour
 					searchPhase.Add(neighbor.Coordinates);
 					grid.SearchData[neighbor.Index].distance = neighbor.Coordinates.DistanceTo(center);
 					grid.SearchData[neighbor.Index].heuristic = Random.value < jitterProbability ? 1 : 0;
-					searchFrontier.Enqueue(neighbor.Index, grid.SearchData[firstCell.Index].SearchPriority);
+					searchFrontier.Enqueue(neighbor.Index, grid.SearchData[neighbor.Index].SearchPriority);
 				}
 			}
 		}
@@ -656,8 +656,8 @@ public class HexMapGenerator : MonoBehaviour
 					cellBiome.plant += 1;
 				}
 
-				cell.SetTerrainTypeIndex(grid, cellBiome.terrain);
-				cell.PlantLevel = cellBiome.plant;
+				cell.SetTerrainTypeIndex(grid, (byte)cellBiome.terrain);
+				cell.PlantLevel = (byte)cellBiome.plant;
 				refrechCells(cell);
 			}
 			else
@@ -720,7 +720,7 @@ public class HexMapGenerator : MonoBehaviour
 				{
 					terrain = 2;
 				}
-				cell.SetTerrainTypeIndex(grid, terrain);
+				cell.SetTerrainTypeIndex(grid, (byte)terrain);
 			}
 			cell.SetMapData(grid, moisture);
 		}

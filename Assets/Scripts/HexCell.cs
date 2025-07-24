@@ -12,16 +12,13 @@ public class HexCell : IEquatable<HexCell>
     [SerializeField]
     private HexCoordinates coordinates;
     [SerializeField]
-    private int[] neighborsIndex = { -1, -1, -1, -1, -1, -1};
-
-    private int terrainTypeIndex;
-    private int elevation;
-    private int chunkIndex;
-    private int waterLevel;
-    private int specialIndex;
+    private int[] neighborsIndex = { -1, -1, -1, -1, -1, -1 };
+    [SerializeField]
     private HexCellFlags flags;
-    private int urbanLevel, farmLevel, plantLevel;
+    [SerializeField]
+    private HexValues values;
     public RectTransform uiRect;
+    int elevation, waterLevel;
 
     public void MarkAsExplored() => flags = flags.With(HexCellFlags.Explored);
 
@@ -39,13 +36,13 @@ public class HexCell : IEquatable<HexCell>
 
     public HexEdgeType GetEdgeType(HexGrid grid, HexDirection direction)
     {
-        return HexMetrics.GetEdgeType(elevation, grid.GetCell(neighborsIndex[(int)direction]).elevation);
+        return HexMetrics.GetEdgeType(Elevation, grid.GetCell(neighborsIndex[(int)direction]).Elevation);
     }
 
     public HexEdgeType GetEdgeType(HexCell otherCell)
     {
         return HexMetrics.GetEdgeType(
-            elevation, otherCell.elevation
+            Elevation, otherCell.Elevation
         );
     }
 
@@ -53,11 +50,11 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return elevation;
+            return values.elevation;
         }
         set
         {
-            elevation = value;
+            values.elevation = value;
             Vector3 position = Position;
             position.y = value * HexMetrics.elevationStep;
             position.y +=
@@ -111,7 +108,7 @@ public class HexCell : IEquatable<HexCell>
     public int GetElevationDifference(HexGrid grid, HexDirection direction)
     {
         HexCell neighbor = GetNeighbor(grid, direction);
-        int difference = elevation - (neighbor ? neighbor.elevation : 0);
+        int difference = Elevation - (neighbor ? neighbor.Elevation : 0);
         return difference >= 0 ? difference : -difference;
     }
 
@@ -218,11 +215,11 @@ public class HexCell : IEquatable<HexCell>
         }
 
         flags = flags.WithRiverOut(direction);
-        specialIndex = 0;
+        SpecialIndex = 0;
 
         affecetd = affecetd.Concat(neighbor.RemoveIncomingRiver(grid));
         neighbor.flags = neighbor.flags.WithRiverIn(direction.Opposite());
-        neighbor.specialIndex = 0;
+        neighbor.SpecialIndex = 0;
 
         affecetd = affecetd.Concat(RemoveRoad(grid, direction));
         return affecetd;
@@ -241,7 +238,7 @@ public class HexCell : IEquatable<HexCell>
         get
         {
             return
-                (elevation + HexMetrics.waterElevationOffset) *
+                (Elevation + HexMetrics.waterElevationOffset) *
                 HexMetrics.elevationStep;
         }
     }
@@ -251,7 +248,7 @@ public class HexCell : IEquatable<HexCell>
         get
         {
             return
-                (waterLevel + HexMetrics.waterElevationOffset) *
+                (WaterLevel + HexMetrics.waterElevationOffset) *
                 HexMetrics.elevationStep;
         }
     }
@@ -305,7 +302,7 @@ public class HexCell : IEquatable<HexCell>
         get
         {
             return
-                (elevation + HexMetrics.streamBedElevationOffset) *
+                (Elevation + HexMetrics.streamBedElevationOffset) *
                 HexMetrics.elevationStep;
         }
     }
@@ -318,14 +315,7 @@ public class HexCell : IEquatable<HexCell>
 
     public int ChunkIdx
     {
-        get
-        {
-            return chunkIndex;
-        }
-        set
-        {
-            chunkIndex = value;
-        }
+        get; set;
     }
 
     public HexCoordinates Coordinates
@@ -344,15 +334,11 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return waterLevel;
+            return values.waterLevel;
         }
         set
         {
-            if (waterLevel == value)
-            {
-                return;
-            }
-            waterLevel = value;
+            values.waterLevel = value;
         }
     }
 
@@ -360,7 +346,7 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return waterLevel > elevation;
+            return WaterLevel > Elevation;
         }
     }
 
@@ -410,56 +396,60 @@ public class HexCell : IEquatable<HexCell>
         }
     }
 
-    public int TerrainTypeIndex
+    public byte TerrainTypeIndex
     {
         get
         {
-            return terrainTypeIndex;
+            return values.terrainTypeIndex;
+        }
+        set
+        {
+            values.terrainTypeIndex = value;
         }
     }
 
-    public void SetTerrainTypeIndex(HexGrid grid, int value)
+    public void SetTerrainTypeIndex(HexGrid grid, byte value)
     {
-        if (terrainTypeIndex != value)
+        if (TerrainTypeIndex != value)
         {
-            terrainTypeIndex = value;
+            TerrainTypeIndex = value;
             grid.ShaderData.RefreshTerrain(this);
         }
     }
 
-    public int UrbanLevel
+    public byte UrbanLevel
     {
         get
         {
-            return urbanLevel;
+            return values.urbanLevel;
         }
         set
         {
-            urbanLevel = value;
+            values.urbanLevel = value;
         }
     }
 
-    public int FarmLevel
+    public byte FarmLevel
     {
         get
         {
-            return farmLevel;
+            return values.farmLevel;
         }
         set
         {
-            farmLevel = value;
+            values.farmLevel = value;
         }
     }
 
-    public int PlantLevel
+    public byte PlantLevel
     {
         get
         {
-            return plantLevel;
+            return values.plantLevel;
         }
         set
         {
-            plantLevel = value;
+            values.plantLevel = value;
         }
     }
 
@@ -475,15 +465,15 @@ public class HexCell : IEquatable<HexCell>
         }
     }
 
-    public int SpecialIndex
+    public byte SpecialIndex
     {
         get
         {
-            return specialIndex;
+            return values.specialIndex;
         }
         set
         {
-            specialIndex = value;
+            values.specialIndex = value;
         }
     }
 
@@ -491,14 +481,14 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return specialIndex > 0;
+            return SpecialIndex > 0;
         }
     }
 
 
     public bool IsValidRiverDestination(HexCell neighbor)
     {
-        return neighbor && (elevation >= neighbor.elevation || waterLevel == neighbor.elevation);
+        return neighbor && (Elevation >= neighbor.Elevation || WaterLevel == neighbor.Elevation);
     }
 
     public void SetLabel(string text)
@@ -561,7 +551,7 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return elevation >= waterLevel ? elevation : waterLevel;
+            return Elevation >= WaterLevel ? Elevation : WaterLevel;
         }
     }
 
@@ -572,26 +562,17 @@ public class HexCell : IEquatable<HexCell>
 
     public void Save(BinaryWriter writer)
     {
-        writer.Write(terrainTypeIndex);
-        writer.Write(Elevation);
-        writer.Write(waterLevel);
         writer.Write((int)flags);
-        writer.Write(urbanLevel);
-        writer.Write(farmLevel);
-        writer.Write(plantLevel);
-        writer.Write(specialIndex);
+        values.Save(writer);
     }
 
     public void Load(HexGrid grid, BinaryReader reader)
     {
-        terrainTypeIndex = reader.ReadInt32();
-        Elevation = reader.ReadInt32();
-        waterLevel = reader.ReadInt32();
+
         flags = (HexCellFlags)reader.ReadInt32();
-        urbanLevel = reader.ReadInt32();
-        farmLevel = reader.ReadInt32();
-        plantLevel = reader.ReadInt32();
-        specialIndex = reader.ReadInt32();
+        values = HexValues.Load(reader);
+        //20250724忘记刷新位置了，耗费了那么久。哎。。。。
+        Elevation = values.elevation;
         grid.ShaderData.RefreshTerrain(this);
         grid.ShaderData.RefreshVisibility(this);
     }
@@ -600,6 +581,6 @@ public class HexCell : IEquatable<HexCell>
     {
         return this == other;
     }
-    
+
     public static implicit operator bool(HexCell cell) => cell != null;
 }
