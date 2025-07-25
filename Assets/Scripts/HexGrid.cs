@@ -4,7 +4,6 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Collections;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 [Flags]
 public enum GizmoMode
@@ -47,6 +46,17 @@ public class HexGrid : MonoBehaviour
     bool wrapping = true;
 
     public HexCellShaderData ShaderData => cellShaderData;
+
+    public HexCellData[] CellData
+    { get; private set; }
+
+    public Vector3[] CellPositions
+    { get; private set; }
+
+    public TextMeshPro[] UiRects
+    {
+        get; private set;
+    }
 
     public bool Wrapping
     {
@@ -110,6 +120,7 @@ public class HexGrid : MonoBehaviour
         }
         ClearPath();
         ClearUnits();
+
         if (columns != null)
         {
             foreach (Transform chunk in columns)
@@ -117,6 +128,14 @@ public class HexGrid : MonoBehaviour
                 Destroy(chunk.gameObject);
             }
         }
+        if (UiRects != null)
+        {
+            foreach (TextMeshPro a in UiRects)
+            {
+                Destroy(a.gameObject);
+            }
+        }
+
         cellCountX = x;
         cellCountZ = z;
         this.wrapping = wrapping;
@@ -170,6 +189,10 @@ public class HexGrid : MonoBehaviour
         cells = new HexCell[cellCountZ * cellCountX];
         cellSearchDatas = new HexCellSearchData[cells.Length];
         cellVisibility = new int[cells.Length];
+        CellData = new HexCellData[cells.Length];
+        CellPositions = new Vector3[cells.Length];
+        UiRects = new TextMeshPro[cells.Length];
+
 
         for (int z = 0, i = 0; z < cellCountZ; z++)
         {
@@ -188,16 +211,15 @@ public class HexGrid : MonoBehaviour
         position.y = 0f;
         position.z = z * (HexMetrics.outerRadius * 1.5f);
 
-
-        HexCell cell = cells[i] = new HexCell();
-        cell.Position = position;
-        cell.Coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
+        HexCell cell = cells[i] = new HexCell(this, i);
+        CellPositions[i] = position;
+        CellData[i].coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
 
         TextMeshPro label = Instantiate(cellLabelPrefab);
         label.rectTransform.anchoredPosition = new Vector2(position.x, position.z);
-        cell.uiRect = label.rectTransform;
+        UiRects[i] = label;
+
         cell.Elevation = 0;
-        cell.Index = i;
         cell.ColumnIndex = x / HexMetrics.chunkSizeX;
 
         if (wrapping)
@@ -331,15 +353,24 @@ public class HexGrid : MonoBehaviour
         return cells[index];
     }
 
-    public HexCell GetCell(HexCoordinates coordinates)
+    public bool GetCellIdx(HexCoordinates coordinates, out int data)
     {
         int z = coordinates.Z;
         int x = coordinates.X + z / 2;
-        if (z < 0 || z >= cellCountZ)
+        if (z < 0 || z >= cellCountZ || x < 0 || x >= cellCountX)
         {
-            return null;
+            data = -1;
+            return false;
         }
-        if (x < 0 || x >= cellCountX)
+        data = x + z * cellCountX;
+        return true;
+    }
+
+      public HexCell GetCell(HexCoordinates coordinates)
+    {
+        int z = coordinates.Z;
+        int x = coordinates.X + z / 2;
+        if (z < 0 || z >= cellCountZ || x < 0 || x >= cellCountX)
         {
             return null;
         }
@@ -548,7 +579,7 @@ public class HexGrid : MonoBehaviour
             if (cellVisibility[cell.Index] == 1)
             {
                 cell.MarkAsExplored();
-                cellShaderData.RefreshVisibility(cell);
+                cellShaderData.RefreshVisibility(fromCell.Index);
             }
 
         }
@@ -563,7 +594,7 @@ public class HexGrid : MonoBehaviour
             cellVisibility[cell.Index] -= 1;
             if (cellVisibility[cell.Index] == 0)
             {
-                cellShaderData.RefreshVisibility(cell);
+                cellShaderData.RefreshVisibility(cell.Index);
             }
         }
         ListPool<HexCell>.Add(cells);
@@ -711,7 +742,7 @@ public class HexGrid : MonoBehaviour
             if (cellVisibility[cell.Index] > 0)
             {
                 cellVisibility[cell.Index] = 0;
-                cellShaderData.RefreshVisibility(cell);
+                cellShaderData.RefreshVisibility(cell.Index);
             }
         }
 

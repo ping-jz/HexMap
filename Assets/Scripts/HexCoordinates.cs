@@ -24,6 +24,8 @@ public struct HexCoordinates
         }
     }
 
+    public readonly int ColumnIndex => (x + z / 2) / HexMetrics.chunkSizeX;
+
     public HexCoordinates(int x, int z)
     {
         //20250715 搞不懂啊
@@ -86,6 +88,17 @@ public struct HexCoordinates
     {
         return new HexCoordinates(x - z / 2, z);
     }
+
+    	public readonly HexCoordinates Step(HexDirection direction) =>
+		direction switch
+		{
+			HexDirection.TopRight => new HexCoordinates(x, z + 1),
+			HexDirection.Right => new HexCoordinates(x + 1, z),
+			HexDirection.BottomRight => new HexCoordinates(x + 1, z - 1),
+			HexDirection.BottomLeft => new HexCoordinates(x, z - 1),
+			HexDirection.Left => new HexCoordinates(x - 1, z),
+			_ => new HexCoordinates(x - 1, z + 1)
+		};
 
     public override string ToString()
     {

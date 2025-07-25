@@ -32,7 +32,7 @@ public class HexFeatureManager : MonoBehaviour
         walls.Apply();
     }
 
-    public void AddFeature(HexCell cell, Vector3 position)
+    public void AddFeature(HexCellData cell, Vector3 position)
     {
         if (cell.IsSpecial)
         {
@@ -96,8 +96,8 @@ public class HexFeatureManager : MonoBehaviour
     }
 
     public void AddWall(
-        EdgeVertices near, HexCell nearCell,
-        EdgeVertices far, HexCell farCell,
+        EdgeVertices near, HexCellData nearCell,
+        EdgeVertices far, HexCellData farCell,
         HexDirection direction
     )
     {
@@ -214,9 +214,9 @@ public class HexFeatureManager : MonoBehaviour
 
 
     public void AddWall(
-        Vector3 c1, HexCell cell1,
-        Vector3 c2, HexCell cell2,
-        Vector3 c3, HexCell cell3
+        Vector3 c1, HexCellData cell1,
+        Vector3 c2, HexCellData cell2,
+        Vector3 c3, HexCellData cell3
     )
     {
         switch (cell1.Walled, cell2.Walled, cell3.Walled)
@@ -231,9 +231,9 @@ public class HexFeatureManager : MonoBehaviour
     }
 
     void AddWallSegment(
-        Vector3 pivot, HexCell pivotCell,
-        Vector3 left, HexCell leftCell,
-        Vector3 right, HexCell rightCell
+        Vector3 pivot, HexCellData pivotCell,
+        Vector3 left, HexCellData leftCell,
+        Vector3 right, HexCellData rightCell
     )
     {
         if (pivotCell.IsUnderwater)
@@ -311,7 +311,7 @@ public class HexFeatureManager : MonoBehaviour
         instance.SetParent(container, false);
     }
 
-    public void AddSpecialFeature(HexCell cell, Vector3 position)
+    public void AddSpecialFeature(HexCellData cell, Vector3 position)
     {
         Transform instance = Instantiate(specials[cell.SpecialIndex - 1]);
         instance.localPosition = HexMetrics.Perturb(position);

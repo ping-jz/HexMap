@@ -8,7 +8,7 @@ public class HexCellShaderData : MonoBehaviour
     Color32[] cellTextureData;
     List<int> transitioningCellIndices = new List<int>();
     const float transitionSpeed = 255f;
-    HexGrid grid;
+    HexGrid Grid;
 
     public bool ImmediateMode { get; set; }
 
@@ -46,28 +46,32 @@ public class HexCellShaderData : MonoBehaviour
         }
 
         transitioningCellIndices.Clear();
-        this.grid = grid;
+        this.Grid = grid;
         enabled = true;
     }
 
-    public void RefreshTerrain(HexCell cell)
+    public void RefreshTerrain(int cellIndex)
     {
-        cellTextureData[cell.Index].a = (byte)cell.TerrainTypeIndex;
+        HexCellData cell = Grid.CellData[cellIndex];
+        Color32 data = cellTextureData[cellIndex];
+        data.b = cell.IsUnderwater ?
+             (byte)(cell.WaterSurfaceY * (255f / 30f)) : (byte)0;
+        data.a = (byte)cell.TerrainTypeIndex;
+        cellTextureData[cellIndex] = data;
         enabled = true;
     }
 
-    public void RefreshVisibility(HexCell cell)
+    public void RefreshVisibility(int index)
     {
-        int index = cell.Index;
         if (ImmediateMode)
         {
-            cellTextureData[index].r = grid.IsCellVisible(cell.Index) ? (byte)255 : (byte)0;
-            cellTextureData[index].g = cell.IsExplored ? (byte)255 : (byte)0;
+            cellTextureData[index].r = Grid.IsCellVisible(index) ? (byte)255 : (byte)0;
+            cellTextureData[index].g = Grid.CellData[index].IsExplored ? (byte)255 : (byte)0;
         }
         else if (cellTextureData[index].b != 255)
         {
             cellTextureData[index].b = 255;
-            transitioningCellIndices.Add(cell.Index);
+            transitioningCellIndices.Add(index);
         }
 
         enabled = true;
@@ -100,18 +104,18 @@ public class HexCellShaderData : MonoBehaviour
 
     bool UpdateCellData(int index, int delta)
     {
-        HexCell cell = grid.GetCell(index);
+
         Color32 data = cellTextureData[index];
         bool updating = false;
 
-        if (cell.IsExplored && data.g < 255)
+        if (Grid.CellData[index].IsExplored && data.g < 255)
         {
             updating = true;
             int t = data.g + delta;
             data.g = (byte)Math.Min(t, 255);
         }
 
-        if (grid.IsCellVisible(index) && data.r < 255)
+        if (Grid.IsCellVisible(index) && data.r < 255)
         {
             updating = true;
             int t = data.r + delta;

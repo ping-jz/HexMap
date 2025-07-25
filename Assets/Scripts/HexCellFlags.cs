@@ -101,10 +101,10 @@ public static class HexCellFlagsExtensions
     public static HexDirection RoadToDirection(this HexCellFlags flags) =>
        flags.ToDirection(0);
 
-    public static HexDirection RiverInToDirection(this HexCellFlags flags) =>
+    public static HexDirection RiverInDirection(this HexCellFlags flags) =>
         flags.ToDirection(6);
 
-    public static HexDirection RiverOutToDirection(this HexCellFlags flags) =>
+    public static HexDirection RiverOutDirection(this HexCellFlags flags) =>
         flags.ToDirection(12);
 
     static HexDirection ToDirection(this HexCellFlags flags, int shift) =>

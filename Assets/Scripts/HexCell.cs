@@ -10,17 +10,28 @@ using System;
 public class HexCell : IEquatable<HexCell>
 {
     [SerializeField]
-    private HexCoordinates coordinates;
-    [SerializeField]
     private int[] neighborsIndex = { -1, -1, -1, -1, -1, -1 };
-    [SerializeField]
-    private HexCellFlags flags;
-    [SerializeField]
-    private HexValues values;
-    public RectTransform uiRect;
-    int elevation, waterLevel;
 
-    public void MarkAsExplored() => flags = flags.With(HexCellFlags.Explored);
+    public HexCell(HexGrid grid, int index)
+    {
+        Grid = grid;
+        Index = index;
+    }
+
+    public int ChunkIdx
+    {
+        get; set;
+    }
+
+    public int Index { get; private set; }
+
+    public HexUnit Unit { get; set; }
+
+    public HexGrid Grid { get; private set; }
+
+    public int ColumnIndex { get; set; }
+
+    public void MarkAsExplored() => Flags = Flags.With(HexCellFlags.Explored);
 
     public HexCell GetNeighbor(HexGrid grid, HexDirection direction)
     {
@@ -50,38 +61,43 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return values.elevation;
+            return Values.elevation;
         }
         set
         {
-            values.elevation = value;
-            Vector3 position = Position;
-            position.y = value * HexMetrics.elevationStep;
-            position.y +=
-                (HexMetrics.SampleNoise(position).y * 2f - 1f) *
-                HexMetrics.elevationPerturbStrength;
-            Position = position;
-
-            Vector3 uiPosition = uiRect.localPosition;
-            uiPosition.z = -position.y;
-            uiRect.localPosition = uiPosition;
+            Grid.CellData[Index].values.elevation = value;
+            RefreshPosition();
         }
+    }
+
+    private void RefreshPosition()
+    {
+        Vector3 position = Position;
+        position.y = Grid.CellData[Index].Elevation * HexMetrics.elevationStep;
+        position.y +=
+            (HexMetrics.SampleNoise(position).y * 2f - 1f) *
+            HexMetrics.elevationPerturbStrength;
+        Grid.CellPositions[Index] = position;
+
+        Vector3 uiPosition = Grid.UiRects[Index].rectTransform.localPosition;
+        uiPosition.z = -position.y;
+        Grid.UiRects[Index].rectTransform.localPosition = uiPosition;
     }
 
     public IEnumerable<HexCell> RemoveInvalidRiver(HexGrid grid)
     {
         IEnumerable<HexCell> affeceted = defaultEnumer;
         if (
-            flags.HasAny(HexCellFlags.RiverOut) &&
-             !IsValidRiverDestination(GetNeighbor(grid, flags.RiverOutToDirection()))
+            Flags.HasAny(HexCellFlags.RiverOut) &&
+             !IsValidRiverDestination(GetNeighbor(grid, Flags.RiverOutDirection()))
         )
         {
             affeceted = affeceted.Concat(RemoveOutgoingRiver(grid));
         }
 
         if (
-            flags.HasAny(HexCellFlags.RiverIn) &&
-            !IsValidRiverDestination(GetNeighbor(grid, flags.RiverInToDirection()))
+            Flags.HasAny(HexCellFlags.RiverIn) &&
+            !IsValidRiverDestination(GetNeighbor(grid, Flags.RiverInDirection()))
             )
         {
             affeceted = affeceted.Concat(RemoveIncomingRiver(grid));
@@ -92,11 +108,11 @@ public class HexCell : IEquatable<HexCell>
 
     public IEnumerable<HexCell> RemoveRoad(HexGrid grid, HexDirection d)
     {
-        flags = flags.WithoutRoad(d);
+        Flags = Flags.WithoutRoad(d);
         HexCell neighbor = GetNeighbor(grid, d);
         if (neighbor)
         {
-            neighbor.flags = neighbor.flags.WithoutRoad(d.Opposite());
+            neighbor.Flags = neighbor.Flags.WithoutRoad(d.Opposite());
             return new HexCell[] { this, neighbor };
         }
         else
@@ -131,8 +147,8 @@ public class HexCell : IEquatable<HexCell>
             return defaultEnumer;
         }
 
-        flags = flags.WithRoad(d);
-        neighbor.flags = neighbor.flags.WithRoad(d.Opposite());
+        Flags = Flags.WithRoad(d);
+        neighbor.Flags = neighbor.Flags.WithRoad(d.Opposite());
         return new HexCell[] { this, neighbor };
 
     }
@@ -158,14 +174,14 @@ public class HexCell : IEquatable<HexCell>
     /// <returns>发生了改变的网格</returns>
     public IEnumerable<HexCell> RemoveOutgoingRiver(HexGrid grid)
     {
-        if (!flags.HasAny(HexCellFlags.RiverOut))
+        if (!Flags.HasAny(HexCellFlags.RiverOut))
         {
             return defaultEnumer;
         }
 
-        HexCell neighbor = GetNeighbor(grid, flags.RiverOutToDirection());
-        flags = flags.Without(HexCellFlags.RiverOut);
-        neighbor.flags = neighbor.flags.Without(HexCellFlags.RiverIn);
+        HexCell neighbor = GetNeighbor(grid, Flags.RiverOutDirection());
+        Flags = Flags.Without(HexCellFlags.RiverOut);
+        neighbor.Flags = neighbor.Flags.Without(HexCellFlags.RiverIn);
         return new HexCell[] { this, neighbor };
     }
 
@@ -175,14 +191,14 @@ public class HexCell : IEquatable<HexCell>
     /// <returns>发生了改变的网格</returns>
     public IEnumerable<HexCell> RemoveIncomingRiver(HexGrid grid)
     {
-        if (!flags.HasAny(HexCellFlags.RiverIn))
+        if (!Flags.HasAny(HexCellFlags.RiverIn))
         {
             return defaultEnumer;
         }
 
-        HexCell neighbor = GetNeighbor(grid, flags.RiverInToDirection());
-        flags = flags.Without(HexCellFlags.RiverIn);
-        neighbor.flags = neighbor.flags.Without(HexCellFlags.RiverOut);
+        HexCell neighbor = GetNeighbor(grid, Flags.RiverInDirection());
+        Flags = Flags.Without(HexCellFlags.RiverIn);
+        neighbor.Flags = neighbor.Flags.Without(HexCellFlags.RiverOut);
         return new HexCell[] { this, neighbor };
     }
 
@@ -196,7 +212,7 @@ public class HexCell : IEquatable<HexCell>
 
     public IEnumerable<HexCell> SetOutgoingRiver(HexGrid grid, HexDirection direction)
     {
-        if (flags.HasRiverOut(direction))
+        if (Flags.HasRiverOut(direction))
         {
             return defaultEnumer;
         }
@@ -209,16 +225,16 @@ public class HexCell : IEquatable<HexCell>
 
         IEnumerable<HexCell> affecetd = defaultEnumer;
         affecetd = affecetd.Concat(RemoveOutgoingRiver(grid));
-        if (flags.HasRiverIn(direction))
+        if (Flags.HasRiverIn(direction))
         {
             affecetd = affecetd.Concat(RemoveIncomingRiver(grid));
         }
 
-        flags = flags.WithRiverOut(direction);
+        Flags = Flags.WithRiverOut(direction);
         SpecialIndex = 0;
 
         affecetd = affecetd.Concat(neighbor.RemoveIncomingRiver(grid));
-        neighbor.flags = neighbor.flags.WithRiverIn(direction.Opposite());
+        neighbor.Flags = neighbor.Flags.WithRiverIn(direction.Opposite());
         neighbor.SpecialIndex = 0;
 
         affecetd = affecetd.Concat(RemoveRoad(grid, direction));
@@ -257,13 +273,13 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return flags.HasAny(HexCellFlags.RiverIn);
+            return Flags.HasAny(HexCellFlags.RiverIn);
         }
     }
 
     public bool HasIncomingRiverOf(HexDirection direction)
     {
-        return HasIncomingRiver && direction == flags.RiverInToDirection();
+        return HasIncomingRiver && direction == Flags.RiverInDirection();
     }
 
 
@@ -271,7 +287,7 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return flags.HasAny(HexCellFlags.RiverOut);
+            return Flags.HasAny(HexCellFlags.RiverOut);
         }
     }
 
@@ -279,8 +295,8 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return flags.HasAny(HexCellFlags.RiverIn) !=
-                flags.HasAny(HexCellFlags.RiverOut);
+            return Flags.HasAny(HexCellFlags.RiverIn) !=
+                Flags.HasAny(HexCellFlags.RiverOut);
         }
     }
 
@@ -288,13 +304,13 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return flags.HasAny(HexCellFlags.River);
+            return Flags.HasAny(HexCellFlags.River);
         }
     }
 
     public bool HasRiverThroughEdge(HexDirection direction)
     {
-        return flags.HasRiverIn(direction) || flags.HasRiverOut(direction);
+        return Flags.HasRiverIn(direction) || Flags.HasRiverOut(direction);
     }
 
     public float StreamBedY
@@ -310,35 +326,28 @@ public class HexCell : IEquatable<HexCell>
 
     public Vector3 Position
     {
-        get; set;
-    }
-
-    public int ChunkIdx
-    {
-        get; set;
-    }
-
-    public HexCoordinates Coordinates
-    {
         get
         {
-            return coordinates;
+            return Grid.CellPositions[Index];
         }
         set
         {
-            coordinates = value;
+            Grid.CellPositions[Index] = value;
         }
     }
+
+    public HexCoordinates Coordinates => Grid.CellData[Index].coordinates;
+
 
     public int WaterLevel
     {
         get
         {
-            return values.waterLevel;
+            return Values.waterLevel;
         }
         set
         {
-            values.waterLevel = value;
+            Grid.CellData[Index].values.waterLevel = value;
         }
     }
 
@@ -358,29 +367,17 @@ public class HexCell : IEquatable<HexCell>
         }
     }
 
-    public HexCellFlags Flags
-    {
-        get
-        {
-            return flags;
-        }
-        set
-        {
-            flags = value;
-        }
-    }
-
     public bool HasRoads
     {
         get
         {
-            return flags.HasAny(HexCellFlags.Road);
+            return Flags.HasAny(HexCellFlags.Road);
         }
     }
 
     public bool HasRoadThroughEdge(HexDirection direction)
     {
-        return flags.HasRoad(direction);
+        return Flags.HasRoad(direction);
     }
 
     /// <summary>
@@ -391,8 +388,8 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return flags.HasAny(HexCellFlags.RiverIn) ?
-            flags.RiverInToDirection() : flags.RiverOutToDirection();
+            return Flags.HasAny(HexCellFlags.RiverIn) ?
+            Flags.RiverInDirection() : Flags.RiverOutDirection();
         }
     }
 
@@ -400,11 +397,11 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return values.terrainTypeIndex;
+            return Values.terrainTypeIndex;
         }
         set
         {
-            values.terrainTypeIndex = value;
+            Grid.CellData[Index].values.terrainTypeIndex = value;
         }
     }
 
@@ -413,7 +410,7 @@ public class HexCell : IEquatable<HexCell>
         if (TerrainTypeIndex != value)
         {
             TerrainTypeIndex = value;
-            grid.ShaderData.RefreshTerrain(this);
+            grid.ShaderData.RefreshTerrain(Index);
         }
     }
 
@@ -421,11 +418,11 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return values.urbanLevel;
+            return Values.urbanLevel;
         }
         set
         {
-            values.urbanLevel = value;
+            Grid.CellData[Index].values.urbanLevel = value;
         }
     }
 
@@ -433,11 +430,11 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return values.farmLevel;
+            return Values.farmLevel;
         }
         set
         {
-            values.farmLevel = value;
+            Grid.CellData[Index].values.farmLevel = value;
         }
     }
 
@@ -445,11 +442,11 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return values.plantLevel;
+            return Values.plantLevel;
         }
         set
         {
-            values.plantLevel = value;
+            Grid.CellData[Index].values.plantLevel = value;
         }
     }
 
@@ -457,11 +454,11 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return flags.Has(HexCellFlags.Wall);
+            return Flags.Has(HexCellFlags.Wall);
         }
         set
         {
-            flags = value ? flags.With(HexCellFlags.Wall) : flags.Without(HexCellFlags.Wall);
+            Flags = value ? Flags.With(HexCellFlags.Wall) : Flags.Without(HexCellFlags.Wall);
         }
     }
 
@@ -469,11 +466,11 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return values.specialIndex;
+            return Values.specialIndex;
         }
         set
         {
-            values.specialIndex = value;
+            Grid.CellData[Index].values.specialIndex = value;
         }
     }
 
@@ -493,38 +490,43 @@ public class HexCell : IEquatable<HexCell>
 
     public void SetLabel(string text)
     {
-        TextMeshPro label = uiRect.GetComponent<TextMeshPro>();
+        TextMeshPro label = Grid.UiRects[Index].GetComponent<TextMeshPro>();
         label.text = text;
     }
 
     public void DisableHighlight()
     {
-        Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+        Image highlight = Grid.UiRects[Index].rectTransform.GetChild(0).GetComponent<Image>();
         highlight.enabled = false;
     }
 
     public void EnableHighlight(Color color)
     {
-        Image highlight = uiRect.GetChild(0).GetComponent<Image>();
+        Image highlight = Grid.UiRects[Index].rectTransform.GetChild(0).GetComponent<Image>();
         highlight.enabled = true;
         highlight.color = color;
     }
 
-    public int Index { get; set; }
+    public HexCellFlags Flags
+    {
+        get => Grid.CellData[Index].flags;
+        private set => Grid.CellData[Index].flags = value;
+    }
 
-    public HexUnit Unit { get; set; }
-
-    public int ColumnIndex { get; set; }
+    HexValues Values
+    {
+        get => Grid.CellData[Index].values;
+    }
 
     public bool IsExplored
     {
         get
         {
-            return flags.Has(HexCellFlags.Explored) && flags.Has(HexCellFlags.Explorable);
+            return Flags.Has(HexCellFlags.Explored) && Flags.Has(HexCellFlags.Explorable);
         }
         private set
         {
-            flags = flags.With(HexCellFlags.Explored);
+            Flags = Flags.With(HexCellFlags.Explored);
         }
     }
 
@@ -532,17 +534,17 @@ public class HexCell : IEquatable<HexCell>
     {
         get
         {
-            return flags.Has(HexCellFlags.Explorable);
+            return Flags.Has(HexCellFlags.Explorable);
         }
         set
         {
             if (value)
             {
-                flags = flags.With(HexCellFlags.Explorable);
+                Flags = Flags.With(HexCellFlags.Explorable);
             }
             else
             {
-                flags = flags.Without(HexCellFlags.Explorable);
+                Flags = Flags.Without(HexCellFlags.Explorable);
             }
         }
     }
@@ -562,19 +564,19 @@ public class HexCell : IEquatable<HexCell>
 
     public void Save(BinaryWriter writer)
     {
-        writer.Write((int)flags);
-        values.Save(writer);
+        writer.Write((int)Flags);
+        Values.Save(writer);
     }
 
     public void Load(HexGrid grid, BinaryReader reader)
     {
 
-        flags = (HexCellFlags)reader.ReadInt32();
-        values = HexValues.Load(reader);
+        Flags = (HexCellFlags)reader.ReadInt32();
+        Grid.CellData[Index].values = HexValues.Load(reader);
         //20250724忘记刷新位置了，耗费了那么久。哎。。。。
-        Elevation = values.elevation;
-        grid.ShaderData.RefreshTerrain(this);
-        grid.ShaderData.RefreshVisibility(this);
+        RefreshPosition();
+        grid.ShaderData.RefreshTerrain(Index);
+        grid.ShaderData.RefreshVisibility(Index);
     }
 
     public bool Equals(HexCell other)
