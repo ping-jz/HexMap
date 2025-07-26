@@ -45,11 +45,6 @@ public class HexCell : IEquatable<HexCell>
         cell.neighborsIndex[(int)direction.Opposite()] = Index;
     }
 
-    public HexEdgeType GetEdgeType(HexGrid grid, HexDirection direction)
-    {
-        return HexMetrics.GetEdgeType(Elevation, grid.GetCell(neighborsIndex[(int)direction]).Elevation);
-    }
-
     public HexEdgeType GetEdgeType(HexCell otherCell)
     {
         return HexMetrics.GetEdgeType(
@@ -66,22 +61,12 @@ public class HexCell : IEquatable<HexCell>
         set
         {
             Grid.CellData[Index].values.elevation = value;
-            RefreshPosition();
         }
     }
 
-    private void RefreshPosition()
+    public void RefreshPosition()
     {
-        Vector3 position = Position;
-        position.y = Grid.CellData[Index].Elevation * HexMetrics.elevationStep;
-        position.y +=
-            (HexMetrics.SampleNoise(position).y * 2f - 1f) *
-            HexMetrics.elevationPerturbStrength;
-        Grid.CellPositions[Index] = position;
-
-        Vector3 uiPosition = Grid.UiRects[Index].rectTransform.localPosition;
-        uiPosition.z = -position.y;
-        Grid.UiRects[Index].rectTransform.localPosition = uiPosition;
+        Grid.RefreshPosition(Index);
     }
 
     public IEnumerable<HexCell> RemoveInvalidRiver(HexGrid grid)
@@ -249,57 +234,6 @@ public class HexCell : IEquatable<HexCell>
         }
     }
 
-    public float RiverSurfaceY
-    {
-        get
-        {
-            return
-                (Elevation + HexMetrics.waterElevationOffset) *
-                HexMetrics.elevationStep;
-        }
-    }
-
-    public float WaterSurfaceY
-    {
-        get
-        {
-            return
-                (WaterLevel + HexMetrics.waterElevationOffset) *
-                HexMetrics.elevationStep;
-        }
-    }
-
-    public bool HasIncomingRiver
-    {
-        get
-        {
-            return Flags.HasAny(HexCellFlags.RiverIn);
-        }
-    }
-
-    public bool HasIncomingRiverOf(HexDirection direction)
-    {
-        return HasIncomingRiver && direction == Flags.RiverInDirection();
-    }
-
-
-    public bool HasOutgoingRiver
-    {
-        get
-        {
-            return Flags.HasAny(HexCellFlags.RiverOut);
-        }
-    }
-
-    public bool HasRiverBeginOrEnd
-    {
-        get
-        {
-            return Flags.HasAny(HexCellFlags.RiverIn) !=
-                Flags.HasAny(HexCellFlags.RiverOut);
-        }
-    }
-
     public bool HasRiver
     {
         get
@@ -311,16 +245,6 @@ public class HexCell : IEquatable<HexCell>
     public bool HasRiverThroughEdge(HexDirection direction)
     {
         return Flags.HasRiverIn(direction) || Flags.HasRiverOut(direction);
-    }
-
-    public float StreamBedY
-    {
-        get
-        {
-            return
-                (Elevation + HexMetrics.streamBedElevationOffset) *
-                HexMetrics.elevationStep;
-        }
     }
 
 
@@ -367,30 +291,9 @@ public class HexCell : IEquatable<HexCell>
         }
     }
 
-    public bool HasRoads
-    {
-        get
-        {
-            return Flags.HasAny(HexCellFlags.Road);
-        }
-    }
-
     public bool HasRoadThroughEdge(HexDirection direction)
     {
         return Flags.HasRoad(direction);
-    }
-
-    /// <summary>
-    /// call {@link HexCell.HasRiverBeginOrEnd} before this method
-    /// </summary>
-    /// <returns></returns>
-    public HexDirection RiverBeginOrEndDirection
-    {
-        get
-        {
-            return Flags.HasAny(HexCellFlags.RiverIn) ?
-            Flags.RiverInDirection() : Flags.RiverOutDirection();
-        }
     }
 
     public byte TerrainTypeIndex
@@ -507,6 +410,13 @@ public class HexCell : IEquatable<HexCell>
         highlight.color = color;
     }
 
+    public void RefreshAll()
+    {
+        RefreshPosition();
+        Grid.ShaderData.RefreshTerrain(Index);
+        Grid.ShaderData.RefreshVisibility(Index);
+    }
+
     public HexCellFlags Flags
     {
         get => Grid.CellData[Index].flags;
@@ -555,11 +465,6 @@ public class HexCell : IEquatable<HexCell>
         {
             return Elevation >= WaterLevel ? Elevation : WaterLevel;
         }
-    }
-
-    public void SetMapData(HexGrid grid, float data)
-    {
-        grid.ShaderData.SetMapData(this, data);
     }
 
     public void Save(BinaryWriter writer)

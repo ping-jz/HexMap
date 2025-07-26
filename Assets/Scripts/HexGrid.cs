@@ -128,13 +128,6 @@ public class HexGrid : MonoBehaviour
                 Destroy(chunk.gameObject);
             }
         }
-        if (UiRects != null)
-        {
-            foreach (TextMeshPro a in UiRects)
-            {
-                Destroy(a.gameObject);
-            }
-        }
 
         cellCountX = x;
         cellCountZ = z;
@@ -221,6 +214,7 @@ public class HexGrid : MonoBehaviour
 
         cell.Elevation = 0;
         cell.ColumnIndex = x / HexMetrics.chunkSizeX;
+        RefreshPosition(i);
 
         if (wrapping)
         {
@@ -323,9 +317,9 @@ public class HexGrid : MonoBehaviour
 
     }
 
-    public HexCell GetCell(int xOffset, int zOffset)
+    public int GetCell(int xOffset, int zOffset)
     {
-        return cells[xOffset + zOffset * cellCountX];
+        return xOffset + zOffset * cellCountX;
     }
 
     public HexCell GetCell(int cellIndex)
@@ -366,7 +360,7 @@ public class HexGrid : MonoBehaviour
         return true;
     }
 
-      public HexCell GetCell(HexCoordinates coordinates)
+    public HexCell GetCell(HexCoordinates coordinates)
     {
         int z = coordinates.Z;
         int x = coordinates.X + z / 2;
@@ -575,11 +569,11 @@ public class HexGrid : MonoBehaviour
         List<HexCell> cells = GetVisibleCells(fromCell, range);
         foreach (HexCell cell in cells)
         {
-            cellVisibility[cell.Index] += 1;
-            if (cellVisibility[cell.Index] == 1)
+            int val = cellVisibility[cell.Index] += 1;
+            if (val == 1)
             {
                 cell.MarkAsExplored();
-                cellShaderData.RefreshVisibility(fromCell.Index);
+                cellShaderData.RefreshVisibility(cell.Index);
             }
 
         }
@@ -751,6 +745,22 @@ public class HexGrid : MonoBehaviour
             IncreaseVisibility(unit.Location, unit.VisionRange);
         }
     }
+
+    public void RefreshPosition(int index)
+    {
+        Vector3 position = CellPositions[index];
+        position.y = CellData[index].Elevation * HexMetrics.elevationStep;
+        position.y +=
+            (HexMetrics.SampleNoise(position).y * 2f - 1f) *
+            HexMetrics.elevationPerturbStrength;
+        CellPositions[index] = position;
+
+        Vector3 uiPosition = UiRects[index].rectTransform.localPosition;
+        uiPosition.z = -position.y;
+        UiRects[index].rectTransform.localPosition = uiPosition;
+    }
+
+
 
     void OnDrawGizmos()
     {

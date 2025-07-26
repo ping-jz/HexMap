@@ -26,7 +26,7 @@ public class HexGridChunk : MonoBehaviour
     public void AddCell(int index, HexCell cell)
     {
         cellsIndices[index] = cell.Index;
-        Grid.UiRects[index].rectTransform.SetParent(gridCanvas.transform, false);
+        Grid.UiRects[cell.Index].rectTransform.SetParent(gridCanvas.transform, false);
     }
 
     public void Refresh()

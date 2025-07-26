@@ -436,6 +436,7 @@ public class HexMapEditor : MonoBehaviour
             {
                 hexGrid.ViewElevationChanged = true;
             }
+            cell.RefreshPosition();
             RefreshCellWithDependents(cell);
             refrechCells(cell.RemoveInvalidRiver(hexGrid));
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)

@@ -14,7 +14,6 @@ public class HexGameUI : MonoBehaviour
     void Awake()
     {
         RegisterEvents();
-        SetEditMode(true);
     }
 
     void Enable()

@@ -101,7 +101,7 @@ public class HexMapGenerator : MonoBehaviour
 
 		for (int i = 0; i < cellCount; i++)
 		{
-			grid.GetCell(i).WaterLevel = waterLevel;
+			grid.CellData[i].values.waterLevel = waterLevel;
 		}
 		CreateRegion(x, z);
 		CreateLand();
@@ -109,6 +109,11 @@ public class HexMapGenerator : MonoBehaviour
 		CreateClimate();
 		CreateRivers();
 		SetTerrainType();
+
+		for (int i = 0; i < cellCount; i++)
+		{
+			grid.GetCell(i).RefreshAll();
+		}
 
 		Random.state = originalRandomState;
 	}
@@ -216,25 +221,26 @@ public class HexMapGenerator : MonoBehaviour
 
 	int RaiseTerrain(int chunkSize, int landBudget, MapRegin mapRegin)
 	{
-		HexCell firstCell = GetRandomCell(mapRegin);
-		grid.SearchData[firstCell.Index] = new HexCellSearchData();
-		searchFrontier.Enqueue(firstCell.Index, grid.SearchData[firstCell.Index].SearchPriority);
-		HexCoordinates center = firstCell.Coordinates;
+		int firstCellIdx = GetRandomCellIdx(mapRegin);
+		grid.SearchData[firstCellIdx] = new HexCellSearchData();
+		searchFrontier.Enqueue(firstCellIdx, grid.SearchData[firstCellIdx].SearchPriority);
+		HexCoordinates center = grid.CellData[firstCellIdx].coordinates;
 
 		int rise = Random.value < highRiseProbability ? 2 : 1;
 		int size = 0;
 		while (size < chunkSize && searchFrontier.Count > 0)
 		{
-			HexCell current = grid.GetCell(searchFrontier.Dequeue());
-			int originalElevation = current.Elevation;
-			int elevation = originalElevation + rise;
-			if (elevation > elevationMaximum)
+			int idx = searchFrontier.Dequeue();
+			int originalElevation = grid.CellData[idx].Elevation;
+			int newElevation = originalElevation + rise;
+			if (newElevation > elevationMaximum)
 			{
 				continue;
 			}
-			current.Elevation = elevation;
+
+			grid.CellData[idx].values.elevation = newElevation;
 			if (originalElevation < waterLevel &&
-				current.Elevation >= waterLevel)
+				grid.CellData[idx].Elevation >= waterLevel)
 			{
 				landBudget -= 1;
 				if (landBudget == 0)
@@ -244,15 +250,19 @@ public class HexMapGenerator : MonoBehaviour
 			}
 			size += 1;
 
+			HexCoordinates coordinates = grid.CellData[idx].coordinates;
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = current.GetNeighbor(grid, d);
-				if (neighbor && !searchPhase.Contains(neighbor.Coordinates))
+
+				if (grid.GetCellIdx(coordinates.Step(d), out int neighborIdx) &&
+					searchPhase.Add(grid.CellData[neighborIdx].coordinates))
 				{
-					searchPhase.Add(neighbor.Coordinates);
-					grid.SearchData[neighbor.Index].distance = neighbor.Coordinates.DistanceTo(center);
-					grid.SearchData[neighbor.Index].heuristic = Random.value < jitterProbability ? 1 : 0;
-					searchFrontier.Enqueue(neighbor.Index, grid.SearchData[neighbor.Index].SearchPriority);
+					grid.SearchData[neighborIdx] = new HexCellSearchData
+					{
+						distance = grid.CellData[neighborIdx].coordinates.DistanceTo(center),
+						heuristic = Random.value < jitterProbability ? 1 : 0
+					};
+					searchFrontier.Enqueue(neighborIdx, grid.SearchData[neighborIdx].SearchPriority);
 				}
 			}
 		}
@@ -267,39 +277,41 @@ public class HexMapGenerator : MonoBehaviour
 		searchFrontier.Clear();
 		searchPhase.Clear();
 
-		HexCell firstCell = GetRandomCell(mapRegin);
-		grid.SearchData[firstCell.Index] = new HexCellSearchData();
-		searchFrontier.Enqueue(firstCell.Index, grid.SearchData[firstCell.Index].SearchPriority);
-		HexCoordinates center = firstCell.Coordinates;
+		int firstCellIdx = GetRandomCellIdx(mapRegin);
+		grid.SearchData[firstCellIdx] = new HexCellSearchData();
+		searchFrontier.Enqueue(firstCellIdx, grid.SearchData[firstCellIdx].SearchPriority);
+		HexCoordinates center = grid.CellData[firstCellIdx].coordinates;
 
 		int sink = Random.value < highRiseProbability ? 2 : 1;
 		int size = 0;
 		while (size < chunkSize && searchFrontier.Count > 0)
 		{
-			HexCell current = grid.GetCell(searchFrontier.Dequeue());
-			int originalElevation = current.Elevation;
+			int idx = searchFrontier.Dequeue();
+			int originalElevation = grid.CellData[idx].Elevation;
 			int elevation = originalElevation - sink;
 			if (elevation < elevationMinimum)
 			{
 				continue;
 			}
-			current.Elevation = elevation;
+			grid.CellData[idx].values.elevation = elevation;
 			if (originalElevation >= waterLevel &&
-				current.Elevation < waterLevel)
+				grid.CellData[idx].Elevation < waterLevel)
 			{
 				landBudget += 1;
 			}
 			size += 1;
 
+			HexCoordinates coordinates = grid.CellData[idx].coordinates;
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = current.GetNeighbor(grid, d);
-				if (neighbor && !searchPhase.Contains(neighbor.Coordinates))
+
+				if (grid.GetCellIdx(coordinates.Step(d), out int neighborIdx) &&
+						searchPhase.Add(grid.CellData[neighborIdx].coordinates))
 				{
-					searchPhase.Add(neighbor.Coordinates);
-					grid.SearchData[neighbor.Index].distance = neighbor.Coordinates.DistanceTo(center);
-					grid.SearchData[neighbor.Index].heuristic = Random.value < jitterProbability ? 1 : 0;
-					searchFrontier.Enqueue(neighbor.Index, grid.SearchData[neighbor.Index].SearchPriority);
+					grid.SearchData[neighborIdx].distance = grid.CellData[neighborIdx]
+																.coordinates.DistanceTo(center);
+					grid.SearchData[neighborIdx].heuristic = Random.value < jitterProbability ? 1 : 0;
+					searchFrontier.Enqueue(neighborIdx, grid.SearchData[neighborIdx].SearchPriority);
 				}
 			}
 		}
@@ -309,7 +321,7 @@ public class HexMapGenerator : MonoBehaviour
 		return landBudget;
 	}
 
-	HexCell GetRandomCell(MapRegin mapRegion)
+	int GetRandomCellIdx(MapRegin mapRegion)
 	{
 		return grid.GetCell(Random.Range(mapRegion.xMin, mapRegion.xMax), Random.Range(mapRegion.zMin, mapRegion.zMax));
 	}
@@ -343,7 +355,7 @@ public class HexMapGenerator : MonoBehaviour
 
 	void EvolveClimate(int cellIndex)
 	{
-		HexCell cell = grid.GetCell(cellIndex);
+		HexCellData cell = grid.CellData[cellIndex];
 		ClimateData cellClimate = climate[cellIndex];
 
 		if (cell.IsUnderwater)
@@ -378,12 +390,12 @@ public class HexMapGenerator : MonoBehaviour
 			float seepage = cellClimate.moisture * seepageFactor * (1f / 6f);
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = cell.GetNeighbor(grid, d);
-				if (!neighbor)
+				if (!grid.GetCellIdx(
+					cell.coordinates.Step(d), out int neighborIndex))
 				{
 					continue;
 				}
-				ClimateData neighborClimate = nextClimate[neighbor.Index];
+				ClimateData neighborClimate = nextClimate[neighborIndex];
 				if (d == windDirection)
 				{
 					neighborClimate.clouds += cloudDispersal * windStrength;
@@ -394,7 +406,7 @@ public class HexMapGenerator : MonoBehaviour
 				}
 
 
-				int elevationDelta = neighbor.ViewElevation - cell.ViewElevation;
+				int elevationDelta = grid.CellData[neighborIndex].ViewElevation - cell.ViewElevation;
 				if (elevationDelta < 0)
 				{
 					cellClimate.moisture -= runoff;
@@ -406,7 +418,7 @@ public class HexMapGenerator : MonoBehaviour
 					neighborClimate.moisture += seepage;
 				}
 
-				nextClimate[neighbor.Index] = neighborClimate;
+				nextClimate[neighborIndex] = neighborClimate;
 			}
 		}
 
@@ -422,11 +434,11 @@ public class HexMapGenerator : MonoBehaviour
 
 	void CreateRivers()
 	{
-		List<HexCell> riverOrigins = ListPool<HexCell>.Get();
+		List<int> riverOrigins = ListPool<int>.Get();
 		int landCells = 0;
 		for (int i = 0; i < cellCount; i++)
 		{
-			HexCell cell = grid.GetCell(i);
+			HexCellData cell = grid.CellData[i];
 			if (cell.IsUnderwater)
 			{
 				continue;
@@ -438,16 +450,16 @@ public class HexMapGenerator : MonoBehaviour
 				(elevationMaximum - waterLevel);
 			if (weight > 0.75f)
 			{
-				riverOrigins.Add(cell);
-				riverOrigins.Add(cell);
+				riverOrigins.Add(i);
+				riverOrigins.Add(i);
 			}
 			if (weight > 0.5f)
 			{
-				riverOrigins.Add(cell);
+				riverOrigins.Add(i);
 			}
 			if (weight > 0.25f)
 			{
-				riverOrigins.Add(cell);
+				riverOrigins.Add(i);
 			}
 		}
 
@@ -456,43 +468,45 @@ public class HexMapGenerator : MonoBehaviour
 		{
 			int index = Random.Range(0, riverOrigins.Count);
 			int lastIndex = riverOrigins.Count - 1;
-			HexCell origin = riverOrigins[index];
+			int originIdx = riverOrigins[index];
+			HexCellData origin = grid.CellData[originIdx];
 			riverOrigins[index] = riverOrigins[lastIndex];
 			riverOrigins.RemoveAt(lastIndex);
 
-			if (!origin.IsUnderwater)
+			if (origin.IsUnderwater)
 			{
-				bool isValidOrigin = true;
-				foreach (int neighborIndex in origin.Neighbors)
-				{
-					if (neighborIndex < 0)
-					{
-						continue;
-					}
+				continue;
+			}
 
-					HexCell neighbor = grid.GetCell(neighborIndex);
-					if (neighbor && (neighbor.HasRiver || neighbor.IsUnderwater))
-					{
-						isValidOrigin = false;
-						break;
-					}
-				}
-				if (isValidOrigin)
+			bool isValidOrigin = true;
+			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
+			{
+				if (grid.GetCellIdx(
+					origin.coordinates.Step(d), out int neighborIndex) &&
+					(grid.CellData[neighborIndex].HasRiver ||
+						grid.CellData[neighborIndex].IsUnderwater))
 				{
-					riverBudget -= CreateRiver(origin);
+					isValidOrigin = false;
+					break;
 				}
 			}
+			if (isValidOrigin)
+			{
+				riverBudget -= CreateRiver(originIdx);
+			}
+
 		}
 
 
-		ListPool<HexCell>.Add(riverOrigins);
+		ListPool<int>.Add(riverOrigins);
 	}
 
-	int CreateRiver(HexCell origin)
+	int CreateRiver(int originIdx)
 	{
 		int length = 1;
-		HexCell cell = origin;
 		List<HexDirection> flowDirections = ListPool<HexDirection>.Get();
+		int cellIndex = originIdx;
+		HexCellData cell = grid.CellData[cellIndex];
 		HexDirection direction = HexDirection.TopRight;
 		while (!cell.IsUnderwater)
 		{
@@ -500,18 +514,18 @@ public class HexMapGenerator : MonoBehaviour
 			int minNeighborElevation = int.MaxValue;
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = cell.GetNeighbor(grid, d);
-				if (!neighbor)
+				if (!grid.GetCellIdx(cell.coordinates.Step(d), out int neighborIndex))
 				{
 					continue;
 				}
+				HexCellData neighbor = grid.CellData[neighborIndex];
 
 				if (neighbor.Elevation < minNeighborElevation)
 				{
 					minNeighborElevation = neighbor.Elevation;
 				}
 
-				if (neighbor == origin || neighbor.HasIncomingRiver)
+				if (neighborIndex == originIdx || neighbor.HasIncomingRiver)
 				{
 					continue;
 				}
@@ -531,7 +545,8 @@ public class HexMapGenerator : MonoBehaviour
 
 				if (neighbor.HasOutgoingRiver)
 				{
-					cell.SetOutgoingRiver(grid, d);
+					grid.CellData[cellIndex].flags = cell.flags.WithRiverOut(d);
+					grid.CellData[neighborIndex].flags = neighbor.flags.WithRiverIn(d.Opposite());
 					return length;
 				}
 
@@ -553,36 +568,43 @@ public class HexMapGenerator : MonoBehaviour
 
 				if (minNeighborElevation >= cell.Elevation)
 				{
-					cell.WaterLevel = minNeighborElevation;
+					cell.values.waterLevel = minNeighborElevation;
 					if (minNeighborElevation == cell.Elevation)
 					{
-						cell.Elevation = minNeighborElevation - 1;
+						cell.values.elevation = minNeighborElevation - 1;
 					}
+					grid.CellData[cellIndex].values = cell.values;
 				}
-				RefreshCellWithDependents(cell);
 				break;
 			}
+
+			direction = flowDirections[Random.Range(0, flowDirections.Count)];
+			//cell.SetOutgoingRiver(direction);
+			cell.flags = cell.flags.WithRiverOut(direction);
+			grid.GetCellIdx(cell.coordinates.Step(direction), out int outIndex);
+			grid.CellData[outIndex].flags =
+				grid.CellData[outIndex].flags.WithRiverIn(direction.Opposite());
+			length += 1;
 
 			if (minNeighborElevation >= cell.Elevation &&
 				Random.value < extraLakeProbability)
 			{
-				cell.WaterLevel = cell.Elevation;
-				cell.Elevation -= 1;
+				cell.values.waterLevel = cell.Elevation;
+				cell.values.elevation -= 1;
 			}
 
-			direction = flowDirections[Random.Range(0, flowDirections.Count)];
-			cell.SetOutgoingRiver(grid, direction);
-			length += 1;
-			cell = cell.GetNeighbor(grid, direction);
-			RefreshCellWithDependents(cell);
+			grid.CellData[cellIndex] = cell;
+			cellIndex = outIndex;
+			cell = grid.CellData[cellIndex];
 		}
 		ListPool<HexDirection>.Add(flowDirections);
 		return length;
 	}
 
-	float DeterminTemperature(HexCell cell, int channel)
+	float DeterminTemperature(int cellIndex, HexCellData cell, int channel)
 	{
-		float latitude = (float)cell.Coordinates.Z / grid.CellCountZ;
+		Vector3 position = grid.CellPositions[cellIndex];
+		float latitude = (float)cell.coordinates.Z / grid.CellCountZ;
 		if (hemisphere == HemisphereMode.Both)
 		{
 			latitude *= 2;
@@ -599,7 +621,7 @@ public class HexMapGenerator : MonoBehaviour
 		float temperature = Mathf.LerpUnclamped(lowTemperature, highTemperature, latitude);
 
 		temperature *= 1f - (cell.ViewElevation - waterLevel) / (elevationMaximum - waterLevel + 1f);
-		temperature += (HexMetrics.SampleNoise(cell.Position * 0.1f)[channel] * 2f - 1f) * temperatureJitter;
+		temperature += (HexMetrics.SampleNoise(position * 0.1f)[channel] * 2f - 1f) * temperatureJitter;
 		return temperature;
 	}
 
@@ -610,9 +632,9 @@ public class HexMapGenerator : MonoBehaviour
 		int channel = Random.Range(0, 4);
 		for (int i = 0; i < cellCount; i++)
 		{
-			HexCell cell = grid.GetCell(i);
+			HexCellData cell = grid.CellData[i];
 			float moisture = climate[i].moisture;
-			float temperature = DeterminTemperature(cell, channel);
+			float temperature = DeterminTemperature(i, cell, channel);
 			//20250711这段地形随机代码，我没能彻底理解。因为缺乏对自然的足够理解
 			if (!cell.IsUnderwater)
 			{
@@ -656,9 +678,8 @@ public class HexMapGenerator : MonoBehaviour
 					cellBiome.plant += 1;
 				}
 
-				cell.SetTerrainTypeIndex(grid, (byte)cellBiome.terrain);
-				cell.PlantLevel = (byte)cellBiome.plant;
-				refrechCells(cell);
+				grid.CellData[i].values.terrainTypeIndex = (byte)cellBiome.terrain;
+				grid.CellData[i].values.plantLevel = (byte)cellBiome.plant;
 			}
 			else
 			{
@@ -670,12 +691,11 @@ public class HexMapGenerator : MonoBehaviour
 						HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++
 					)
 					{
-						HexCell neighbor = cell.GetNeighbor(grid, d);
-						if (!neighbor)
+						if (!grid.GetCellIdx(cell.coordinates.Step(d), out int neighborIdx))
 						{
 							continue;
 						}
-						int delta = neighbor.Elevation - cell.WaterLevel;
+						int delta = grid.CellData[neighborIdx].Elevation - cell.WaterLevel;
 						if (delta == 0)
 						{
 							slopes += 1;
@@ -720,88 +740,77 @@ public class HexMapGenerator : MonoBehaviour
 				{
 					terrain = 2;
 				}
-				cell.SetTerrainTypeIndex(grid, (byte)terrain);
+				grid.CellData[i].values.terrainTypeIndex = (byte)terrain;
 			}
-			cell.SetMapData(grid, moisture);
+			//cell.SetMapData(grid, moisture);
 		}
 	}
 
 	void ErodeLand()
 	{
-		List<HexCell> erodibleCells = ListPool<HexCell>.Get();
+		List<int> erodibleIndices = ListPool<int>.Get();
 		for (int i = 0; i < cellCount; i++)
 		{
-			HexCell cell = grid.GetCell(i);
-			if (IsErodible(cell))
+			if (IsErodible(i, grid.CellData[i].Elevation))
 			{
-				erodibleCells.Add(cell);
+				erodibleIndices.Add(i);
 			}
 		}
 
-		int erodibleCount = (int)(erodibleCells.Count * (1.0 - erosionPercentage));
-		while (erodibleCount < erodibleCells.Count)
+		int erodibleCount = (int)(erodibleIndices.Count * (1.0 - erosionPercentage));
+		while (erodibleCount < erodibleIndices.Count)
 		{
-			int index = Random.Range(0, erodibleCells.Count);
-			HexCell cell = erodibleCells[index];
-			HexCell targetCell = GetErosionTarget(cell);
+			int index = Random.Range(0, erodibleIndices.Count);
+			int cellIdx = erodibleIndices[index];
+			HexCellData cell = grid.CellData[cellIdx];
+			int targetCellIdx = GetErosionTarget(cellIdx, cell.Elevation);
 
-			cell.Elevation -= 1;
-			targetCell.Elevation += 1;
-			RefreshCellWithDependents(cell);
+			grid.CellData[cellIdx].values.elevation = cell.values.elevation -= 1;
 
-			if (!IsErodible(cell))
+			HexCellData targetCell = grid.CellData[targetCellIdx];
+			grid.CellData[targetCellIdx].values.elevation = targetCell.values.elevation += 1;
+
+			if (!IsErodible(cellIdx, cell.Elevation))
 			{
-				erodibleCells[index] = erodibleCells[erodibleCells.Count - 1];
-				erodibleCells.RemoveAt(erodibleCells.Count - 1);
+				int lastIndex = erodibleIndices.Count - 1;
+				erodibleIndices[index] = erodibleIndices[lastIndex];
+				erodibleIndices.RemoveAt(lastIndex);
 			}
 
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = cell.GetNeighbor(grid, d);
-				if (neighbor &&
+				if (grid.GetCellIdx(cell.coordinates.Step(d), out int neighborIdx) &&
 					//这个编程技巧不错，复用了{IsErodible}的判断，减少erodibleCells.Contains的调用
-					neighbor.Elevation == cell.Elevation + 2 &&
-					!erodibleCells.Contains(neighbor))
+					grid.CellData[neighborIdx].Elevation == cell.Elevation + 2 &&
+					!erodibleIndices.Contains(neighborIdx))
 				{
-					erodibleCells.Add(neighbor);
+					erodibleIndices.Add(neighborIdx);
 				}
 			}
 
-			if (IsErodible(targetCell) && !erodibleCells.Contains(targetCell))
+			if (IsErodible(targetCellIdx, targetCell.Elevation) && !erodibleIndices.Contains(targetCellIdx))
 			{
-				erodibleCells.Add(targetCell);
+				erodibleIndices.Add(targetCellIdx);
 			}
 
 			for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 			{
-				HexCell neighbor = targetCell.GetNeighbor(grid, d);
 				if (
-					neighbor &&
-					neighbor != cell &&
+					grid.GetCellIdx(targetCell.coordinates.Step(d), out int neighborIdx) &&
+					neighborIdx != cellIdx &&
 					//这个编程技巧不错，复用了{IsErodible}的判断，减少erodibleCells.Contains的调用
-					neighbor.Elevation == targetCell.Elevation + 1 &&
-					!IsErodible(neighbor)
+					grid.CellData[neighborIdx].Elevation == targetCell.Elevation + 1 &&
+					!IsErodible(neighborIdx, grid.CellData[neighborIdx].Elevation)
 				)
 				{
-					erodibleCells.Remove(neighbor);
+					erodibleIndices.Remove(neighborIdx);
 				}
 			}
 		}
 
-		ListPool<HexCell>.Add(erodibleCells);
+		ListPool<int>.Add(erodibleIndices);
 	}
 
-	private void RefreshCellWithDependents(HexCell cell)
-	{
-		refrechCells(cell);
-		foreach (int cellIndex in cell.Neighbors)
-		{
-			if (cellIndex >= 0)
-			{
-				refrechCells(grid.GetCell(cellIndex));
-			}
-		}
-	}
 
 	void refrechCells(HexCell cell)
 	{
@@ -816,27 +825,14 @@ public class HexMapGenerator : MonoBehaviour
 			cell.Unit.ValidateLocation();
 		}
 	}
-
-	void refrechCells(IEnumerable<HexCell> cells)
+	bool IsErodible(int cellIdx, int elevation)
 	{
-		foreach (HexCell cell in cells)
-		{
-			if (!cell)
-			{
-				continue;
-			}
-
-			refrechCells(cell);
-		}
-	}
-
-	bool IsErodible(HexCell cell)
-	{
-		int erodibleElevation = cell.Elevation - 2;
+		int erodibleElevation = elevation - 2;
+		HexCoordinates coordinates = grid.CellData[cellIdx].coordinates;
 		for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 		{
-			HexCell neighbor = cell.GetNeighbor(grid, d);
-			if (neighbor && neighbor.Elevation <= erodibleElevation)
+			if (grid.GetCellIdx(coordinates.Step(d), out int neighborIdx) &&
+				grid.CellData[neighborIdx].Elevation <= erodibleElevation)
 			{
 				return true;
 			}
@@ -844,20 +840,21 @@ public class HexMapGenerator : MonoBehaviour
 		return false;
 	}
 
-	HexCell GetErosionTarget(HexCell cell)
+	int GetErosionTarget(int cellIdx, int elevation)
 	{
-		List<HexCell> erodibleCells = ListPool<HexCell>.Get();
-		int erodibleElevation = cell.Elevation - 2;
+		List<int> erodibleCells = ListPool<int>.Get();
+		int erodibleElevation = elevation - 2;
+		HexCoordinates coordinates = grid.CellData[cellIdx].coordinates;
 		for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
 		{
-			HexCell neighbor = cell.GetNeighbor(grid, d);
-			if (neighbor && neighbor.Elevation <= erodibleElevation)
+			if (grid.GetCellIdx(coordinates.Step(d), out int neighborIdx) &&
+				grid.CellData[neighborIdx].Elevation <= erodibleElevation)
 			{
-				erodibleCells.Add(neighbor);
+				erodibleCells.Add(neighborIdx);
 			}
 		}
-		HexCell target = erodibleCells[Random.Range(0, erodibleCells.Count)];
-		ListPool<HexCell>.Add(erodibleCells);
+		int target = erodibleCells[Random.Range(0, erodibleCells.Count)];
+		ListPool<int>.Add(erodibleCells);
 		return target;
 	}
 }

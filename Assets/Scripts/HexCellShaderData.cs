@@ -77,10 +77,10 @@ public class HexCellShaderData : MonoBehaviour
         enabled = true;
     }
 
-    public void SetMapData(HexCell cell, float data)
+    public void SetMapData(int idx, float data)
     {
         //for debug only
-        cellTextureData[cell.Index].b =
+        cellTextureData[idx].b =
             data < 0f ? (byte)0 : (data < 1f ? (byte)(data * 254f) : (byte)254);
         enabled = true;
     }
