@@ -24,26 +24,25 @@ public class HexUnit : MonoBehaviour
         }
     }
 
-    public HexCell Location
+    public int Location
     {
         get
         {
-            return Grid.GetCell(locationCellIndex);
+            return locationCellIndex;
         }
         set
         {
             if (locationCellIndex >= 0)
             {
-                HexCell location = Grid.GetCell(locationCellIndex);
-                Grid.DecreaseVisibility(location, visionRange);
-                location.Unit = null;
+                Grid.DecreaseVisibility(locationCellIndex, visionRange);
+                 Grid.GetCell(locationCellIndex).Unit = null;
             }
 
-            locationCellIndex = value.Index;
-            value.Unit = this;
+            locationCellIndex = value;
+            Grid.GetCell(value).Unit = this;
             Grid.IncreaseVisibility(value, visionRange);
-            transform.localPosition = value.Position;
-            Grid.MakeChildOfColumn(transform, value.ColumnIndex);
+            transform.localPosition = Grid.CellPositions[value];
+            Grid.MakeChildOfColumn(transform, Grid.CellData[value].coordinates.ColumnIndex);
         }
     }
 
@@ -62,26 +61,26 @@ public class HexUnit : MonoBehaviour
     IEnumerator TravelPath()
     {
         float t = 0f;
-        Vector3 a, b, c = Grid.GetCell(pathToTravel[0]).Position;
+        Vector3 a, b, c = Grid.CellPositions[pathToTravel[0]];
         transform.localPosition = c;
-        yield return LookAt(Grid.GetCell(pathToTravel[1]).Position);
+        yield return LookAt(Grid.CellPositions[pathToTravel[1]]);
 
         if (currentTravelLocationCellIndex < 0)
         {
             currentTravelLocationCellIndex = pathToTravel[0];
         }
-        HexCell currentTravelLocation = Grid.GetCell(currentTravelLocationCellIndex);
 
-        Grid.DecreaseVisibility(currentTravelLocation, visionRange);
-        int currentColumn = currentTravelLocation.ColumnIndex;
+
+        Grid.DecreaseVisibility(currentTravelLocationCellIndex, visionRange);
+        int currentColumn = Grid.CellData[currentTravelLocationCellIndex].coordinates.ColumnIndex;
 
         for (int i = 1; i < pathToTravel.Count; i++)
         {
-            currentTravelLocation = Grid.GetCell(pathToTravel[i]);
+            currentTravelLocationCellIndex = pathToTravel[i];
             a = c;
-            b = Grid.GetCell(pathToTravel[i - 1]).Position;
+            b = Grid.CellPositions[pathToTravel[i - 1]];
 
-            int nextColumn = currentTravelLocation.ColumnIndex;
+            int nextColumn = Grid.CellData[currentTravelLocationCellIndex].coordinates.ColumnIndex;
             if (currentColumn != nextColumn)
             {
                 if (nextColumn < currentColumn - 1)
@@ -100,8 +99,8 @@ public class HexUnit : MonoBehaviour
 
             //从两个相邻的六边形的中心点开始计算，得出其共同相邻边的中心点
             //你当时理解错就缺少点连线的概念，才没办法理解。
-            c = (b + currentTravelLocation.Position) * 0.5f;
-            Grid.IncreaseVisibility(Grid.GetCell(pathToTravel[i]), visionRange);
+            c = (b + Grid.CellPositions[currentTravelLocationCellIndex]) * 0.5f;
+            Grid.IncreaseVisibility(pathToTravel[i], visionRange);
 
             for (; t < 1f; t += Time.deltaTime * speed)
             {
@@ -114,16 +113,16 @@ public class HexUnit : MonoBehaviour
                 }
                 yield return null;
             }
-            Grid.DecreaseVisibility(Grid.GetCell(pathToTravel[i]), visionRange);
+            Grid.DecreaseVisibility(pathToTravel[i], visionRange);
             t -= 1f;
         }
         currentTravelLocationCellIndex = -1;
 
-        HexCell location = Grid.GetCell(locationCellIndex);
+
         a = c;
-        b = location.Position;
+        b = Grid.CellPositions[locationCellIndex];
         c = b;
-        Grid.IncreaseVisibility(location, visionRange);
+        Grid.IncreaseVisibility(locationCellIndex, visionRange);
         for (; t < 1f; t += Time.deltaTime * speed)
         {
             transform.localPosition = Bezier.GetPoint(a, b, c, t);
@@ -132,7 +131,7 @@ public class HexUnit : MonoBehaviour
             transform.localRotation = Quaternion.LookRotation(d);
             yield return null;
         }
-        transform.localPosition = location.Position;
+        transform.localPosition = Grid.CellPositions[locationCellIndex];
         orientation = transform.localRotation.eulerAngles.y;
 
         ListPool<int>.Add(pathToTravel);
@@ -191,16 +190,15 @@ public class HexUnit : MonoBehaviour
 
     public void ValidateLocation()
     {
-        transform.localPosition = Grid.GetCell(locationCellIndex).Position;
+        transform.localPosition = Grid.CellPositions[locationCellIndex];
     }
 
     public void Die()
     {
         if (locationCellIndex >= 0)
         {
-            HexCell location = Grid.GetCell(locationCellIndex);
-            Grid.DecreaseVisibility(location, visionRange);
-            location.Unit = null;
+            Grid.DecreaseVisibility(locationCellIndex, visionRange);
+             Grid.GetCell(locationCellIndex).Unit = null;
             locationCellIndex = -1;
         }
         Destroy(gameObject);
@@ -208,7 +206,7 @@ public class HexUnit : MonoBehaviour
 
     public void Save(BinaryWriter writer)
     {
-        Grid.GetCell(locationCellIndex).Coordinates.Save(writer);
+        Grid.CellData[locationCellIndex].coordinates.Save(writer);
         writer.Write(orientation);
     }
 
@@ -217,7 +215,7 @@ public class HexUnit : MonoBehaviour
         HexCoordinates coordinates = HexCoordinates.Load(reader);
         float orientation = reader.ReadSingle();
         grid.AddUnit(
-            Instantiate(grid.UnitPrefab), grid.GetCell(coordinates), orientation
+            Instantiate(grid.UnitPrefab), grid.GetCell(coordinates).Index, orientation
         );
     }
 
@@ -225,13 +223,12 @@ public class HexUnit : MonoBehaviour
     {
         if (locationCellIndex >= 0)
         {
-            HexCell location = Grid.GetCell(locationCellIndex);
-            transform.localPosition = location.Position;
+            transform.localPosition = Grid.CellPositions[locationCellIndex];
             if (currentTravelLocationCellIndex >= 0)
             {
-                HexCell currentTravelLocationCell = Grid.GetCell(currentTravelLocationCellIndex);
-                Grid.IncreaseVisibility(location, visionRange);
-                Grid.DecreaseVisibility(currentTravelLocationCell, visionRange);
+               
+                Grid.IncreaseVisibility(locationCellIndex, visionRange);
+                Grid.DecreaseVisibility(currentTravelLocationCellIndex, visionRange);
                 currentTravelLocationCellIndex = -1;
             }
         }
@@ -246,12 +243,12 @@ public class HexUnit : MonoBehaviour
     }
 
 
-    public bool IsValidDestination(HexCell cell)
+    public bool IsValidDestination(HexCellData cell)
     {
-        return cell.IsExplored && !cell.IsUnderwater && !cell.Unit;
+        return cell.IsExplored && !cell.IsUnderwater && !Grid.GetCell(cell.coordinates).Unit;
     }
 
-    public int getMoveCost(HexCell fromCell, HexCell toCell, HexDirection d)
+    public int getMoveCost(HexCellData fromCell, HexCellData toCell, HexDirection d)
     {
         HexEdgeType edgeType = fromCell.GetEdgeType(toCell);
 
@@ -288,15 +285,15 @@ public class HexUnit : MonoBehaviour
         }
 
         {
-            Vector3 a, b, c = Grid.GetCell(pathToTravel[0]).Position;
+            Vector3 a, b, c = Grid.CellPositions[pathToTravel[0]];
             //点连线
             for (int i = 1; i < pathToTravel.Count; i++)
             {
                 a = c;
-                b = Grid.GetCell(pathToTravel[i - 1]).Position;
+                b = Grid.CellPositions[pathToTravel[i - 1]];
                 //从两个相邻的六边形的中心点开始计算，得出其共同相邻边的中心点
                 //你当时理解错就缺少点连线的概念，才没办法理解。
-                c = (b + Grid.GetCell(pathToTravel[i]).Position) * 0.5f;
+                c = (b + Grid.CellPositions[pathToTravel[i]]) * 0.5f;
                 for (float t = 0f; t < 1.0f; t += 0.1f)
                 {
                     Gizmos.DrawSphere(Bezier.GetPoint(a, b, c, t), 2f);
@@ -304,7 +301,7 @@ public class HexUnit : MonoBehaviour
             }
 
             a = c;
-            b = Grid.GetCell(pathToTravel[pathToTravel.Count - 1]).Position;
+            b = Grid.CellPositions[pathToTravel[pathToTravel.Count - 1]];
             c = b;
             for (float t = 0f; t < 1f; t += 0.1f)
             {

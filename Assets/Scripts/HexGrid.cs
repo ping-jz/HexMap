@@ -387,18 +387,18 @@ public class HexGrid : MonoBehaviour
 
     int currentPathFromIndex = -1, currentPathToIndex;
 
-    public void FindPath(HexCell from, HexCell to, HexUnit hexUnit)
+    public void FindPath(int fromIdx, int toIdx, HexUnit hexUnit)
     {
         ClearPath();
-        if (search(from, to, hexUnit))
+        if (search(fromIdx, toIdx, hexUnit))
         {
-            currentPathFromIndex = from.Index;
-            currentPathToIndex = to.Index;
+            currentPathFromIndex = fromIdx;
+            currentPathToIndex = toIdx;
         }
         ShowPath(hexUnit.Speed);
     }
 
-    public void AddUnit(HexUnit unit, HexCell location, float orientation)
+    public void AddUnit(HexUnit unit, int location, float orientation)
     {
         units.Add(unit);
         unit.Grid = this;
@@ -428,26 +428,29 @@ public class HexGrid : MonoBehaviour
     /// <returns></returns>
     /// 
     private int searchPhase = 1;
-    private bool search(HexCell fromCell, HexCell to, HexUnit hexUnit)
+    private bool search(int fromIdx, int toIdx, HexUnit hexUnit)
     {
         searchPhase += 1;
         int searchFrontierPhase = searchPhase;
 
         PriorityQueue<int> frontier = new PriorityQueue<int>();
 
-        cellSearchDatas[fromCell.Index] = new HexCellSearchData
+        cellSearchDatas[fromIdx] = new HexCellSearchData
         {
             searchPhase = searchFrontierPhase
         };
-        frontier.Enqueue(fromCell.Index,
-            cellSearchDatas[fromCell.Index].SearchPriority);
+        frontier.Enqueue(fromIdx,
+            cellSearchDatas[fromIdx].SearchPriority);
+
+        HexCellData to = CellData[toIdx];
 
         int speed = hexUnit.Speed;
         while (frontier.Count > 0)
         {
-            HexCell current = cells[frontier.Dequeue()];
-            HexCellSearchData currentData = cellSearchDatas[current.Index];
-            if (current == to)
+            int currentIdx = frontier.Dequeue();
+            HexCellData current = CellData[currentIdx];
+            HexCellSearchData currentData = cellSearchDatas[currentIdx];
+            if (currentIdx == toIdx)
             {
                 return true;
             }
@@ -457,11 +460,13 @@ public class HexGrid : MonoBehaviour
             //还是有很多重复计算
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
-                HexCell neighbor = current.GetNeighbor(this, d);
-                if (!neighbor)
+
+
+                if (!GetCellIdx(current.coordinates.Step(d), out int neighborIdx))
                 {
                     continue;
                 }
+                HexCellData neighbor = CellData[neighborIdx];
 
                 if (!hexUnit.IsValidDestination(neighbor))
                 {
@@ -480,22 +485,22 @@ public class HexGrid : MonoBehaviour
                     distance = turn * speed + moveCost;
                 }
 
-                if (cellSearchDatas[neighbor.Index].searchPhase != searchFrontierPhase)
+                if (cellSearchDatas[neighborIdx].searchPhase != searchFrontierPhase)
                 {
-                    cellSearchDatas[neighbor.Index] = new HexCellSearchData
+                    cellSearchDatas[neighborIdx] = new HexCellSearchData
                     {
                         searchPhase = searchFrontierPhase,
                         distance = distance,
-                        pathFrom = current.Index,
-                        heuristic = neighbor.Coordinates.DistanceTo(to.Coordinates),
+                        pathFrom = currentIdx,
+                        heuristic = neighbor.coordinates.DistanceTo(to.coordinates),
                     };
-                    frontier.Enqueue(neighbor.Index, cellSearchDatas[neighbor.Index].SearchPriority);
+                    frontier.Enqueue(neighborIdx, cellSearchDatas[neighborIdx].SearchPriority);
                 }
-                else if (distance < cellSearchDatas[neighbor.Index].distance)
+                else if (distance < cellSearchDatas[neighborIdx].distance)
                 {
-                    cellSearchDatas[neighbor.Index].distance = distance;
-                    cellSearchDatas[neighbor.Index].pathFrom = current.Index;
-                    frontier.Enqueue(neighbor.Index, cellSearchDatas[neighbor.Index].SearchPriority);
+                    cellSearchDatas[neighborIdx].distance = distance;
+                    cellSearchDatas[neighborIdx].pathFrom = currentIdx;
+                    frontier.Enqueue(neighborIdx, cellSearchDatas[neighborIdx].SearchPriority);
                 }
             }
         }
@@ -564,85 +569,91 @@ public class HexGrid : MonoBehaviour
         return paths;
     }
 
-    public void IncreaseVisibility(HexCell fromCell, int range)
+    public void IncreaseVisibility(int fromCellIdx, int range)
     {
-        List<HexCell> cells = GetVisibleCells(fromCell, range);
-        foreach (HexCell cell in cells)
+        List<int> cells = GetVisibleCells(fromCellIdx, range);
+        foreach (int cell in cells)
         {
-            int val = cellVisibility[cell.Index] += 1;
+            int val = cellVisibility[cell] += 1;
             if (val == 1)
             {
-                cell.MarkAsExplored();
-                cellShaderData.RefreshVisibility(cell.Index);
+                CellData[cell].MarkAsExplored();
+                cellShaderData.RefreshVisibility(cell);
             }
 
         }
-        ListPool<HexCell>.Add(cells);
+        ListPool<int>.Add(cells);
     }
 
-    public void DecreaseVisibility(HexCell fromCell, int range)
+    public void DecreaseVisibility(int fromCellIdx, int range)
     {
-        List<HexCell> cells = GetVisibleCells(fromCell, range);
-        foreach (HexCell cell in cells)
+        List<int> cells = GetVisibleCells(fromCellIdx, range);
+        foreach (int cell in cells)
         {
-            cellVisibility[cell.Index] -= 1;
-            if (cellVisibility[cell.Index] == 0)
+            cellVisibility[cell] -= 1;
+            if (cellVisibility[cell] == 0)
             {
-                cellShaderData.RefreshVisibility(cell.Index);
+                cellShaderData.RefreshVisibility(cell);
             }
         }
-        ListPool<HexCell>.Add(cells);
+        ListPool<int>.Add(cells);
     }
 
-    List<HexCell> GetVisibleCells(HexCell fromCell, int range)
+    List<int> GetVisibleCells(int fromCellIdx, int range)
     {
+        HexCellData fromCell = CellData[fromCellIdx];
         range += fromCell.ViewElevation;
-        List<HexCell> visibleCells = ListPool<HexCell>.Get();
+        List<int> visibleCells = ListPool<int>.Get();
         searchPhase += 1;
         int searchFrontierPhase = searchPhase;
         int searched = -searchFrontierPhase;
         PriorityQueue<int> frontier = new PriorityQueue<int>();
 
-        cellSearchDatas[fromCell.Index] = new HexCellSearchData
+        cellSearchDatas[fromCellIdx] = new HexCellSearchData
         {
             searchPhase = searchFrontierPhase,
-            pathFrom = cellSearchDatas[fromCell.Index].pathFrom,
+            pathFrom = cellSearchDatas[fromCellIdx].pathFrom,
         };
-        frontier.Enqueue(fromCell.Index, cellSearchDatas[fromCell.Index].SearchPriority);
-        HexCoordinates fromCoordinates = fromCell.Coordinates;
+        frontier.Enqueue(fromCellIdx, cellSearchDatas[fromCellIdx].SearchPriority);
+        HexCoordinates fromCoordinates = fromCell.coordinates;
         while (frontier.Count > 0)
         {
-
-            HexCell current = GetCell(frontier.Dequeue());
-            cellSearchDatas[current.Index].searchPhase = searched;
-            visibleCells.Add(current);
+            int currentIdx = frontier.Dequeue();
+            HexCellData current = CellData[currentIdx];
+            cellSearchDatas[currentIdx].searchPhase = searched;
+            visibleCells.Add(currentIdx);
             //还是有很多重复计算
             for (HexDirection d = HexDirection.TopRight; d <= HexDirection.TopLeft; d++)
             {
-                HexCell neighbor = current.GetNeighbor(this, d);
-                if (!neighbor || cellSearchDatas[neighbor.Index].searchPhase == searched || !neighbor.Explorable)
+
+                if (!GetCellIdx(current.coordinates.Step(d), out int neighborIdx))
+                {
+                    continue;
+                }
+                HexCellData neighbor = CellData[neighborIdx];
+                if (cellSearchDatas[neighborIdx].searchPhase == searched || !neighbor.Explorable)
                 {
                     continue;
                 }
 
-                int distance = cellSearchDatas[current.Index].distance + 1;
+                int distance = cellSearchDatas[currentIdx].distance + 1;
                 if (distance + neighbor.ViewElevation > range ||
-                    distance > fromCoordinates.DistanceTo(neighbor.Coordinates)
+                    distance > fromCoordinates.DistanceTo(neighbor.coordinates)
                 )
                 {
                     continue;
                 }
 
-                if (cellSearchDatas[neighbor.Index].searchPhase != searchFrontierPhase)
+                if (cellSearchDatas[neighborIdx].searchPhase != searchFrontierPhase)
                 {
-                    cellSearchDatas[neighbor.Index] = new HexCellSearchData
+                    cellSearchDatas[neighborIdx] = new HexCellSearchData
                     {
                         searchPhase = searchFrontierPhase,
                         distance = distance,
-                        pathFrom = cellSearchDatas[neighbor.Index].pathFrom,
+                        pathFrom = cellSearchDatas[neighborIdx].pathFrom,
                         heuristic = 0
                     };
-                    frontier.Enqueue(neighbor.Index, cellSearchDatas[neighbor.Index].SearchPriority);
+                    frontier.Enqueue(neighborIdx, cellSearchDatas[neighborIdx].SearchPriority);
                 }
             }
         }

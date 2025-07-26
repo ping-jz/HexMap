@@ -45,13 +45,6 @@ public class HexCell : IEquatable<HexCell>
         cell.neighborsIndex[(int)direction.Opposite()] = Index;
     }
 
-    public HexEdgeType GetEdgeType(HexCell otherCell)
-    {
-        return HexMetrics.GetEdgeType(
-            Elevation, otherCell.Elevation
-        );
-    }
-
     public int Elevation
     {
         get
@@ -245,19 +238,6 @@ public class HexCell : IEquatable<HexCell>
     public bool HasRiverThroughEdge(HexDirection direction)
     {
         return Flags.HasRiverIn(direction) || Flags.HasRiverOut(direction);
-    }
-
-
-    public Vector3 Position
-    {
-        get
-        {
-            return Grid.CellPositions[Index];
-        }
-        set
-        {
-            Grid.CellPositions[Index] = value;
-        }
     }
 
     public HexCoordinates Coordinates => Grid.CellData[Index].coordinates;

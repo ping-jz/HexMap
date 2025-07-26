@@ -90,6 +90,7 @@ public class HexMapEditor : MonoBehaviour
         SetEditMode(true);
         SelectTerrianType(1);
         RegisterEvents();
+        Shader.EnableKeyword("_HEX_MAP_EDIT_MODE");
     }
 
     void OnValidate()
@@ -328,7 +329,7 @@ public class HexMapEditor : MonoBehaviour
         HexCell cell = GetCellUnderCursor();
         if (cell && !cell.Unit)
         {
-            hexGrid.AddUnit(Instantiate(hexGrid.UnitPrefab), cell, UnityEngine.Random.Range(0f, 360f));
+            hexGrid.AddUnit(Instantiate(hexGrid.UnitPrefab), cell.Index, UnityEngine.Random.Range(0f, 360f));
         }
     }
 

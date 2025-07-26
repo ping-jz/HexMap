@@ -68,9 +68,9 @@ public class HexGameUI : MonoBehaviour
 
 
         if (currentCellIndex >= 0 &&
-            selectedUnit.IsValidDestination(grid.GetCell(currentCellIndex)))
+            selectedUnit.IsValidDestination(grid.CellData[currentCellIndex]))
         {
-            grid.FindPath(selectedUnit.Location, grid.GetCell(currentCellIndex), selectedUnit);
+            grid.FindPath(selectedUnit.Location, currentCellIndex, selectedUnit);
         }
         else
         {

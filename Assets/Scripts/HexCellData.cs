@@ -54,6 +54,16 @@ public struct HexCellData
 
 	public readonly HexDirection OutgoingRiver => flags.RiverOutDirection();
 
+	public readonly bool Explorable
+	{
+		get
+		{
+			return flags.Has(HexCellFlags.Explorable);
+		}
+	}
+
+	public void MarkAsExplored() => flags = flags.With(HexCellFlags.Explored);
+
 	public readonly float StreamBedY =>
 		(values.elevation + HexMetrics.streamBedElevationOffset) *
 		HexMetrics.elevationStep;
